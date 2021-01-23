@@ -92,7 +92,7 @@ p_load(bookdown,
        tidyverse,
        XML)
 
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, out.width = "96%")
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, out.width = "100%")
 
 theme_update(plot.title = element_text(hjust = 0.5, vjust = 0.5))
 
@@ -771,7 +771,7 @@ Project %>% ggplot(mapping = aes(x = Country, y = `Projected Annual Return`)) +
   annotation_custom(textGrob("Emerging market", x = unit(0.95, "npc"), hjust = 1, vjust = -2, gp = gpar(fontface = "bold")),
                     xmin = -Inf, xmax = -Inf) +
   geom_col(mapping = aes(fill = factor(sign(`Projected Annual Return`))), color = "black", width = 0.7) +
-  scale_y_continuous(labels = percent) +
+  scale_y_continuous(breaks = pretty_breaks(), labels = percent) +
   scale_fill_manual(breaks = c("-1", "1", "0"), values = brewer_pal("qual", 4)(3), guide = F) +
   coord_flip() +
   labs(x = NULL) +
