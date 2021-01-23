@@ -775,7 +775,7 @@ Project %>% ggplot(mapping = aes(x = Country, y = `Projected Annual Return`)) +
   scale_fill_manual(breaks = c("-1", "1", "0"), values = brewer_pal("qual", 4)(3), guide = F) +
   coord_flip() +
   labs(x = NULL) +
-  theme(axis.ticks.y = element_blank())
+  theme(axis.ticks.y = element_blank(), plot.margin = unit(c(5.5, 15, 5.5, 5.5), "points"))
 ```
 
 Source data and details can be found at [Gurufocus.com](https://www.gurufocus.com/global-market-valuation.php).
@@ -983,21 +983,21 @@ USmonthly = list(Copper, USBond) %>%
 UScross = full_join(USdaily, USmonthly) %>% mutate(month = format(DATE, "%Y-%m")) %>% group_by(month) %>% summarise(across(-DATE, ~mean(., na.rm = T))) %>% arrange(month)
 
 USdailycor = USdaily %>% 
-  mutate(interval = cut(DATE, 10)) %>% 
+  mutate(interval = cut(DATE, 6)) %>% 
   group_by(interval) %>% 
   group_map(~cor(select(., -DATE), use = "pairwise.complete.obs"))
 
 USdailycor %<>% reduce(`+`) %>% divide_by(length(USdailycor))
 
 USmonthlycor = USmonthly %>% 
-  mutate(interval = cut(DATE, 5)) %>%
+  mutate(interval = cut(DATE, 6)) %>%
   group_by(interval) %>%
   group_map(~cor(select(., -DATE), use = "pairwise.complete.obs"))
 
 USmonthlycor %<>% reduce(`+`) %>% divide_by(length(USmonthlycor))
 
 UScrosscor = UScross %>% 
-  mutate(interval = cut(row_number(), 5)) %>%
+  mutate(interval = cut(row_number(), 6)) %>%
   group_by(interval) %>%
   group_map(~cor(.[names(select(USdaily, -DATE))], .[names(select(USmonthly, -DATE))], use = "pairwise.complete.obs"))
 
