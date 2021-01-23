@@ -365,15 +365,15 @@ financial_plot = function(financials, variable, title = NULL, labels = NULL) {
     scale_fill_manual(limits = unique(financials$Industry), values = qual_col_vector[length(unique(financials$Industry)):1], guide = F) +
     coord_flip() +
     labs(x = NULL, y = title) +
-    theme(axis.ticks.y = element_blank(), axis.ticks.length.y = unit(0, "npc"), axis.text.y = element_blank(), plot.margin = unit(c(5.5, 1, 5.5, 3), "points"))
+    theme(axis.ticks.y = element_blank(), axis.ticks.length.y = unit(0, "npc"), axis.text.y = element_blank(), plot.margin = unit(c(5.5, 5.5, 5.5, 0), "points"))
 }
 
 f2 = financial_plot(company_plot, `Earnings-to-price`, "Earnings/Price")
 f3 = financial_plot(company_plot, `Sales-to-price`, "Sales/Price")
 f4 = financial_plot(company_plot, `Book-to-price`, "Book/Price")
-f5 = financial_plot(company_plot, ROE, "Return on equity", percent)
-f6 = financial_plot(company_plot, ROA, "Return on asset", percent)
-f7 = financial_plot(company_plot, DER, "Debt/Equity", percent)
+f5 = financial_plot(company_plot, ROE, "Return on equity")
+f6 = financial_plot(company_plot, ROA, "Return on asset")
+f7 = financial_plot(company_plot, DER, "Debt/Equity")
 f8 = financial_plot(company_plot, Quarterly_earnings_growth, "Quarterly earnings growth (yoy)", percent)
 f9 = financial_plot(company_plot, Quarterly_revenue_growth, "Quarterly revenue growth (yoy)", percent)
 ```
