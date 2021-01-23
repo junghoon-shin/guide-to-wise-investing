@@ -1,0 +1,61 @@
+---
+title: "Guide for wise investing"
+author: "Junghoon Shin"
+date: "`r paste('Last updated', Sys.time())`"
+output: 
+  bookdown::html_document2: 
+    theme: yeti
+    highlight: tango
+    toc: TRUE
+    toc_float: TRUE
+    number_sections: TRUE
+    fig_caption: TRUE
+editor_options: 
+  chunk_output_type: inline
+---
+
+**Contact**\
+junghoonshin@kaist.ac.kr\
+\
+
+<style>
+p.caption {
+  font-size: 1.2em;
+}
+</style>
+
+<font style = "font-family: times; font-style: italic">
+
+![](`r file.path("images", "Warren.jpg")`){width=180px}
+
+"Price is what you pay. Value is what you get."
+
+"It's far better to buy a wonderful company at a fair price than a fair company at a wonderful price."
+
+"Buy a stock the way you would buy a house. Understand and like it such that you'd be content to own it in the absence of any market."
+
+“The key to investing is not assessing how much an industry is going to affect society, or how much it will grow, but rather determining the competitive advantage of any given company and, above all, the durability of that advantage.”
+
+"In the 20th century, the United States endured two world wars and other traumatic and expensive military conflicts; the Depression; a dozen or so recessions and financial panics; oil shocks; a flu epidemic; and the resignation of a disgraced president. Yet the Dow rose from 66 to 11,497."
+
+"We simply attempt to be fearful when others are greedy and to be greedy only when others are fearful."
+
+"Predicting rain doesn't count, building the ark does."
+
+"You are neither right nor wrong because the crowd disagrees with you. You are right because your data and reasoning are right."
+
+"The difference between successful people and really successful people is that really successful people say no to almost everything."
+
+"Diversification is a protection against ignorance. It makes very little sense for those who know what they're doing."
+
+"The most important thing to do if you find yourself in a hole is to stop digging."
+
+"Rule No. 1 is never lose money. Rule No. 2 is never forget Rule No. 1."
+
+</font>
+
+[- Warren Buffet]{style="font-family: times; font-style: italic; float: right"}\
+\
+
+# Business evaluation
+
