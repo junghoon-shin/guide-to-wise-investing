@@ -14,6 +14,7 @@ editor_options:
   chunk_output_type: inline
 ---
 
+
 **Contact**\
 junghoonshin@kaist.ac.kr\
 \
@@ -21,6 +22,9 @@ junghoonshin@kaist.ac.kr\
 <style>
 p.caption {
   font-size: 1.2em;
+}
+.list-group {
+  font-size: 15px;
 }
 </style>
 
@@ -31,6 +35,8 @@ p.caption {
 "Price is what you pay. Value is what you get."
 
 "It's far better to buy a wonderful company at a fair price than a fair company at a wonderful price."
+
+"Someone's sitting in the shade today because someone planted a tree a long time ago."
 
 "Buy a stock the way you would buy a house. Understand and like it such that you'd be content to own it in the absence of any market."
 
@@ -54,8 +60,9 @@ p.caption {
 
 </font>
 
-[- Warren Buffet]{style="font-family: times; font-style: italic; float: right"}\
+[--- Warren Buffet]{style="font-family: times; font-style: italic; float: right"}\
 \
 
 # Business evaluation
 
+## Fundamental analysis

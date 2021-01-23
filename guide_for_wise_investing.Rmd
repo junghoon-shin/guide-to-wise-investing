@@ -24,6 +24,12 @@ junghoonshin@kaist.ac.kr\
 p.caption {
   font-size: 1.2em;
 }
+.list-group {
+  font-size: 15px;
+}
+.tocify ul, .tocify li {
+  line-height: 25px;
+}
 </style>
 
 <font style = "font-family: times; font-style: italic">
@@ -58,7 +64,7 @@ p.caption {
 
 </font>
 
-[- Warren Buffet]{style="font-family: times; font-style: italic; float: right"}\
+[--- Warren Buffet]{style="font-family: times; font-style: italic; float: right"}\
 \
 
 # Business evaluation
@@ -86,7 +92,7 @@ p_load(bookdown,
        tidyverse,
        XML)
 
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, out.width = "100%")
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, out.width = "96%")
 
 theme_update(plot.title = element_text(hjust = 0.5, vjust = 0.5))
 
@@ -321,12 +327,12 @@ High52: 52-week high price\
 Industry PER: data from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html)\
 Low52: 52-week low price\
 PBR: price/book value ratio\
-PEG: price/earnings to growth ratio\
+PEG: price/earnings-to-growth ratio\
 PER: price/earnings ratio\
 PSR: price/sales ratio\
 ROA: return on asset\
 ROE: return on equity\
-Sustainable growth rate: ROE * retention ratio
+Sustainable growth rate: ROE $\times$ retention ratio
 
 </font>
 
@@ -834,9 +840,6 @@ index_plot(Index, "S&P500", "S&P 500")
 index_plot(Index, "NASDAQ", "NASDAQ")
 ```
 
-
-
-
 ```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Wilshire US REIT Index"}
 index_plot(Index, "REIT", "Wilshire REIT")
 ```
@@ -966,7 +969,7 @@ index_plot_fed(US, DAAA, "AAA corporate bond yield")
 
 ## Asset correlation
 
-```{r, fig.width = 7, fig.height = 6, fig.cap = "Pairwise correlation between stock matket index, bond yields, REIT index, gold price, oil price, and USD/KRW exchange rate over the last 30 years"}
+```{r, fig.width = 7, fig.height = 5.5, fig.cap = "Pairwise correlation between stock matket index, bond yields, REIT index, gold price, oil price, and USD/KRW exchange rate over the last 30 years"}
 USdaily = list(Wilshire5000, WilshireREIT, Gold, WTI, AAA, USDKRW) %>%
   reduce(full_join) %>%
   mutate(across(-DATE, as.numeric)) %>%
