@@ -48,7 +48,7 @@ my_datatable = function(tbl, scrollY) {
 }
 ```
 
-```{r, cache = T}
+```{r}
 drive_auth("freeustand@gmail.com", scopes = "https://www.googleapis.com/auth/drive")
 gs4_auth(token = drive_token(), scopes = "https://www.googleapis.com/auth/drive")
 
@@ -312,7 +312,7 @@ company_decision = company %>%
 company_decision
 ```
 
-```{r, cache = T}
+```{r}
 nona = function(x) ifelse(sum(!is.na(x)) > 0, x[!is.na(x)], NA)
 yahoo_to_name = function(Yahoo) company$Name[match(Yahoo, company$Yahoo)]
 

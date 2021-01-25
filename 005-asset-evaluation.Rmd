@@ -2,7 +2,7 @@
 
 ## Index trend (6 months)^[Data are from [Yahoo Finance](https://finance.yahoo.com/).]
 
-```{r, cache = T}
+```{r}
 Yahoo = c(USDKRW = "KRW=X",
           `S&P500` = "^GSPC",
           NASDAQ = "^IXIC",
@@ -77,7 +77,7 @@ index_plot(Index, "Oil", "Crude oil")
 
 ## Index trend (30 years)^[Data are from [Federal Reserve Bank of St. Louis](https://fred.stlouisfed.org/).]
 
-```{r, cache = T}
+```{r}
 Shiller = read_html("https://www.multpl.com/shiller-pe/table/by-year", which = 1, header = T) %>% rename(Shiller = "\n\nValue\n\n\n\nValue\n")
 
 Shiller$Date %<>% 

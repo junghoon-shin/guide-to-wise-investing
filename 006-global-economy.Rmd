@@ -2,7 +2,7 @@
 
 ## GDP
 
-```{r, cache = T}
+```{r}
 country_ranking = read_html("https://www.worldometers.info/gdp/gdp-by-country/", which = 1, header = T) %>% pull(Country) %>% .[1:15] %>% setdiff(c("Russia", "Brazil", "Mexico"))
 
 download.file("https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.CD?downloadformat=csv", destfile = "gdp.zip", mode = "wb")
@@ -36,7 +36,7 @@ gdp %>%
 
 ## GDP growth
 
-```{r, cache = T}
+```{r}
 download.file("https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.KD.ZG?downloadformat=csv", destfile = "gdp_growth.zip", mode = "wb")
 
 gdp_growth_csv = unzip("gdp_growth.zip", list = T) %>% pull(Name) %>% str_subset("^(?!Metadata)")
@@ -68,7 +68,7 @@ gdp_growth %>%
 
 ## Inflation
 
-```{r, cache = T}
+```{r}
 download.file("https://api.worldbank.org/v2/en/indicator/FP.CPI.TOTL.ZG?downloadformat=csv", destfile = "inflation.zip", mode = "wb")
 
 inflation_csv = unzip("inflation.zip", list = T) %>% pull(Name) %>% str_subset("^(?!Metadata)")
@@ -101,7 +101,7 @@ inflation %>%
 
 ## OECD Composite Leading Indicators
 
-```{r, cache = T}
+```{r}
 US = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "USALORSGPNOSTSAM", "&cosd=", threeyearsago, "&coed=", today,
                               "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", threeyearsago), col_names = T)
 

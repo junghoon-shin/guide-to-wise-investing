@@ -2,7 +2,7 @@
 
 ## GDP and Buffett indicator
 
-```{r, cache = T}
+```{r}
 Buffett = read_html("https://www.gurufocus.com/global-market-valuation.php", which = 3, header = T) %>% 
   mutate(across(-c(Country, `Country ETF`), as.numeric))
 
@@ -11,7 +11,7 @@ my_datatable(Buffett, NULL)
 
 ## Market valuation
 
-```{r, cache = T}
+```{r}
 USA = read_html("https://www.gurufocus.com/stock-market-valuations.php", which = 3, header = T) %>% 
   mutate(Country = "USA")
 
