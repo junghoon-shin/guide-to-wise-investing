@@ -1,0 +1,61 @@
+# Sector evaluation^[Data are from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html).]
+
+## PE ratio
+
+```{r, cache = T}
+industry = read_html("http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html", which = 1, header = T)
+
+names(industry) %<>% str_replace_all(c("\\s+" = " ", "/ " = "/"))
+
+industry %<>% mutate(`Industry Name` = str_replace_all(`Industry Name`, c("\\s+" = " ", "\\t+" = " ")),
+                     across(-c(`Industry Name`, `Expected growth - next 5 years`), as.numeric),
+                     `Expected growth - next 5 years` = str_replace(`Expected growth - next 5 years`, "%", "") %>% as.numeric %>% divide_by(100))
+
+industry_per = industry %>% 
+  arrange(`Current PE`) %>% 
+  mutate(`Industry Name` = factor(`Industry Name`, levels = `Industry Name`)) %>% 
+  select(`Industry Name`, ends_with("PE")) %>% 
+  pivot_longer(cols = ends_with("PE"), names_to = "Variable", values_to = "PE ratio") %>%
+  mutate(Variable = Variable %>% str_replace(" PE", "") %>% factor(levels = c("Current", "Trailing", "Forward")))
+```
+
+```{r, fig.width = 7, fig.height = 20, fig.cap = "Current, trailing, and forward PE ratio by industry sector"}
+industry_per %>%
+  ggplot(mapping = aes(x = `Industry Name`, y = `PE ratio`)) +
+  geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, max(industry_per$`PE ratio`) * 1.05)) +
+  coord_flip() +
+  labs(x = NULL) +
+  facet_grid(cols = vars(Variable)) +
+  theme(axis.ticks.y = element_blank())
+```
+
+## Expected growth rate
+
+```{r, fig.width = 7, fig.height = 20, fig.cap = "Expected growth rate for the next 5 years by industry sector"}
+industry %>%
+  arrange(`Expected growth - next 5 years`) %>%
+  mutate(`Industry Name` = factor(`Industry Name`, levels = `Industry Name`)) %>%
+  ggplot(mapping = aes(x = `Industry Name`, y = `Expected growth - next 5 years`)) +
+  geom_col(mapping = aes(fill = factor(sign(`Expected growth - next 5 years`))), color = "black", width = 0.7) +
+  scale_y_continuous(labels = percent) +
+  scale_fill_manual(breaks = c("-1", "1", "0"), values = brewer_pal("qual", 4)(3), guide = F) +
+  coord_flip() +
+  labs(x = NULL, y = "Expected growth rate - next 5 years") +
+  theme(axis.ticks.y = element_blank())
+```
+
+## PEG ratio
+
+```{r, fig.width = 7, fig.height = 20 * (sum(!is.na(industry$`PEG Ratio`)) + 2)/(nrow(industry) + 2), fig.cap = "PEG ratio by industry sector"}
+industry %>%
+  filter(!is.na(`PEG Ratio`)) %>%
+  arrange(`PEG Ratio`) %>%
+  mutate(`Industry Name` = factor(`Industry Name`, levels = `Industry Name`)) %>%
+  ggplot(mapping = aes(x = `Industry Name`, y = `PEG Ratio`)) +
+  geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, max(industry$`PEG Ratio`, na.rm = T) * 1.05)) +
+  coord_flip() +
+  labs(x = NULL) +
+  theme(axis.ticks.y = element_blank())
+```

@@ -1,0 +1,5 @@
+book_filename: "guide-for-wise-investing"
+delete_merged_file: true
+language:
+  ui:
+    chapter_name: "Chapter "

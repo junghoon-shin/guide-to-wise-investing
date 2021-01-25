@@ -1,0 +1,50 @@
+# (PART) Part III {-} 
+
+# Asset growth simulation
+
+## Investment scenario
+
+|Variable|Assumption (thousand USD)|
+|--------|----------|
+|Initial investment|20|
+|Monthly investment|5|
+|Investment increment per year|5%|
+|Target profit|20%|
+|Inflation|2%|
+
+## Simulation
+
+```{r, fig.width = 7, fig.height = 4, fig.cap = "Simulated asset growth"}
+annual_return = function(initial_investment, annual_increment, profit, duration, year) {
+  sum(initial_investment * annual_increment^(year - 1) * profit^(1:12/12)) * profit^(duration - year)
+}
+
+annual_return = Vectorize(annual_return, "year")
+
+final_return = function(principal, initial_investment, annual_increment, profit, duration, inflation) {
+  unadjusted_return = (principal * profit^duration) + sum(annual_return(initial_investment, annual_increment, profit, duration, 1:duration))
+  adjusted_return = ((principal * profit^duration) + sum(annual_return(initial_investment, annual_increment, profit, duration, 1:duration))) / inflation^duration
+  return(c(unadjusted = unadjusted_return, adjusted = adjusted_return))
+}
+
+final_return = Vectorize(final_return, "duration")
+
+return_simulation = final_return(principal = 20/1000, initial_investment = 5/1000, annual_increment = 1.05, profit = 1.2, duration = 1:30, inflation = 1.02) %>% 
+  t %>% 
+  as_tibble %>%
+  mutate(year = row_number())
+
+return_simulation %<>% bind_rows(tibble(unadjusted = 20/1000, adjusted = 20/1000, year = 0), .)
+
+return_simulation %<>%
+  pivot_longer(-year, names_to = "adjustment", values_to = "amount") %>%
+  mutate(adjustment = factor(adjustment, levels = c("unadjusted", "adjusted")))
+
+return_simulation %>% ggplot(mapping = aes(x = year, y = amount)) +
+  geom_line(mapping = aes(color = adjustment), size = 1) +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_color_brewer(type = "qual", labels = c("Total return", "Inflation-adjusted return"), guide = guide_legend(title = NULL)) +
+  labs(x = "Years from now", y = "Asset (million USD)") +
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.key = element_rect(fill = "transparent"), legend.background = element_rect(fill = "transparent"),
+        plot.margin = unit(c(5.5, 11, 5.5, 5.5), "points"))
+```

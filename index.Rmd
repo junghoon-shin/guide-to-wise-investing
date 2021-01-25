@@ -1,0 +1,56 @@
+--- 
+title: "Guide for Wise Investing"
+author: "Junghoon Shin"
+date: "`r paste(Sys.time(), 'KST')`"
+site: bookdown::bookdown_site
+documentclass: book
+bibliography: [book.bib, packages.bib]
+biblio-style: apalike
+link-citations: yes
+url: 'https\://junghoon-shin.github.io/'
+github-repo: "junghoon-shin/guide-for-wise-investing"
+cover-image: "images/Warren.jpg"
+description: "This is a guide for wise investing based on the analysis of company financials, industry and market status, and global economy. This guide is intended for personal use only."
+---
+
+# About the author {-}
+
+Junghoon Shin is a Korean doctor, cancer scientist, and statistical programmer. He earned his MD and MSc from the [Seoul National University College of Medicine](https://medicine.snu.ac.kr/) and is now a PhD student at the Graduate School of Medical Science and Engineering, [Korea Advanced Institute of Science and Technology](https://www.kaist.ac.kr/en/). His research is mainly focused on the transcriptome dysregulation patterns observed in cancer cells, which have an important role in cancer development process. Before coming to KAIST, He received the residency training at the Department of Internal Medicine, [Seoul National University Hospital](http://www.snuh.org/global/en/main.do) and earned his medical board certification in 2018. Recently he has a particular interest in statistical computing, data visualization, and obviously, investment. This project is what he spend most of his out-of-work time doing these days.\
+\
+
+**Contact**\
+junghoonshin@kaist.ac.kr\
+https://github.com/junghoon-shin
+
+```{r, include = F}
+library(pacman)
+
+p_load(bookdown,
+       ComplexHeatmap,
+       cowplot,
+       DT,
+       furrr,
+       ggpubr,
+       googledrive,
+       googlesheets4,
+       grid,
+       gridExtra,
+       httr,
+       kableExtra,
+       knitr,
+       magrittr,
+       RColorBrewer,
+       scales,
+       tidyverse,
+       XML)
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, out.width = "100%")
+
+theme_update(plot.title = element_text(hjust = 0.5, vjust = 0.5))
+```
+
+```{r, include = FALSE}
+# automatically create a bib database for R packages
+
+knitr::write_bib(c(.packages(), "bookdown", "knitr", "rmarkdown"), "packages.bib")
+```

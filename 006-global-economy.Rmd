@@ -1,0 +1,161 @@
+# Global economy^[Data are from [World Bank](https://www.worldbank.org/) and [OECD](https://www.oecd.org/).]
+
+## GDP
+
+```{r, cache = T}
+country_ranking = read_html("https://www.worldometers.info/gdp/gdp-by-country/", which = 1, header = T) %>% pull(Country) %>% .[1:15] %>% setdiff(c("Russia", "Brazil", "Mexico"))
+
+download.file("https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.CD?downloadformat=csv", destfile = "gdp.zip", mode = "wb")
+
+gdp_csv = unzip("gdp.zip", list = T) %>% pull(Name) %>% str_subset("^(?!Metadata)")
+
+unzip("gdp.zip", files = gdp_csv, overwrite = T, exdir = "gdp")
+
+gdp = read_csv(file.path("gdp", gdp_csv), skip = 4, col_names = T, trim_ws = T)
+
+gdp %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russian Federation" = "Russia",
+                                                                   "Korea, Rep." = "South Korea",
+                                                                   "Korea, Dem. People's Rep." = "North Korea"))) %>%
+  select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>% 
+  pivot_longer(-`Country Name`, names_to = "Year", values_to = "GDP") %>%
+  mutate(Year = as.numeric(Year)) %>%
+  filter(!is.na(GDP) & Year >= as.numeric(format(as.Date(thirtyyearsago), "%Y")) & `Country Name` %in% country_ranking) %>%
+  mutate(`Country Name` = factor(`Country Name`, levels = country_ranking))
+```
+
+```{r, fig.width = 7, fig.height = 4, fig.cap = str_c("GDP over the last 30 years of ", length(unique(gdp$`Country Name`)), " major countries")}
+gdp %>% 
+  ggplot(mapping = aes(x = Year, y = `GDP`)) +
+  geom_line(mapping = aes(color = `Country Name`)) +
+  scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
+  scale_y_continuous(trans = "log10") +
+  scale_color_manual(values = qual_col_vector[1:length(unique(gdp$`Country Name`))], guide = guide_legend(title = NULL)) +
+  labs(y = "GDP (current USD)") +
+  theme(legend.key = element_rect(fill = "transparent"))
+```
+
+## GDP growth
+
+```{r, cache = T}
+download.file("https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.KD.ZG?downloadformat=csv", destfile = "gdp_growth.zip", mode = "wb")
+
+gdp_growth_csv = unzip("gdp_growth.zip", list = T) %>% pull(Name) %>% str_subset("^(?!Metadata)")
+
+unzip("gdp_growth.zip", files = gdp_growth_csv, overwrite = T, exdir = "gdp_growth")
+
+gdp_growth = read_csv(file.path("gdp_growth", gdp_growth_csv), skip = 4, col_names = T)
+
+gdp_growth %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russian Federation" = "Russia",
+                                                                          "Korea, Rep." = "South Korea",
+                                                                          "Korea, Dem. People's Rep." = "North Korea"))) %>%
+  select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>% 
+  pivot_longer(-`Country Name`, names_to = "Year", values_to = "GDP growth") %>%
+  mutate(`GDP growth` = `GDP growth`/100, Year = as.numeric(Year)) %>%
+  filter(!is.na(`GDP growth`) & Year >= as.numeric(format(as.Date(thirtyyearsago), "%Y")) & `Country Name` %in% country_ranking) %>%
+  mutate(`Country Name` = factor(`Country Name`, levels = country_ranking))
+```
+
+```{r, fig.width = 7, fig.height = 4, fig.cap = str_c("Annual GDP growth over the last 30 years of ", length(unique(gdp_growth$`Country Name`)), " major countries")}
+gdp_growth %>% 
+  ggplot(mapping = aes(x = Year, y = `GDP growth`)) +
+  geom_line(mapping = aes(color = `Country Name`)) +
+  scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
+  scale_y_continuous(labels = percent) +
+  scale_color_manual(values = qual_col_vector[1:length(unique(gdp_growth$`Country Name`))], guide = guide_legend(title = NULL)) +
+  labs(y = "Annual GDP growth") +
+  theme(legend.key = element_rect(fill = "transparent"))
+```
+
+## Inflation
+
+```{r, cache = T}
+download.file("https://api.worldbank.org/v2/en/indicator/FP.CPI.TOTL.ZG?downloadformat=csv", destfile = "inflation.zip", mode = "wb")
+
+inflation_csv = unzip("inflation.zip", list = T) %>% pull(Name) %>% str_subset("^(?!Metadata)")
+
+unzip("inflation.zip", files = inflation_csv, overwrite = T, exdir = "inflation")
+
+inflation = read_csv(file.path("inflation", inflation_csv), skip = 4, col_names = T)
+
+inflation %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russian Federation" = "Russia",
+                                                                          "Korea, Rep." = "South Korea",
+                                                                          "Korea, Dem. People's Rep." = "North Korea"))) %>%
+  select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>% 
+  pivot_longer(-`Country Name`, names_to = "Year", values_to = "Inflation") %>%
+  mutate(Inflation = Inflation/100, Year = as.numeric(Year)) %>%
+  filter(!is.na(Inflation) & Year >= as.numeric(format(as.Date(thirtyyearsago), "%Y")) & `Country Name` %in% country_ranking) %>%
+  mutate(`Country Name` = factor(`Country Name`, levels = country_ranking))
+
+```
+
+```{r, fig.width = 7, fig.height = 4, fig.cap = str_c("Annual inflation over the last 30 years of ", length(unique(inflation$`Country Name`)), " major countries")}
+inflation %>% 
+  ggplot(mapping = aes(x = Year, y = Inflation)) +
+  geom_line(mapping = aes(color = `Country Name`)) +
+  scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
+  scale_y_continuous(labels = percent) +
+  scale_color_manual(values = qual_col_vector[1:length(unique(inflation$`Country Name`))], guide = guide_legend(title = NULL)) +
+  labs(y = "Annual inflation") +
+  theme(legend.key = element_rect(fill = "transparent"))
+```
+
+## OECD Composite Leading Indicators
+
+```{r, cache = T}
+US = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "USALORSGPNOSTSAM", "&cosd=", threeyearsago, "&coed=", today,
+                              "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", threeyearsago), col_names = T)
+
+China = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "CHNLORSGPNOSTSAM", "&cosd=", threeyearsago, "&coed=", today,
+                              "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", threeyearsago), col_names = T)
+
+Euro = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "EA19LORSGPNOSTSAM", "&cosd=", threeyearsago, "&coed=", today,
+                              "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", threeyearsago), col_names = T)
+
+Korea = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "KORLOLITONOSTSAM", "&cosd=", threeyearsago, "&coed=", today,
+                              "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", threeyearsago), col_names = T)
+
+CLI = list(US, China, Euro, Korea) %>%
+  reduce(full_join) %>%
+  mutate(across(-DATE, as.numeric)) %>%
+  arrange(DATE)
+
+relabelCLI = function(symbol) c(USALORSGPNOSTSAM = "US", 
+                                CHNLORSGPNOSTSAM = "China", 
+                                EA19LORSGPNOSTSAM = "Euro", 
+                                KORLOLITONOSTSAM = "Korea")[symbol]
+```
+
+```{r, fig.width = 7, fig.height = 4, fig.cap = "OECD Composite Leading Indicators (CLIs) normalized for US, China, Euro, and South Korea"}
+CLI %>% 
+  pivot_longer(-DATE, names_to = "Region", values_to = "CLI") %>% 
+  mutate(Region = relabelCLI(Region) %>% factor(levels = c("US", "China", "Euro", "Korea"))) %>%
+  ggplot(mapping = aes(x = DATE, y = CLI - 100)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_area(mapping = aes(fill = Region), alpha = 0.3, position = "identity") +
+  geom_line(mapping = aes(color = Region)) +
+  scale_x_date(expand = c(0, 0)) +
+  scale_y_continuous(labels = function(x) x + 100) +
+  scale_color_brewer(type = "qual", palette = 6, guide = guide_legend(title = NULL)) +
+  scale_fill_brewer(type = "qual", palette = 6, guide = guide_legend(title = NULL)) +
+  labs(x = "Recent 3 years", y = "CLI")
+```
+
+[What are OECD CLIs?](https://www.oecd.org/sdd/compositeleadingindicatorsclifrequentlyaskedquestionsfaqs.htm)
+
+The OECD system of Composite Leading Indicators (CLIs) is designed to provide early signals of turning points in business cycles - fluctuation in the output gap, i.e. fluctuation of the economic activity around its long term potential level. This approach, focusing on turning points (peaks and troughs), results in CLIs that provide qualitative rather than quantitative information on short-term economic movements.
+
+The phases and patterns in CLIs are likely to be followed by the business cycle. The chart below presents the CLI and the estimated business cycle for the OECD area. The two series show strong co-movements, with the turning points of the CLI consistently preceding those of the business cycle; lead time varies, but 6 - 9 months is at what the OECD aims.\
+\
+![](https://www.oecd.org/media/oecdorg/directorates/statisticsdirectorate/50067091FAQ1.png)
+
+\- *[OECD](https://www.oecd.org/)*
+
+[Do OECD CLIs predict the future movement of stock markets?](https://finance.yahoo.com/news/does-mean-stock-market-leading-205002941.html?soc_src=social-sh&soc_trk=ma)
+
+The stock market is what’s known as a leading economic indicator. A leading economic indicator is a measure of economic recovery that shows improvement before the actual economy does.
+
+Stock prices are forward-looking in the sense that investors buy and sell stocks not based on what happened yesterday or what is happening today, but rather based on their expectations for the future. For example, a company may report impressive EPS and revenue numbers in a given quarter. But if they also cut revenue and EPS growth projections for the next several quarters at the same time, the stock will most certainly sell off.
+
+An individual stock is priced in large part based on investors’ expectations of what is coming in the next several months and quarters. Collectively, the S&P 500 is priced in a similar fashion.
+
+\- *Wayne Duggan @ [Benzinga.com](https://www.benzinga.com/)*
