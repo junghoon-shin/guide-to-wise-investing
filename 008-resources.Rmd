@@ -1,4 +1,4 @@
-# Resources
+# Resources {-}
 
 - [Google Finance](https://www.google.com/finance)
 - [Yahoo Finance](https://finance.yahoo.com/)
@@ -6,6 +6,7 @@
 - [World Bank](https://www.worldbank.org/)
 - [OECD](https://www.oecd.org/)
 - [Gurufocus](https://www.gurufocus.com/new_index/)
+- [Investopedia](https://www.investopedia.com/)
 - [Industry sector classification](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html)
 - [Adjusted Graham formula](https://www.oldschoolvalue.com/stock-valuation/benjamin-graham-formula/)
 - [Discounted cash flow](https://www.investopedia.com/terms/d/dcf.asp)

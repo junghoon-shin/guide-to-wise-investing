@@ -81,4 +81,3 @@ oecd-composite-leading-indicators
 asset-growth-simulation
 investment-scenario
 simulation
-resources

@@ -1,4 +1,4 @@
-# (PART) Part III {-} 
+# (PART) Part III {-}
 
 # Asset growth simulation
 
