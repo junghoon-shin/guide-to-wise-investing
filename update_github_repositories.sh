@@ -12,6 +12,7 @@ github_pages_repository_directory="$current_directory"/../junghoon-shin.github.i
 
 rm -rf "$github_pages_repository_directory"/docs/*
 cp -r "$current_directory"/_book/* "$github_pages_repository_directory"/docs
+touch "$github_pages_repository_directory"/docs/.nojekyll
 
 cd "$github_pages_repository_directory"
 
