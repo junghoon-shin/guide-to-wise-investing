@@ -2,7 +2,7 @@
 
 # Buffett's wisdom^[The quotes are picked from https://www.fool.com/investing/best-warren-buffett-quotes.aspx and reorganized.] {#buffett}
 
-![Warren Buffet, CEO of Berkshire Hathaway](`r file.path("images", "Warren.jpg")`){width=240px}
+![Warren Buffet, CEO of Berkshire Hathaway](images/Warren.jpg){width=240px}
 
 ## Rule No. 1
 
