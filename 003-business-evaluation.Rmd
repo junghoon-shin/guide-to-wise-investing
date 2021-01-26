@@ -40,11 +40,11 @@ my_datatable = function(tbl, scrollY) {
                                fixedColumns = T,
                                autoWidth = T,
                                initComplete = JS("function(settings, json) {", 
-                                                 "$(this.api().table().header()).css({'font-family': 'Arial', 'font-size': '13px'});",
+                                                 "$(this.api().table().header()).css({'font-family': 'Arial', 'font-size': '14px'});",
                                                  "}")),
                 extensions = "FixedColumns",
               rownames = F) %>%
-    formatStyle(columns = 1:ncol(tbl), fontFamily = "Arial", fontSize = "13px")
+    formatStyle(columns = 1:ncol(tbl), fontFamily = "Arial", fontSize = "14px")
 }
 ```
 
@@ -213,7 +213,7 @@ company_display = company %>%
 my_datatable(company_display, unit(700, "lines"))
 ```
 \
- <font style = "font-size: 0.9em">
+ <font style = "font-size: 14px">
  Adjusted Graham formula: as defined [here](https://www.oldschoolvalue.com/stock-valuation/benjamin-graham-formula/)\
 BVPS: book value per share\
 DCF10: discounted cash flow in 10 years as defined [here](https://www.investopedia.com/terms/d/dcf.asp)\
