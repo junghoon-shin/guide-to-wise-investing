@@ -8,8 +8,9 @@ git add --all
 git commit -m "Regular update"
 git push -u origin master
 
-github_pages_repository_directory="$current_directory"/../junghoon-shin.github.io/
+github_pages_repository_directory="$current_directory"/../junghoon-shin.github.io
 
+rm -rf "$github_pages_repository_directory"/docs/*
 cp -r "$current_directory"/_book/* "$github_pages_repository_directory"/docs
 
 cd "$github_pages_repository_directory"
