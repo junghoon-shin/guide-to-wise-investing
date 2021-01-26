@@ -40,11 +40,11 @@ my_datatable = function(tbl, scrollY) {
                                fixedColumns = T,
                                autoWidth = T,
                                initComplete = JS("function(settings, json) {", 
-                                                 "$(this.api().table().header()).css({'font-family': 'Arial', 'font-size': '12px'});",
+                                                 "$(this.api().table().header()).css({'font-family': 'Arial', 'font-size': '13px'});",
                                                  "}")),
                 extensions = "FixedColumns",
               rownames = F) %>%
-    formatStyle(columns = 1:ncol(tbl), fontFamily = "Arial", fontSize = "12px")
+    formatStyle(columns = 1:ncol(tbl), fontFamily = "Arial", fontSize = "13px")
 }
 ```
 
