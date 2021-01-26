@@ -5,6 +5,7 @@ date: "`r paste(Sys.time(), 'KST')`"
 site: bookdown::bookdown_site
 documentclass: book
 bibliography: [book.bib, packages.bib]
+csl: apa-with-abstract.csl
 biblio-style: apalike
 link-citations: yes
 url: 'https\://junghoon-shin.github.io/'
@@ -13,23 +14,23 @@ cover-image: "images/Warren.jpg"
 description: "This is a personal investing guide based on the analysis of company financials, industry and market status, and global economy."
 ---
 
-# About the author {-}
+# About the author {#author .unnumbered}
 
-Junghoon Shin is a Korean doctor, cancer scientist, and statistical programmer. He earned his MD and MSc from the [Seoul National University College of Medicine](https://medicine.snu.ac.kr/) and is now a PhD student at the Graduate School of Medical Science and Engineering, [Korea Advanced Institute of Science and Technology](https://www.kaist.ac.kr/en/). His research is primarily focused on the transcriptome dysregulation patterns observed in cancer cells, which have a key role in the cancer development process. Before coming to KAIST, He received the residency training at the Department of Internal Medicine, [Seoul National University Hospital](http://www.snuh.org/global/en/main.do) and earned his medical board certification in 2018. Recently he has had a particular interest in statistical computing, data visualization, and obviously, investment. He spends most of his out-of-work time digging out early-stage companies that have a great mission, strength, and fine management.\
+Junghoon Shin is a Korean doctor, cancer scientist, and statistical programmer. He earned his MD and MSc from the [Seoul National University College of Medicine](https://medicine.snu.ac.kr/) and is now a PhD student at the Graduate School of Medical Science and Engineering, [Korea Advanced Institute of Science and Technology](https://www.kaist.ac.kr/en/). His research is primarily focused on the transcriptome dysregulation patterns observed in cancer cells, which have a key role in the cancer development process. Before coming to KAIST, he received the residency training at the Department of Internal Medicine, [Seoul National University Hospital](http://www.snuh.org/global/en/main.do) and earned his medical board certification in 2018. Recently he has had a particular interest in machine learning, data visualization, and obviously, investment. He spends most of his out-of-work time digging out early-stage companies that have a great mission, strength, and fine management.\
 \
 
 **Contact the author**\
 junghoonshin@kaist.ac.kr\
 https://github.com/junghoon-shin
 
-# Preface {-}
+# Preface {#preface .unnumbered}
 
-This project was initially aimed to serve as the author's personal resource of financial data for guiding unbiased and premeditated investing decision. As the project went along, it has gradually progressed into a more public reference for the author's close friends who seek a financial data resource which is not too extensive but yet helpful and easy-to-get. This project has been hugely inspired by @town2018 and @graham2003.\
+This project initially aimed to serve as the author's personal resource of financial data for guiding unbiased and premeditated investing decision. As the project went along, it has gradually progressed into a more public reference for the author's close friends who are interested in investing and seek a financial data resource which is not [exhausting](https://www.sec.gov/ix?doc=/Archives/edgar/data/320193/000032019320000096/aapl-20200926.htm) but tidy and easy-to-get. This project has been hugely inspired by [Warren Buffett](https://www.berkshirehathaway.com/letters/letters.html), @town2018, and @graham2003. This is a publicly accessible project still in its infant stage, and the author is always open to suggestions from whoever hopes to make it better. Always feel free to [contact](#author), or even better make a [pull request](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests)!\
 \
 
 ![](images/CC-BY-NC-SA-4.0.png){width=120px}
 
-The contents of this project is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+This project is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)](https://creativecommons.org/licenses/by-nc-sa/4.0/).
 
 ```{r, include = F}
 library(pacman)
@@ -53,7 +54,7 @@ p_load(bookdown,
        tidyverse,
        XML)
 
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, out.width = "100%", cache = T)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, out.width = "100%")
 
 theme_update(plot.title = element_text(hjust = 0.5, vjust = 0.5))
 ```

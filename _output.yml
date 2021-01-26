@@ -1,21 +1,22 @@
 bookdown::gitbook:
+  number_sections: true
   css: style.css
+  highlight: tango
+  includes:
+    in_header: google_analytics.html
   config:
     toc:
       before: |
         <li><a href="./">Guide for Wise Investing</a></li>
       after: |
         <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
-    download: no
-  highlight: tango
-  fontsettings:
-    theme: sepia
-    family: sans
-  edit: yes
-  info: yes
-  sharing:
-    facebook: yes
-    twitter: yes
-    linkedin: yes
-  includes:
-    in_header: google_analytics.html
+    search: yes
+    fontsettings:
+      theme: white
+      family: sans
+    download: null
+    info: yes
+    sharing:
+      facebook: yes
+      twitter: yes
+      linkedin: yes

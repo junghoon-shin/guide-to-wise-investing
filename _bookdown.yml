@@ -1,5 +1,9 @@
 book_filename: "guide-for-wise-investing"
 delete_merged_file: true
+edit: https://github.com/junghoon-shin/guide-for-wise-investing/edit/master/%s
+view: https://github.com/junghoon-shin/guide-for-wise-investing/blob/master/%s
+clean: ["_bookdown_files"]
 language:
   ui:
     chapter_name: "Chapter "
+    appendix_name: "Appendix "
