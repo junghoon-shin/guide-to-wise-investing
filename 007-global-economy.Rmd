@@ -1,4 +1,4 @@
-# Global economy^[Data are from [World Bank](https://www.worldbank.org/) and [OECD](https://www.oecd.org/).]
+# Global economy^[Data are from [World Bank](https://www.worldbank.org/) and [OECD](https://www.oecd.org/).] {#global-economy}
 
 ## GDP
 

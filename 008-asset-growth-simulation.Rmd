@@ -1,6 +1,6 @@
 # (PART) Part III {-}
 
-# Asset growth simulation
+# Asset growth simulation {#simulation}
 
 ## Investment scenario
 

@@ -11,6 +11,8 @@ bookdown::gitbook:
   fontsettings:
     theme: sepia
     family: sans
+  edit: yes
+  info: yes
   sharing:
     facebook: yes
     twitter: yes

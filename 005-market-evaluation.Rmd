@@ -1,4 +1,4 @@
-# Market evaluation^[Source data and details can be found at [Gurufocus.com](https://www.gurufocus.com/global-market-valuation.php).]
+# Market evaluation^[Source data and details can be found at [Gurufocus.com](https://www.gurufocus.com/global-market-valuation.php).] {#market}
 
 ## GDP and Buffett indicator
 

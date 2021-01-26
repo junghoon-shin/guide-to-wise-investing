@@ -2,7 +2,7 @@
 
 # Business evaluation {#business}
 
-## Comprehensive financials^[Data are from [Google Finance](https://www.google.com/finance) and [Yahoo Finance](https://finance.yahoo.com/).]
+## Comprehensive financials^[Data are automatically retrieved from [Google Finance](https://www.google.com/finance) and [Yahoo Finance](https://finance.yahoo.com/).]
 
 ```{r}
 qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
