@@ -1,6 +1,6 @@
 base
-bookdown
 pacman
+bookdown
 ComplexHeatmap
 cowplot
 DT

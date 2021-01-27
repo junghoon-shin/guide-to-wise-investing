@@ -1,0 +1,524 @@
+# (PART) Part II {-}
+
+# Business evaluation {#business}
+
+## Comprehensive financials^[Data are automatically retrieved from [Google Finance](https://www.google.com/finance) and [Yahoo Finance](https://finance.yahoo.com/).]
+
+```{r}
+qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+qual_col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals))) %>% unique
+
+confident_return = 0.05
+target_return = 0.2
+per_no_growth = 7
+
+today = Sys.Date() %>% as.character %>% str_replace(" ", "")
+monthago = (Sys.Date() - 30) %>% as.character %>% str_replace(" ", "")
+threeyearsago = (Sys.Date() - 365 * 3) %>% as.character %>% str_replace(" ", "")
+twentyyearsago = (Sys.Date() - 365 * 20) %>% as.character %>% str_replace(" ", "")
+thirtyyearsago = (Sys.Date() - 365 * 30) %>% as.character %>% str_replace(" ", "")
+thisyear = today %>% str_extract("^[0-9]+") %>% as.numeric
+
+AAA_return = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "DAAA", "&cosd=", monthago, "&coed=", today,
+                            "&fq=Daily&fam=avg&vintage_date=", today, "&revision_date=", today, "&nd=", monthago), col_names = T) %>% 
+  mutate(DAAA = as.numeric(DAAA)) %>%
+  filter(!is.na(DAAA)) %>%
+  pull(DAAA) %>%
+  .[length(.)]
+```
+
+```{r}
+drive_auth("freeustand@gmail.com", scopes = "https://www.googleapis.com/auth/drive")
+gs4_auth(token = drive_token(), scopes = "https://www.googleapis.com/auth/drive")
+
+company = drive_get("Investment/Valuation") %>% read_sheet(sheet = "Company") %>%
+  mutate(Yahoo = Ticker %>% 
+           str_replace("^(.+):(.+)$", "\\2.\\1") %>% 
+           str_replace_all(c("\\.KRX" = ".KS",
+                             "\\.KOSDAQ" = ".KQ",
+                             "\\.NYSE" = "",
+                             "\\.NASDAQ" = "",
+                             "\\.EPA" = ".PA",
+                             "\\.TPE" = ".TW"))) %>%
+  relocate(Yahoo, .after = Ticker)
+
+plan(multisession)
+
+yahoo_data = future_map_dfr(company$Yahoo, ~{
+  ticker = .
+    
+  tryCatch({
+    Profile = read_html(file.path("https://finance.yahoo.com/quote" , ticker, "profile"), which = 1, header = T)
+    Summary = read_html(file.path("https://finance.yahoo.com/quote", ticker), header = F) %>% bind_rows
+    Statistics = read_html(file.path("https://finance.yahoo.com/quote", ticker, "key-statistics"), header = F) %>% map_dfr(~select(., 1:2))
+    Statistics$V1 %<>% str_replace(" [0-9]$", "")
+    Revenue = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 2, header = F)
+    Growth = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 6, header = T)
+    
+    tibble(Yahoo = ticker,
+           CEO = Profile %>% slice(1) %>% pull(Name),
+           CEO_title = Profile %>% slice(1) %>% pull(Title),
+           CEO_pay = Profile %>% slice(1) %>% pull(Pay),
+           CEO_age = thisyear - (Profile %>% slice(1) %>% pull(`Year Born`) %>% as.numeric),
+           Beta = Summary %>% filter(V1 == "Beta (5Y Monthly)") %>% pull(V2),
+           Target = Summary %>% filter(V1 == "1y Target Est") %>% pull(V2),
+           Profit_margin = Statistics %>% filter(V1 == "Profit Margin") %>% pull(V2),
+           ROA = Statistics %>% filter(V1 == "Return on Assets (ttm)") %>% pull(V2),
+           ROE = Statistics %>% filter(V1 == "Return on Equity (ttm)") %>% pull(V2),
+           Revenue_per_share = Statistics %>% filter(V1 == "Revenue Per Share (ttm)") %>% pull(V2),
+           Quarterly_revenue_growth = Statistics %>% filter(V1 == "Quarterly Revenue Growth (yoy)") %>% pull(V2),
+           Diluted_EPS = Statistics %>% filter(V1 == "Diluted EPS (ttm)") %>% pull(V2),
+           Quarterly_earnings_growth = Statistics %>% filter(V1 == "Quarterly Earnings Growth (yoy)") %>% pull(V2),
+           DER = Statistics %>% filter(V1 == "Total Debt/Equity (mrq)") %>% pull(V2),
+           BVPS = Statistics %>% filter(V1 == "Book Value Per Share (mrq)") %>% pull(V2),
+           Operating_cash_flow = Statistics %>% filter(V1 == "Operating Cash Flow (ttm)") %>% pull(V2),
+           Levered_free_cash_flow = Statistics %>% filter(V1 == "Levered Free Cash Flow (ttm)") %>% pull(V2),
+           Forward_annual_dividend_yield = Statistics %>% filter(V1 == "Forward Annual Dividend Yield") %>% pull(V2),
+           Trailing_annual_dividend_yield = Statistics %>% filter(V1 == "Trailing Annual Dividend Yield") %>% pull(V2),
+           Average_dividend_yield_5yrs = Statistics %>% filter(V1 == "5 Year Average Dividend Yield") %>% pull(V2),
+           Payout_ratio = Statistics %>% filter(V1 == "Payout Ratio") %>% pull(V2),
+           Revenue_growth_estimate_current = Revenue %>% filter(V1 == "Sales Growth (year/est)") %>% pull(V4),
+           Revenue_growth_estimate_next = Revenue %>% filter(V1 == "Sales Growth (year/est)") %>% pull(V5),
+           Earnings_growth_past_5yrs = Growth %>% filter(`Growth Estimates` == "Past 5 Years (per annum)") %>% pull(ticker),
+           Earnings_growth_estimate_next_5yrs = Growth %>% filter(`Growth Estimates` == "Next 5 Years (per annum)") %>% pull(ticker))
+  },
+  error = function(cond) {
+    message(str_c("Error: ", ticker))
+    message(cond)
+    return(NULL)
+  })
+})
+
+plan("default")
+
+company %<>% left_join(yahoo_data)
+
+company %<>% 
+  replace(. == "N/A", NA) %>%
+  mutate(across(c(Beta, 
+                  Target, 
+                  Revenue_per_share,
+                  Diluted_EPS, 
+                  BVPS), 
+                ~as.numeric(str_replace(., ",", "")))) %>%
+  mutate(across(c(DER, 
+                  Average_dividend_yield_5yrs), 
+                ~as.numeric(.)/100)) %>%
+  mutate(across(c(Profit_margin, 
+                  ROA,
+                  ROE, 
+                  Quarterly_revenue_growth, 
+                  Quarterly_earnings_growth, 
+                  Forward_annual_dividend_yield, 
+                  Trailing_annual_dividend_yield,
+                  Payout_ratio, 
+                  Revenue_growth_estimate_current, 
+                  Revenue_growth_estimate_next, 
+                  Earnings_growth_past_5yrs, 
+                  Earnings_growth_estimate_next_5yrs), 
+                ~as.numeric(str_replace(., "%", ""))/100)) %>%
+  mutate(across(c(Operating_cash_flow, Levered_free_cash_flow),
+                ~case_when(str_detect(., "M$") ~ str_replace(., "M", "") %>% as.numeric %>% multiply_by(10e6),
+                           str_detect(., "B$") ~ str_replace(., "B", "") %>% as.numeric %>% multiply_by(10e9),
+                           str_detect(., "T$") ~ str_replace(., "T", "") %>% as.numeric %>% multiply_by(10e12))))
+
+company %<>% 
+  rowwise %>%
+  mutate(PSR = Price / Revenue_per_share,
+         PBR = Price / BVPS,
+         Retention_ratio = 1 - Payout_ratio,
+         Sustainable_growth_rate = ROE * Retention_ratio,
+         Expected_EPS_growth_rate = Earnings_growth_estimate_next_5yrs,
+         Expected_payout_ratio_change_rate = 0,
+         Expected_dividend_growth_rate = Expected_EPS_growth_rate * (1 + Expected_payout_ratio_change_rate),
+         Expected_PE_in_10yrs = `Industry PER`,
+         Estimated_price_in_10yrs = EPS * (1 + Expected_EPS_growth_rate)^10 * Expected_PE_in_10yrs,
+         Reinvested_dividend_in_10yrs = sum(EPS * Payout_ratio * (1 + Expected_dividend_growth_rate)^(1:10) * (1 + confident_return)^(10 - 1:10)),
+         Expected_price_in_10yrs = Estimated_price_in_10yrs + Reinvested_dividend_in_10yrs,
+         DCF10 = Expected_price_in_10yrs / (1 + target_return)^10,
+         Adjusted_Graham_formula = EPS * (per_no_growth + 100 * Earnings_growth_estimate_next_5yrs) * 4.4 / AAA_return,
+         `Price/Target` = Price/Target,
+         PEG = PER/(100 * Earnings_growth_estimate_next_5yrs),
+         `Price/DCF10` = Price / DCF10,
+         `Price/Graham` = Price / Adjusted_Graham_formula,
+         `Relative_price` = exp(mean(log(c(`Price/Target`, PEG, `Price/DCF10`, `Price/Graham`) %>% sort %>% .[2:3])))) %>%
+  rowwise %>%
+  mutate(Decision = case_when(BVPS < 0 ~ "Negative equity",
+                              DER > 2.5 ~ "High debt-to-equity ratio",
+                              EPS <= 0 ~ "Zero or negative earnings",
+                              Earnings_growth_estimate_next_5yrs <= 0 ~ "Zero or negative growth",
+                              ROE < 0.05 ~ "ROE < 5%",
+                              Relative_price < 1 ~ "Buy",
+                              sum(`Price/Target` < 1, PEG < 1, `Price/DCF10` < 1, `Price/Graham` < 1) > 1 ~ "Maybe buy",
+                              T ~ "Wait")) %>%
+  ungroup %>%
+  mutate(Changepct = str_c(round(Changepct, 2), "%")) %>%
+  relocate(CEO, CEO_title, CEO_pay, CEO_age, .after = `Broad group`) %>%
+  relocate(EPS, Diluted_EPS, BVPS,
+           Revenue_growth_estimate_current, Revenue_growth_estimate_next, Earnings_growth_estimate_next_5yrs,
+           Operating_cash_flow, Levered_free_cash_flow,
+           Profit_margin,
+           DER, ROA, ROE, PER, `Industry PER`, PSR, PBR, .before = `Price/Target`) %>%
+  relocate(Retention_ratio, .after = Payout_ratio)
+
+company_plot = company
+
+company %<>% 
+  arrange(Industry, Name) %>%
+  rename(`Debt-to-equity ratio` = DER,
+         `5yrs average dividend yield` = Average_dividend_yield_5yrs,
+         `Revenue growth estimate (current year)` = Revenue_growth_estimate_current,
+         `Revenue growth estimate (next year)` = Revenue_growth_estimate_next,
+         `Earnings growth (past 5yrs)` = Earnings_growth_past_5yrs,
+         `Earnings growth estimate (next 5yrs)` = Earnings_growth_estimate_next_5yrs)
+
+names(company) %<>% str_replace_all(., "_", " ")
+```
+
+```{r}
+company %>% write_sheet(ss = drive_get("Investment/Valuation"), sheet = "Valuation")
+```
+
+```{r watchlist, fig.cap = "Comprehensive financial data of my watchlist"}
+make_readable = function(x) case_when(abs(x) >= 1e12 ~ str_c(round(x/1e12, 1), "T"),
+                                      abs(x) >= 1e9 ~ str_c(round(x/1e9, 1), "B"),
+                                      abs(x) >= 1e6 ~ str_c(round(x/1e6, 1), "M"),
+                                      T ~ as.character(round(x, 1)))
+
+company_display = company %>% 
+  select(-c(Ticker, Yahoo, Ticker3)) %>%
+  mutate(across(c(Marketcap, `Operating cash flow`, `Levered free cash flow`), make_readable)) %>%
+  mutate(across(c(`Profit margin`, ROA, ROE, `Debt-to-equity ratio`, `Payout ratio`, `Retention ratio`, contains(c("growth", "yield"))), percent)) %>% 
+  mutate(across(c(Price:Closeyest,
+                  Low52:`Revenue per share`, 
+                  `Expected payout ratio change rate`,
+                  `Expected PE in 10yrs`:BVPS,
+                  PER:`Relative price`), 
+                ~round(., 2) %>% format(scientific = F, big.mark = ","))) %>%
+  relocate(Name)
+
+my_datatable(company_display, paging = T, scrollY = NULL)
+```
+
+Adjusted Graham formula: as defined [here](https://www.oldschoolvalue.com/stock-valuation/benjamin-graham-formula/)\
+BVPS: book value per share\
+DCF10: discounted cash flow in 10 years as defined [here](https://www.investopedia.com/terms/d/dcf.asp)\
+EPS: earnings per share\
+High52: 52-week high price\
+Industry PER: data from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html)\
+Low52: 52-week low price\
+PBR: price/book value ratio\
+PEG: price/earnings-to-growth ratio\
+PER: price/earnings ratio\
+PSR: price/sales ratio\
+ROA: return on asset\
+ROE: return on equity\
+Sustainable growth rate: ROE $\times$ retention ratio
+
+## Key financials
+
+```{r}
+company_plot %<>% 
+  mutate(`Earnings-to-price` = 1/PER,
+         `Book-to-price` = 1/PBR,
+         `Sales-to-price` = 1/PSR) %>%
+  arrange(desc(Industry), !is.na(`Earnings-to-price`), `Earnings-to-price`, !is.na(`Sales-to-price`), `Sales-to-price`, !is.na(`Book-to-price`), `Book-to-price`) %>%
+  mutate(Name = factor(Name, levels = Name))
+
+f1 = company_plot %>%
+  ggplot(mapping = aes(x = Name, y = 0)) + 
+  geom_col(mapping = aes(fill = Industry), color = "transparent") +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 0)) +
+  scale_fill_manual(limits = unique(company_plot$Industry), 
+                    values = qual_col_vector[length(unique(company$Industry)):1], 
+                    guide = guide_legend(title = NULL, ncol = 3, reverse = T)) +
+  coord_flip() +
+  labs(x = NULL, y = NULL) +
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank(), 
+        legend.position = "bottom", legend.key.size = unit(1, "lines"),
+        panel.background = element_rect(fill = "transparent"), 
+        plot.margin = unit(c(5.5, 0, 5.5, 1), "points"))
+
+financial_plot = function(financials, variable, title = NULL, labels = NULL) {
+  if (is.null(title)) title = enquo(variable)
+  if (is.null(labels)) labels = waiver()
+  
+  variable = enquo(variable)
+  
+  financials %>%
+    ggplot(mapping = aes(x = Name, y = !!variable)) + 
+    geom_col(mapping = aes(fill = Industry), color = "black", width = 0.7) +
+    scale_y_continuous(expand = c(0.05, 0), breaks = pretty_breaks(3), labels = labels) +
+    scale_fill_manual(limits = unique(financials$Industry), values = qual_col_vector[length(unique(financials$Industry)):1], guide = F) +
+    coord_flip() +
+    labs(x = NULL, y = title) +
+    theme(axis.ticks.y = element_blank(), axis.ticks.length.y = unit(0, "npc"), axis.text.y = element_blank(), plot.margin = unit(c(5.5, 5.5, 5.5, 0), "points"))
+}
+
+f2 = financial_plot(company_plot, `Earnings-to-price`, "Earnings/Price")
+f3 = financial_plot(company_plot, `Sales-to-price`, "Sales/Price")
+f4 = financial_plot(company_plot, `Book-to-price`, "Book/Price")
+f5 = financial_plot(company_plot, ROE, "Return on equity")
+f6 = financial_plot(company_plot, ROA, "Return on asset")
+f7 = financial_plot(company_plot, DER, "Debt/Equity")
+f8 = financial_plot(company_plot, Quarterly_earnings_growth, "Quarterly earnings growth (yoy)", percent)
+f9 = financial_plot(company_plot, Quarterly_revenue_growth, "Quarterly revenue growth (yoy)", percent)
+```
+
+```{r financials-figure, fig.width = 7, fig.height = nrow(company_plot)/1.4, fig.cap = "Key financials of my watchlist"}
+ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align = "h", widths = c(1.55, 1, 1, 1)), 
+          ggarrange(f1 + guides(fill = F), f5, f6, f7, nrow = 1, ncol = 4, align = "h", widths = c(1.55, 1, 1, 1)),
+          ggarrange(f1 + guides(fill = F), f8, f9, nrow = 1, ncol = 3, align = "h", widths = c(1.55, 1.5, 1.5)),
+          get_legend(f1), 
+          nrow = 4, ncol = 1, 
+          heights = c(6, 6, 6, 1))
+```
+
+## Investing decision^[The value of a company in its early stage of development with zero or negative earnings cannot be determined based on its financials, but rather should be based on the subject matter knowledge about its mission, technologies, management and culture, as well as the industry overall.]
+
+```{r, fig.width = 7, fig.height = nrow(company)/4, fig.cap = "Investing decision made by a fundamental analysis-based algorithm for listed companies"}
+company_decision = company %>% 
+  mutate(Decision = factor(Decision, levels = c("Buy",
+                                                "Maybe buy",
+                                                "Wait", 
+                                                "ROE < 5%",
+                                                "Zero or negative earnings", 
+                                                "Zero or negative growth", 
+                                                "High debt-to-equity ratio", 
+                                                "Negative equity"))) %>%
+  ggplot(mapping = aes(x = Name, y = Decision)) +
+  geom_point(mapping = aes(fill = Decision), shape = 21, size = 3, stroke = 1) +
+  scale_x_discrete(limits = sort(company$Name, decreasing = T)) +
+  scale_fill_brewer(type = "qual", palette = 1) +
+  coord_flip() +
+  labs(x = NULL) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.key = element_rect(fill = "transparent"))
+
+company_decision
+```
+
+```{r}
+nona = function(x) ifelse(sum(!is.na(x)) > 0, x[!is.na(x)], NA)
+yahoo_to_name = function(Yahoo) company$Name[match(Yahoo, company$Yahoo)]
+
+plan(multisession)
+
+company_close = company$Yahoo %>% future_map(~{
+  read_html(file.path("https://finance.yahoo.com/quote", .x, "history"), which = 1, header = T) %>% select(Date, `Close*`)
+})
+
+plan("default")
+
+company_close %<>% 
+  setNames(company$Yahoo) %>% 
+  imap_dfr(~mutate(.x, Yahoo = .y)) %>% 
+  rename(Close = "Close*") %>% 
+  mutate(Event = Close %>% 
+           str_extract("^.+[a-zA-Z].+$") %>% 
+           str_replace("Stock Split", " stock split") %>% 
+           str_replace("Dividend", " dividend") %>%
+           str_replace(",", ""))
+
+company_close$Date %<>%
+  str_match("([^ ,]+) ([^ ,]+), ([^ ,]+)") %>% 
+  .[, -1] %>% 
+  as_tibble %>% 
+  setNames(c("m", "d", "y")) %>% 
+  mutate(m = match(m, month.abb), date = str_c(y, m, d, sep = "-")) %>% 
+  pull(date) %>% 
+  as.Date
+
+company_close %<>%
+  group_by(Date, Yahoo) %>%
+  summarise(Close = nona(as.numeric(str_replace(Close, ",", ""))), Event = nona(Event)) %>%
+  ungroup %>%
+  filter(!is.na(Close)) %>%
+  arrange(Yahoo, Date) %>%
+  left_join(company %>% select(Yahoo, Name, Industry))
+
+company_with_sufficient_data = company_close %>% count(Name) %>% filter(n > 10) %>% pull(Name)
+
+company_close %<>% 
+  filter(Name %in% company_with_sufficient_data) %>%
+  mutate(Name = str_replace_all(Name, c("Taiwan Semiconductor Mfg. Co. Ltd." = "TSMC")))
+
+base_date = company_close %>% count(Date) %>% filter(n == length(company_with_sufficient_data)) %>% pull(Date) %>% min
+
+get_legend_nrow = function(close, industry) {
+  max(round((close %>% filter(Industry == industry) %>% pull(Name) %>% unique %>% length)/3), 1)
+}
+
+get_legend_nrow = Vectorize(get_legend_nrow, "industry")
+
+close_trend = function(close, industry) {
+  tmp = close %>% 
+    filter(Industry == industry) %>%
+    group_by(Name) %>%
+    mutate(Close = Close / Close[Date == base_date] * 100) %>%
+    ungroup
+  
+  ncompany = length(unique(tmp$Name))
+  legend_nrow = max(round(ncompany/3), 1)
+  
+  g = tmp %>%
+    ggplot(mapping = aes(x = Date, y = Close)) +
+    geom_hline(yintercept = 100, linetype = "dashed") +
+    geom_line(mapping = aes(color = Name), size = 1) +
+    scale_x_date(expand = c(0, 0)) +
+    scale_color_manual(values = qual_col_vector[-4][1:ncompany], 
+                       guide = guide_legend(title = NULL, nrow = legend_nrow)) +
+    labs(x = "Recent 6 months", y = "Normalized close price") +
+    theme(legend.position = "bottom", legend.key = element_rect(fill = "transparent"))
+  
+  ggarrange(g + guides(color = F), ggdraw(get_legend(g)), nrow = 2, ncol = 1, heights = c(8, legend_nrow))
+}
+
+interesting_sectors = company_close %>% select(Name, Industry) %>% unique %>% count(Industry) %>% arrange(desc(n)) %>% pull(Industry)
+
+fig_height = (8 + get_legend_nrow(company_close, interesting_sectors))/2.5
+```
+
+## Stock price trend^[All prices are normalized to 100 as of `r base_date`.]
+
+```{r, fig.width = 7, fig.height = fig_height[1], fig.cap = interesting_sectors[1]}
+close_trend(company_close, interesting_sectors[1])
+```
+
+```{r, fig.width = 7, fig.height = fig_height[2], fig.cap = interesting_sectors[2]}
+close_trend(company_close, interesting_sectors[2])
+```
+
+```{r, fig.width = 7, fig.height = fig_height[3], fig.cap = interesting_sectors[3]}
+close_trend(company_close, interesting_sectors[3])
+```
+
+```{r, fig.width = 7, fig.height = fig_height[4], fig.cap = interesting_sectors[4]}
+close_trend(company_close, interesting_sectors[4])
+```
+
+```{r, fig.width = 7, fig.height = fig_height[5], fig.cap = interesting_sectors[5]}
+close_trend(company_close, interesting_sectors[5])
+```
+
+```{r, fig.width = 7, fig.height = fig_height[6], fig.cap = interesting_sectors[6]}
+close_trend(company_close, interesting_sectors[6])
+```
+
+```{r, fig.width = 7, fig.height = fig_height[7], fig.cap = interesting_sectors[7]}
+close_trend(company_close, interesting_sectors[7])
+```
+
+```{r, fig.width = 7, fig.height = fig_height[8], fig.cap = interesting_sectors[8]}
+close_trend(company_close, interesting_sectors[8])
+```
+
+```{r, fig.width = 7, fig.height = fig_height[9], fig.cap = interesting_sectors[9]}
+close_trend(company_close, interesting_sectors[9])
+```
+
+```{r, fig.width = 7, fig.height = fig_height[10], fig.cap = interesting_sectors[10]}
+close_trend(company_close, interesting_sectors[10])
+```
+
+```{r, fig.width = 7, fig.height = fig_height[11], fig.cap = interesting_sectors[11]}
+close_trend(company_close, interesting_sectors[11])
+```
+
+```{r, fig.width = 7, fig.height = fig_height[12], fig.cap = interesting_sectors[12]}
+close_trend(company_close, interesting_sectors[12])
+```
+
+```{r, fig.width = 7, fig.height = fig_height[13], fig.cap = interesting_sectors[13]}
+close_trend(company_close, interesting_sectors[13])
+```
+
+```{r, fig.width = 7, fig.height = fig_height[14], fig.cap = interesting_sectors[14]}
+close_trend(company_close, interesting_sectors[14])
+```
+
+```{r, fig.width = 7, fig.height = fig_height[15], fig.cap = interesting_sectors[15]}
+close_trend(company_close, interesting_sectors[15])
+```
+
+## Stock price correlation^[Industry sector classification is based on data from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html).]
+
+```{r, fig.width = 7, fig.height = 8.5, fig.cap = "Pairwise correlation between closing prices over 6 months"}
+company_event = company_close %>% filter(!is.na(Event)) %>% select(Date, Yahoo, Event)
+
+company_close_wide = company_close %>% select(-Event) %>% pivot_wider(id_cols = Date, names_from = Yahoo, values_from = Close)
+
+company_cor = company_close_wide %>% column_to_rownames("Date") %>% cor(use = "pairwise.complete.obs")
+
+colnames(company_cor) %<>% yahoo_to_name
+rownames(company_cor) %<>% yahoo_to_name
+
+company_annotation = company %>% 
+  select(Name, `Broad group`, Country, Industry) %>% 
+  column_to_rownames("Name") %>% 
+  .[rownames(company_cor), ]
+
+n_industry = company_annotation$Industry %>% unique %>% length
+
+broad_group_color = qual_col_vector[1:length(unique(company_annotation$`Broad group`))] %>% setNames(sort(unique(company_annotation$`Broad group`)))
+country_color = qual_col_vector[1:length(unique(company_annotation$Country))] %>% setNames(sort(unique(company_annotation$Country)))
+industry_color = qual_col_vector[1:length(unique(company_annotation$Industry))] %>% setNames(sort(unique(company_annotation$Industry)))
+
+column_annotation = HeatmapAnnotation(df = company_annotation,
+                                      col = list(Industry = industry_color,
+                                                 Country = country_color,
+                                                 `Broad group` = broad_group_color),
+                                      annotation_name_gp = gpar(fontsize = 8),
+                                      annotation_legend_param = list(`Broad group` = list(grid_width = unit(4, "mm"),
+                                                                                          grid_height = unit(4, "mm"),
+                                                                                          title_gp = gpar(fontsize = 8, fontface = "bold"),
+                                                                                          labels_gp = gpar(fontsize = 7)),
+                                                                     Country = list(grid_width = unit(4, "mm"),
+                                                                                    grid_height = unit(4, "mm"),
+                                                                                    title_gp = gpar(fontsize = 8, fontface = "bold"),
+                                                                                    labels_gp = gpar(fontsize = 7)),
+                                                                     Industry = list(ncol = 2, 
+                                                                                     grid_width = unit(4, "mm"),
+                                                                                     grid_height = unit(4, "mm"),
+                                                                                     title_gp = gpar(fontsize = 8, fontface = "bold"),
+                                                                                     labels_gp = gpar(fontsize = 7))))
+
+company_cor %>% Heatmap(name = "Pearson's r",
+                        width = unit(5, "inch"), height = unit(5, "inch"),
+                        show_column_names = F, show_column_dend = T,
+                        show_row_names = T, show_row_dend = F,
+                        row_names_gp = gpar(fontsize = 6),
+                        heatmap_legend_param = list(legend_height = unit(n_industry * 2, "mm"),
+                                                    grid_width = unit(4, "mm"),
+                                                    title_gp = gpar(fontsize = 8, fontface = "bold"),
+                                                    labels_gp = gpar(fontsize = 7)),
+                        top_annotation = column_annotation) %>% 
+  draw(merge_legend = T, heatmap_legend_side = "bottom")
+```
+
+## Small-cap companies^[Data are from [Wikipedia](https://en.wikipedia.org/wiki/Main_Page).]
+
+These are a list of small-cap companies which interest me but need more research. For comprehensive financial data of these companies, see Figure \@ref(fig:watchlist).
+
+### Intellia Therapeutics
+
+![](images/Intellia_Therapeutics.jpeg){width=240px}
+
+```{r}
+read_html("https://en.wikipedia.org/wiki/Intellia_Therapeutics", which = 1, header = T, trim = T) %>% 
+  column_to_rownames("V1") %>% t %>% as_tibble %>%
+  mutate(`Traded as` = str_replace_all(`Traded as`, "(.)(NASDAQ|Russell)", "\\1<br>\\2"),
+         `Key people` = str_replace_all(`Key people`, "\\)([A-Z])", ")<br>\\1") %>% linebreak) %>%
+  t %>% 
+  as_tibble(.name_repair = "minimal", rownames = "Var") %>%
+  kbl(escape = F, col.names = NULL) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = F, position = "left")
+```
+
+### SI-Bone^[Wiki page is not available. The official website is https://si-bone.com/.]
+
+![](images/SI_Bone.jpg){width=240px}
+
+### CymaBay Therapeutics^[Wiki page is not available. The official website is https://www.cymabay.com/.]
+
+![](images/CymaBay_Therapeutics.png){width=240px}

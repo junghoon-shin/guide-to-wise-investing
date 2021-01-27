@@ -13,9 +13,5 @@ pre code {
   white-space: inherit;
 }
 input[type="search"] {
-    height: 28px;
-    width: 240px;
     margin: 10px;
-    font-size: 15px;
-    border: 1px solid #CCCCCC;
 } 

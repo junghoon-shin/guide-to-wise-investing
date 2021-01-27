@@ -1,0 +1,99 @@
+# Market evaluation^[Source data and details can be found at [Gurufocus.com](https://www.gurufocus.com/global-market-valuation.php).] {#market}
+
+## GDP and Buffett indicator
+
+```{r}
+Buffett = read_html("https://www.gurufocus.com/global-market-valuation.php", which = 3, header = T) %>% 
+  mutate(across(-c(Country, `Country ETF`), as.numeric))
+```
+
+```{r, fig.cap = str_c("GDP and Buffett indicator across ", nrow(Buffett), " major countries")}
+my_datatable(Buffett, paging = F, scrollY = NULL)
+```
+
+## Market valuation
+
+```{r}
+USA = read_html("https://www.gurufocus.com/stock-market-valuations.php", which = 3, header = T) %>% 
+  mutate(Country = "USA")
+
+country_mapping = c(China = "CHN", Japan = "JPN", Germany = "DEU", India = "IND", UK = "GBR", France = "FRA", Italy = "ITA", Canada = "CAN", Korea = "KOR", Australia = "AUS", Spain = "ESP", Russia = "RUS")
+
+plan(multisession)
+
+Others = country_mapping %>% future_imap_dfr(~read_html(str_c("https://www.gurufocus.com/global-market-valuation.php?country=", .x), 
+                                                            which = 3, header = T) %>% 
+                                               mutate(Country = .y))
+
+plan("default")
+
+All = bind_rows(USA, Others)
+
+names(All) %<>% str_trim
+
+col = brewer_pal("div", 5)(5)
+
+All %<>% 
+  filter(`Ratio = Total Market Cap / GDP` %>% str_detect("Where are we today")) %>%
+  mutate(Valuation = str_extract(Valuation, "[A-Za-z ]+$")) %>%
+  select(-`Ratio = Total Market Cap / GDP`) %>%
+  left_join(Buffett %>% select(Country, `Total Market/GDP Ratio (%)`, `GDP ($Trillion)`)) %>%
+  rename(`Total Market/GDP Ratio` = "Total Market/GDP Ratio (%)") %>%
+  mutate(Country = factor(Country, levels = rev(Country)),
+         `Total Market/GDP Ratio` = `Total Market/GDP Ratio`/100,
+         Valuation = Valuation %>% 
+           str_replace_all(c("^\\s+" = "", "\\s+$" = "")) %>% 
+           str_to_sentence %>%
+           factor(levels = c("Significantly overvalued", 
+                             "Modestly overvalued",
+                             "Fair valued",
+                             "Modestly undervalued",
+                             "Significanly undervalued")))
+```
+
+```{r, fig.width = 7, fig.height = 3, fig.cap = str_c("Market valuation for ", nrow(All), " major countries")}
+f1 = All %>% 
+  ggplot(mapping = aes(x = Country, y = `GDP ($Trillion)`)) +
+  geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, max(All$`GDP ($Trillion)`) * 1.05)) +
+  coord_flip() +
+  labs(x = NULL) +
+  theme(axis.ticks.y = element_blank())
+
+f2 = All %>% 
+  ggplot(mapping = aes(x = Country, y = `Total Market/GDP Ratio`)) +
+  geom_col(mapping = aes(fill = Valuation), color = "black", width = 0.7) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, max(All$`Total Market/GDP Ratio`) * 1.05), labels = percent) +
+  scale_fill_brewer(type = "div", palette = 5, guide = guide_legend(title = NULL)) +
+  coord_flip() +
+  labs(x = NULL) +
+  theme(axis.ticks.y = element_blank())
+
+ggarrange(f1, f2, nrow = 1, legend = "right", common.legend = T)
+```
+
+## Projected annual return
+
+```{r, fig.width = 7, fig.height = 5, fig.cap = "Projected future annual returns of the world's 18 largest stock markets, calculated using (1) future business growth estimates, (2) dividends, and (3) change in market valuation"}
+Project = read_html("https://www.gurufocus.com/global-market-valuation.php", which = 1, header = T) %>% 
+  rename(Country = "") %>% 
+  rename(`Projected Annual Return` = "Projected Annual Return (%)") %>%
+  mutate(Country = factor(Country, levels = rev(Country)),
+         `Projected Annual Return` = str_replace(`Projected Annual Return`, "%", "") %>% as.numeric %>% divide_by(100))
+
+cutoff = max(which(Project$Country %>% rev %>% as.character %in% c("Turkey", "Indonesia", "Mexico", "Russia", "India", "China", "Brazil"))) + 0.5
+
+Project %>% ggplot(mapping = aes(x = Country, y = `Projected Annual Return`)) +
+  annotation_custom(rectGrob(gp = gpar(col = "black", fill = "transparent")), xmin = cutoff) +
+  annotation_custom(rectGrob(gp = gpar(col = "black", fill = "transparent")), xmax = cutoff) +
+  annotation_custom(textGrob("Developed market", x = unit(0.95, "npc"), hjust = 1, vjust = -2, gp = gpar(fontface = "bold")),
+                    xmin = cutoff, xmax = cutoff) +
+  annotation_custom(textGrob("Emerging market", x = unit(0.95, "npc"), hjust = 1, vjust = -2, gp = gpar(fontface = "bold")),
+                    xmin = -Inf, xmax = -Inf) +
+  geom_col(mapping = aes(fill = factor(sign(`Projected Annual Return`))), color = "black", width = 0.7) +
+  scale_y_continuous(breaks = pretty_breaks(), labels = percent) +
+  scale_fill_manual(breaks = c("-1", "1", "0"), values = brewer_pal("qual", 4)(3), guide = F) +
+  coord_flip() +
+  labs(x = NULL) +
+  theme(axis.ticks.y = element_blank(), plot.margin = unit(c(5.5, 15, 5.5, 5.5), "points"))
+```

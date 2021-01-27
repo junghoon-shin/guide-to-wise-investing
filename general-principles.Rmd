@@ -1,0 +1,17 @@
+# General principles^[Contents of this chapter are mostly adapted from @town2018.]
+
+## Charlie Munger's four principles of investing
+
+1. It must be a business within your circle of competence.
+2. The business should have *intrinsic* characteristics that give it a durable competitive advantage.
+3. The business should have management with integrity and talent.
+4. The business should be available for a fair price that gives a "margin of safety."
+
+## The five and half Moats
+
+1. Strong brand (e.g., Coca-Cola)
+2. Painful switching (e.g., Apple)
+3. Network effects (e.g., Facebook, Kakao)
+4. Toll bridge (e.g., intercontinental railroad companies)
+5. Secret (e.g., patents of pharmaceutical companies)
+6. Capacity to provide goods at the lowest price (e.g., Costco)
