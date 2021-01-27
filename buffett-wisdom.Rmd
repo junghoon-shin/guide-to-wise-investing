@@ -1,6 +1,6 @@
 # (PART) Part I {-} 
 
-# Buffett's wisdom^[The quotes are picked from https://www.fool.com/investing/best-warren-buffett-quotes.aspx and reorganized.] {#buffett}
+# Buffett's wisdom^[The quotes are picked and reorganized from https://www.fool.com/investing/best-warren-buffett-quotes.aspx.] {#buffett}
 
 ![Warren Buffett, CEO of Berkshire Hathaway](images/Warren.jpg){width=240px}
 
