@@ -3,7 +3,8 @@
 ## PE ratio
 
 ```{r}
-industry = read_html("http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html", which = 1, header = T)
+industry = read_html("http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html", which = 1, header = T) %>%
+  filter(nchar(`Industry Name`) > 0)
 
 names(industry) %<>% str_replace_all(c("\\s+" = " ", "/ " = "/"))
 
