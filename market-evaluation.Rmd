@@ -8,7 +8,7 @@ Buffett = read_html("https://www.gurufocus.com/global-market-valuation.php", whi
 ```
 
 ```{r, fig.cap = str_c("GDP and Buffett indicator across ", nrow(Buffett), " major countries")}
-my_datatable(Buffett, paging = F, scrollY = NULL)
+my_datatable(Buffett, paging = T, scrollY = NULL)
 ```
 
 ## Market valuation

@@ -9,4 +9,4 @@ language:
   ui:
     chapter_name: "Chapter "
     appendix_name: "Appendix "
-rmd_files: ["index.Rmd", "preface.Rmd", "buffett-wisdom.Rmd", "general-principles.Rmd", "business-evaluation.Rmd", "sector-evaluation.Rmd", "market-evaluation.Rmd", "asset-evaluation.Rmd", "global-economy.Rmd", "asset-growth-simulation.Rmd", "resources.Rmd", "references.Rmd"]
+rmd_files: ["index.Rmd", "author.Rmd", "buffett-wisdom.Rmd", "general-principles.Rmd", "business-evaluation.Rmd", "sector-evaluation.Rmd", "market-evaluation.Rmd", "asset-evaluation.Rmd", "global-economy.Rmd", "asset-growth-simulation.Rmd", "resources.Rmd", "references.Rmd"]

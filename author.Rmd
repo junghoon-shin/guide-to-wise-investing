@@ -1,0 +1,8 @@
+# About the author {#author .unnumbered}
+
+Junghoon Shin is a Korean doctor, cancer scientist, and statistical programmer. He earned his MD and MSc from the [Seoul National University College of Medicine](https://medicine.snu.ac.kr/) and is now a PhD student at the Graduate School of Medical Science and Engineering, [Korea Advanced Institute of Science and Technology](https://www.kaist.ac.kr/en/). His research is primarily focused on the transcriptome dysregulation patterns observed in cancer cells, which have a key role in the cancer development process. Before coming to KAIST, he received the residency training at the Department of Internal Medicine, [Seoul National University Hospital](http://www.snuh.org/global/en/main.do) and earned his medical board certification in 2018. Recently he has had a particular interest in machine learning, data visualization, and obviously, investment. He spends most of his out-of-work time digging out early-stage companies that have a great mission, strength, and fine management.\
+\
+
+**Contact the author**\
+junghoonshin@kaist.ac.kr\
+https://github.com/junghoon-shin

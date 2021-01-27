@@ -1,6 +1,13 @@
 base
-pacman
+methods
+datasets
+utils
+grDevices
+graphics
+stats
 bookdown
+pacman
+grid
 ComplexHeatmap
 cowplot
 DT
