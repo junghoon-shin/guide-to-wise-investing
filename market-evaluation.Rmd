@@ -35,23 +35,20 @@ col = brewer_pal("div", 5)(5)
 
 All %<>% 
   filter(`Ratio = Total Market Cap / GDP` %>% str_detect("Where are we today")) %>%
-  mutate(Valuation = str_extract(Valuation, "[A-Za-z ]+$")) %>%
+  mutate(Valuation = str_extract(Valuation, "(Significantly|Modestly|Fair) (Overvalued|Undervalued|valued)")) %>%
   select(-`Ratio = Total Market Cap / GDP`) %>%
   left_join(Buffett %>% select(Country, `Total Market/GDP Ratio (%)`, `GDP ($Trillion)`)) %>%
   rename(`Total Market/GDP Ratio` = "Total Market/GDP Ratio (%)") %>%
   mutate(Country = factor(Country, levels = rev(Country)),
          `Total Market/GDP Ratio` = `Total Market/GDP Ratio`/100,
-         Valuation = Valuation %>% 
-           str_replace_all(c("^\\s+" = "", "\\s+$" = "")) %>% 
-           str_to_sentence %>%
-           factor(levels = c("Significantly overvalued", 
-                             "Modestly overvalued",
-                             "Fair valued",
-                             "Modestly undervalued",
-                             "Significanly undervalued")))
+         Valuation = str_to_sentence(Valuation) %>% factor(levels = c("Significantly overvalued", 
+                                                                      "Modestly overvalued",
+                                                                      "Fair valued",
+                                                                      "Modestly undervalued",
+                                                                      "Significantly undervalued")))
 ```
 
-```{r, fig.width = 7, fig.height = 3, fig.cap = str_c("Market valuation for ", nrow(All), " major countries")}
+```{r, fig.width = 7, fig.height = (nrow(All) + 2)/4, fig.cap = str_c("Market valuation for ", nrow(All), " major countries")}
 f1 = All %>% 
   ggplot(mapping = aes(x = Country, y = `GDP ($Trillion)`)) +
   geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
@@ -64,7 +61,7 @@ f2 = All %>%
   ggplot(mapping = aes(x = Country, y = `Total Market/GDP Ratio`)) +
   geom_col(mapping = aes(fill = Valuation), color = "black", width = 0.7) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, max(All$`Total Market/GDP Ratio`) * 1.05), labels = percent) +
-  scale_fill_brewer(type = "div", palette = 5, guide = guide_legend(title = NULL)) +
+  scale_fill_brewer(type = "qual", palette = 4, guide = guide_legend(title = NULL)) +
   coord_flip() +
   labs(x = NULL) +
   theme(axis.ticks.y = element_blank())
@@ -74,15 +71,18 @@ ggarrange(f1, f2, nrow = 1, legend = "right", common.legend = T)
 
 ## Projected annual return
 
-```{r, fig.width = 7, fig.height = 5, fig.cap = "Projected future annual returns of the world's 18 largest stock markets, calculated using (1) future business growth estimates, (2) dividends, and (3) change in market valuation"}
+```{r}
 Project = read_html("https://www.gurufocus.com/global-market-valuation.php", which = 1, header = T) %>% 
   rename(Country = "") %>% 
   rename(`Projected Annual Return` = "Projected Annual Return (%)") %>%
+  filter(Country != "Emerging Market:") %>%
   mutate(Country = factor(Country, levels = rev(Country)),
          `Projected Annual Return` = str_replace(`Projected Annual Return`, "%", "") %>% as.numeric %>% divide_by(100))
 
 cutoff = max(which(Project$Country %>% rev %>% as.character %in% c("Turkey", "Indonesia", "Mexico", "Russia", "India", "China", "Brazil"))) + 0.5
+```
 
+```{r, fig.width = 7, fig.height = (nrow(Project) + 2)/4, fig.cap = "Projected future annual returns of the world's 18 largest stock markets, calculated using (1) future business growth estimates, (2) dividends, and (3) change in market valuation"}
 Project %>% ggplot(mapping = aes(x = Country, y = `Projected Annual Return`)) +
   annotation_custom(rectGrob(gp = gpar(col = "black", fill = "transparent")), xmin = cutoff) +
   annotation_custom(rectGrob(gp = gpar(col = "black", fill = "transparent")), xmax = cutoff) +

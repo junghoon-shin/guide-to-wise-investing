@@ -20,7 +20,7 @@ industry_per = industry %>%
   mutate(Variable = Variable %>% str_replace(" PE", "") %>% factor(levels = c("Current", "Trailing", "Forward")))
 ```
 
-```{r, fig.width = 7, fig.height = 20, fig.cap = "Current, trailing, and forward PE ratio by industry sector"}
+```{r, fig.width = 7, fig.height = (nrow(industry_per)/3 + 2)/4, fig.cap = "Current, trailing, and forward PE ratio by industry sector"}
 industry_per %>%
   ggplot(mapping = aes(x = `Industry Name`, y = `PE ratio`)) +
   geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
@@ -33,7 +33,7 @@ industry_per %>%
 
 ## Expected growth rate
 
-```{r, fig.width = 7, fig.height = 20, fig.cap = "Expected growth rate for the next 5 years by industry sector"}
+```{r, fig.width = 7, fig.height = (nrow(industry) + 2)/4, fig.cap = "Expected growth rate for the next 5 years by industry sector"}
 industry %>%
   arrange(`Expected growth - next 5 years`) %>%
   mutate(`Industry Name` = factor(`Industry Name`, levels = `Industry Name`)) %>%
@@ -48,7 +48,7 @@ industry %>%
 
 ## PEG ratio
 
-```{r, fig.width = 7, fig.height = 20 * (sum(!is.na(industry$`PEG Ratio`)) + 2)/(nrow(industry) + 2), fig.cap = "PEG ratio by industry sector"}
+```{r, fig.width = 7, fig.height = (nrow(industry %>% filter(!is.na(`PEG Ratio`))) + 2)/4, fig.cap = "PEG ratio by industry sector"}
 industry %>%
   filter(!is.na(`PEG Ratio`)) %>%
   arrange(`PEG Ratio`) %>%

@@ -263,9 +263,11 @@ f6 = financial_plot(company_plot, ROA, "Return on asset")
 f7 = financial_plot(company_plot, DER, "Debt/Equity")
 f8 = financial_plot(company_plot, Quarterly_earnings_growth, "Quarterly earnings growth (yoy)", percent)
 f9 = financial_plot(company_plot, Quarterly_revenue_growth, "Quarterly revenue growth (yoy)", percent)
+
+n_industry = company_plot$Industry %>% unique %>% length
 ```
 
-```{r financials-figure, fig.width = 7, fig.height = nrow(company_plot)/1.4, fig.cap = "Key financials of my watchlist"}
+```{r, fig.width = 7, fig.height = (nrow(company_plot) + 2)/4 * 3 + ceiling(n_industry/3)/4, fig.cap = "Key financials of my watchlist"}
 ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align = "h", widths = c(1.55, 1, 1, 1)), 
           ggarrange(f1 + guides(fill = F), f5, f6, f7, nrow = 1, ncol = 4, align = "h", widths = c(1.55, 1, 1, 1)),
           ggarrange(f1 + guides(fill = F), f8, f9, nrow = 1, ncol = 3, align = "h", widths = c(1.55, 1.5, 1.5)),
@@ -276,7 +278,7 @@ ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align
 
 ## Investing decision^[The value of a company in its early stage of development with zero or negative earnings cannot be determined based on its financials, but rather should be based on the subject matter knowledge about its mission, technologies, management and culture, as well as the industry overall.]
 
-```{r, fig.width = 7, fig.height = nrow(company)/4, fig.cap = "Investing decision made by a fundamental analysis-based algorithm for listed companies"}
+```{r, fig.width = 7, fig.height = (nrow(company) + 2)/4, fig.cap = "Investing decision made by a fundamental analysis-based algorithm for listed companies"}
 company_decision = company %>% 
   mutate(Decision = factor(Decision, levels = c("Buy",
                                                 "Maybe buy",
@@ -487,7 +489,7 @@ company_cor %>% Heatmap(name = "Pearson's r",
                         show_column_names = F, show_column_dend = T,
                         show_row_names = T, show_row_dend = F,
                         row_names_gp = gpar(fontsize = 6),
-                        heatmap_legend_param = list(legend_height = unit(n_industry * 2, "mm"),
+                        heatmap_legend_param = list(legend_height = unit(ceiling(n_industry/2) * 2, "mm"),
                                                     grid_width = unit(4, "mm"),
                                                     title_gp = gpar(fontsize = 8, fontface = "bold"),
                                                     labels_gp = gpar(fontsize = 7)),
