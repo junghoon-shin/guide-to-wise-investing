@@ -4,13 +4,15 @@
 
 ## Investment scenario
 
-|Variable|Assumption (thousand USD)|
-|--------|----------|
-|Initial investment|20|
-|Monthly investment|5|
-|Investment increment per year|5%|
-|Target profit|20%|
-|Inflation|2%|
+```{r}
+scenario = tibble(Variable = c("Initial investment", "Monthly investment", "Investment increment per year", "Target profit", "Inflation"),
+                  `Assumption (thousand USD)` = c("20", "5", "5%", "20%", "2%"))
+
+scenario %>% 
+  kbl(escape = F, col.names = colnames(.)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = F, position = "left")
+```
 
 ## Simulation
 

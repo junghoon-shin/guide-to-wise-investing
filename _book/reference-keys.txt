@@ -46,7 +46,7 @@ fig:unnamed-chunk-60
 fig:unnamed-chunk-62
 fig:unnamed-chunk-64
 fig:unnamed-chunk-66
-fig:unnamed-chunk-67
+fig:unnamed-chunk-68
 buffett
 rule-no.-1
 value-investing
