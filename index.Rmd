@@ -14,7 +14,7 @@ cover-image: "images/cover1.jpg"
 apple-touch-icon: "images/up-arrow.svg"
 apple-touch-icon-size: 120
 favicon: "images/up-arrow.svg"
-description: "This is a personal investing guide based on the analysis of company financials, industry and market status, and global economy."
+description: "Investment data book containing up-to-date company financials, industry and market status, and global economy"
 ---
 
 ```{r, include = F}
