@@ -48,20 +48,20 @@ yahoo_data = future_map_dfr(company$Yahoo, ~{
   ticker = .
     
   tryCatch({
-    Profile = read_html(file.path("https://finance.yahoo.com/quote" , ticker, "profile"), which = 1, header = T)
     Summary = read_html(file.path("https://finance.yahoo.com/quote", ticker), header = F) %>% bind_rows
+    Profile = read_html(file.path("https://finance.yahoo.com/quote" , ticker, "profile"), which = 1, header = T)
     Statistics = read_html(file.path("https://finance.yahoo.com/quote", ticker, "key-statistics"), header = F) %>% map_dfr(~select(., 1:2))
     Statistics$V1 %<>% str_replace(" [0-9]$", "")
     Revenue = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 2, header = F)
     Growth = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 6, header = T)
     
     tibble(Yahoo = ticker,
+           Beta = Summary %>% filter(V1 == "Beta (5Y Monthly)") %>% pull(V2),
+           Target = Summary %>% filter(V1 == "1y Target Est") %>% pull(V2),
            CEO = Profile %>% slice(1) %>% pull(Name),
            CEO_title = Profile %>% slice(1) %>% pull(Title),
            CEO_pay = Profile %>% slice(1) %>% pull(Pay),
            CEO_age = thisyear - (Profile %>% slice(1) %>% pull(`Year Born`) %>% as.numeric),
-           Beta = Summary %>% filter(V1 == "Beta (5Y Monthly)") %>% pull(V2),
-           Target = Summary %>% filter(V1 == "1y Target Est") %>% pull(V2),
            Profit_margin = Statistics %>% filter(V1 == "Profit Margin") %>% pull(V2),
            ROA = Statistics %>% filter(V1 == "Return on Assets (ttm)") %>% pull(V2),
            ROE = Statistics %>% filter(V1 == "Return on Equity (ttm)") %>% pull(V2),
@@ -153,9 +153,8 @@ company %<>%
                               T ~ "Wait")) %>%
   ungroup %>%
   mutate(Changepct = str_c(round(Changepct, 2), "%")) %>%
-  relocate(CEO, CEO_title, CEO_pay, CEO_age, .after = `Broad group`) %>%
-  relocate(EPS, Diluted_EPS, BVPS,
-           Revenue_growth_estimate_current, Revenue_growth_estimate_next, Earnings_growth_estimate_next_5yrs,
+  relocate(Diluted_EPS, Revenue_per_share, BVPS, .after = EPS) %>%
+  relocate(Revenue_growth_estimate_current, Revenue_growth_estimate_next, Earnings_growth_estimate_next_5yrs,
            Operating_cash_flow, Levered_free_cash_flow,
            Profit_margin,
            DER, ROA, ROE, PER, `Industry PER`, PSR, PBR, .before = `Price/Target`) %>%
@@ -180,24 +179,29 @@ company %>% write_sheet(ss = drive_get("Investment/Valuation"), sheet = "Valuati
 ```
 
 ```{r watchlist, fig.cap = "Comprehensive financial data of my watchlist"}
-make_readable = function(x) case_when(abs(x) >= 1e12 ~ str_c(round(x/1e12, 1), "T"),
-                                      abs(x) >= 1e9 ~ str_c(round(x/1e9, 1), "B"),
-                                      abs(x) >= 1e6 ~ str_c(round(x/1e6, 1), "M"),
-                                      T ~ as.character(round(x, 1)))
+make_readable = function(x) case_when(abs(x) >= 1e12 ~ str_c(round(x/1e12, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "T"),
+                                      abs(x) >= 1e9 ~ str_c(round(x/1e9, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "B"),
+                                      abs(x) >= 1e6 ~ str_c(round(x/1e6, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "M"),
+                                      abs(x) >= 1e3 ~ str_c(round(x/1e3, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "k"),
+                                      T ~ round(x, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim)
+
+make_percent = function(x) {
+  (x * 100) %>% round(1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim %>% {ifelse(. == "NA", ., str_c(., "%"))}
+}
 
 company_display = company %>% 
   select(-c(Ticker, Yahoo, Ticker3)) %>%
   mutate(across(c(Marketcap, `Operating cash flow`, `Levered free cash flow`), make_readable)) %>%
-  mutate(across(c(`Profit margin`, ROA, ROE, `Debt-to-equity ratio`, `Payout ratio`, `Retention ratio`, contains(c("growth", "yield"))), percent)) %>% 
+  mutate(across(c(`Expected payout ratio change rate`, `Payout ratio`, `Retention ratio`, `Profit margin`, `Debt-to-equity ratio`, ROA, ROE,
+                  contains(c("growth", "yield"))), make_percent)) %>%
   mutate(across(c(Price:Closeyest,
-                  Low52:`Revenue per share`, 
-                  `Expected payout ratio change rate`,
-                  `Expected PE in 10yrs`:BVPS,
+                  Low52:Target, 
+                  `Expected PE in 10yrs`:`Adjusted Graham formula`,
                   PER:`Relative price`), 
-                ~round(., 2) %>% format(scientific = F, big.mark = ","))) %>%
-  relocate(Name)
+                ~round(., 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim)) %>%
+  replace(. == "NA", NA)
 
-my_datatable(company_display, paging = T, scrollY = NULL)
+my_datatable(company_display, paging = T, pageLength = 5, scrollY = NULL, caption = NULL)
 ```
 
 Adjusted Graham formula: as defined [here](https://www.oldschoolvalue.com/stock-valuation/benjamin-graham-formula/)\

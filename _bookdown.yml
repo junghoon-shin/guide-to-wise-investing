@@ -1,12 +1,11 @@
 book_filename: "guide-for-wise-investing"
 output_dir: "_book"
-delete_merged_file: true
-new_session: false
+delete_merged_file: yes
+new_session: no
 edit: https://github.com/junghoon-shin/guide-for-wise-investing/edit/master/%s
-view: https://github.com/junghoon-shin/guide-for-wise-investing/blob/master/%s
 clean: ["_bookdown_files"]
 language:
   ui:
     chapter_name: "Chapter "
     appendix_name: "Appendix "
-rmd_files: ["index.Rmd", "author.Rmd", "buffett-wisdom.Rmd", "general-principles.Rmd", "business-evaluation.Rmd", "sector-evaluation.Rmd", "market-evaluation.Rmd", "asset-evaluation.Rmd", "global-economy.Rmd", "asset-growth-simulation.Rmd", "resources.Rmd", "references.Rmd"]
+rmd_files: ["index.Rmd", "author.Rmd", "buffett-wisdom.Rmd", "general-principles.Rmd", "business-evaluation.Rmd", "sector-evaluation.Rmd", "asset-evaluation.Rmd", "market-evaluation.Rmd", "global-economy.Rmd", "asset-growth-simulation.Rmd", "resources.Rmd", "references.Rmd"]

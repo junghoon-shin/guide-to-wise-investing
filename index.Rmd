@@ -47,7 +47,7 @@ p_load(bookdown,
        tidyverse,
        XML)
 
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, out.width = "100%")
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, out.width = "100%", cache = T)
 
 theme_update(plot.title = element_text(hjust = 0.5, vjust = 0.5))
 ```
@@ -59,23 +59,26 @@ read_html = function(url, which = integer(), header = T, trim = T) {
   readHTMLTable(rawToChar(GET(url)$content), which = which, header = header, trim = trim)
 }
 
-my_datatable = function(tbl, paging = F, scrollY = unit(700, "lines"), caption = NULL) {
+my_datatable = function(tbl, paging = F, pageLength = 5, scrollY = unit(700, "lines"), caption = NULL) {
   DT::datatable(tbl,
-                options = list(paging = paging,
+                options = list(dom = "lfrtip",
+                               paging = paging,
+                               pageLength = pageLength,
                                searching = T,
                                ordering = T,
                                scrollX = T, 
                                scrollY = scrollY,
-                               fixedHeader = T,
-                               fixedColumns = T,
+                               fixedColumns = list(leftColumns = 1),
+                               colReorder = list(realtime = F),
+                               keys = T,
                                autoWidth = T,
                                initComplete = JS("function(settings, json) {", 
-                                                 "$(this.api().table().header()).css({'font-family': 'Arial', 'font-size': '14px'});",
+                                                 "$(this.api().table().header()).css({'font-size': '14px'});",
                                                  "}")),
-                extensions = "FixedColumns",
+                extensions = c("FixedColumns", "ColReorder", "KeyTable"),
               rownames = F,
               caption = caption) %>%
-    formatStyle(columns = 1:ncol(tbl), fontFamily = "Arial", fontSize = "14px")
+    formatStyle(columns = 1:ncol(tbl), fontSize = "14px")
 }
 ```
 
