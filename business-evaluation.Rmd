@@ -152,7 +152,6 @@ company %<>%
                               sum(`Price/Target` < 1, PEG < 1, `Price/DCF10` < 1, `Price/Graham` < 1) > 1 ~ "Maybe buy",
                               T ~ "Wait")) %>%
   ungroup %>%
-  mutate(Changepct = str_c(round(Changepct, 2), "%")) %>%
   relocate(Diluted_EPS, Revenue_per_share, BVPS, .after = EPS) %>%
   relocate(Revenue_growth_estimate_current, Revenue_growth_estimate_next, Earnings_growth_estimate_next_5yrs,
            Operating_cash_flow, Levered_free_cash_flow,
@@ -179,21 +178,32 @@ company %>% write_sheet(ss = drive_get("Investment/Valuation"), sheet = "Valuati
 ```
 
 ```{r watchlist, fig.cap = "Comprehensive financial data of my watchlist"}
+make_percent = function(x, times) {
+  (x * times) %>% round(1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim %>% {ifelse(. == "NA", ., str_c(., "%"))}
+}
+
 make_readable = function(x) case_when(abs(x) >= 1e12 ~ str_c(round(x/1e12, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "T"),
                                       abs(x) >= 1e9 ~ str_c(round(x/1e9, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "B"),
                                       abs(x) >= 1e6 ~ str_c(round(x/1e6, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "M"),
                                       abs(x) >= 1e3 ~ str_c(round(x/1e3, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "k"),
                                       T ~ round(x, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim)
 
-make_percent = function(x) {
-  (x * 100) %>% round(1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim %>% {ifelse(. == "NA", ., str_c(., "%"))}
-}
-
 company_display = company %>% 
   select(-c(Ticker, Yahoo, Ticker3)) %>%
-  mutate(across(c(Marketcap, `Operating cash flow`, `Levered free cash flow`), make_readable)) %>%
-  mutate(across(c(`Expected payout ratio change rate`, `Payout ratio`, `Retention ratio`, `Profit margin`, `Debt-to-equity ratio`, ROA, ROE,
-                  contains(c("growth", "yield"))), make_percent)) %>%
+  mutate(Changepct = make_percent(Changepct, 1)) %>%
+  mutate(across(c(`Expected payout ratio change rate`, 
+                  `Payout ratio`, 
+                  `Retention ratio`, 
+                  `Profit margin`, 
+                  `Debt-to-equity ratio`, 
+                  ROA, 
+                  ROE, 
+                  contains(c("growth", "yield"))), 
+                ~make_percent(., 100))) %>%
+  mutate(across(c(Marketcap, 
+                  `Operating cash flow`, 
+                  `Levered free cash flow`), 
+                make_readable)) %>%
   mutate(across(c(Price:Closeyest,
                   Low52:Target, 
                   `Expected PE in 10yrs`:`Adjusted Graham formula`,
@@ -269,20 +279,22 @@ f8 = financial_plot(company_plot, Quarterly_earnings_growth, "Quarterly earnings
 f9 = financial_plot(company_plot, Quarterly_revenue_growth, "Quarterly revenue growth (yoy)", percent)
 
 n_industry = company_plot$Industry %>% unique %>% length
+
+legend_ratio = nrow(company_plot) / (ceiling(n_industry/3) * 5/6 + 1)
 ```
 
-```{r, fig.width = 7, fig.height = (nrow(company_plot) + 2)/4 * 3 + ceiling(n_industry/3)/5, fig.cap = "Key financials of my watchlist"}
+```{r, fig.width = 7, fig.height = (nrow(company_plot) + 2)/4 * 3 + (ceiling(n_industry/3)/4 * 5/6 + 1), fig.cap = "Key financials of my watchlist"}
 ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align = "h", widths = c(1.55, 1, 1, 1)), 
           ggarrange(f1 + guides(fill = F), f5, f6, f7, nrow = 1, ncol = 4, align = "h", widths = c(1.55, 1, 1, 1)),
           ggarrange(f1 + guides(fill = F), f8, f9, nrow = 1, ncol = 3, align = "h", widths = c(1.55, 1.5, 1.5)),
           get_legend(f1), 
           nrow = 4, ncol = 1, 
-          heights = c(7, 7, 7, 1))
+          heights = c(legend_ratio, legend_ratio, legend_ratio, 1))
 ```
 
 ## Investing decision^[The value of a company in its early stage of development with zero or negative earnings cannot be determined based on its financials, but rather should be based on the subject matter knowledge about its mission, technologies, management and culture, as well as the industry overall.]
 
-```{r, fig.width = 7, fig.height = (nrow(company) + 5)/4, fig.cap = "Investing decision made by a fundamental analysis-based algorithm for listed companies"}
+```{r, fig.width = 7, fig.height = (nrow(company) + 6)/4, fig.cap = "Investing decision made by a fundamental analysis-based algorithm for listed companies"}
 company_decision = company %>% 
   mutate(Decision = factor(Decision, levels = c("Buy",
                                                 "Maybe buy",
@@ -448,7 +460,7 @@ close_trend(company_close, interesting_sectors[15])
 
 ## Stock price correlation^[Industry sector classification is based on data from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html).]
 
-```{r, fig.width = 7, fig.height = 8.25, fig.cap = "Pairwise correlation between closing prices over 6 months"}
+```{r, include = F}
 company_event = company_close %>% filter(!is.na(Event)) %>% select(Date, Yahoo, Event)
 
 company_close_wide = company_close %>% select(-Event) %>% pivot_wider(id_cols = Date, names_from = Yahoo, values_from = Close)
@@ -488,6 +500,23 @@ column_annotation = HeatmapAnnotation(df = company_annotation,
                                                                                      title_gp = gpar(fontsize = 8, fontface = "bold"),
                                                                                      labels_gp = gpar(fontsize = 7))))
 
+h = company_cor %>% Heatmap(name = "Pearson's r",
+                        width = unit(5, "inch"), height = unit(5, "inch"),
+                        show_column_names = F, show_column_dend = T,
+                        show_row_names = T, show_row_dend = F,
+                        row_names_gp = gpar(fontsize = 6),
+                        heatmap_legend_param = list(legend_height = unit(ceiling(n_industry/2) * 4, "mm"),
+                                                    grid_width = unit(4, "mm"),
+                                                    title_gp = gpar(fontsize = 8, fontface = "bold"),
+                                                    labels_gp = gpar(fontsize = 7)),
+                        top_annotation = column_annotation) %>% 
+  draw(merge_legend = T, heatmap_legend_side = "bottom")
+
+h_height = h@ht_list_param$height %>% as.numeric %>% conv_unit("mm", "inch")
+```
+
+
+```{r, fig.width = 7, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between closing prices over 6 months"}
 company_cor %>% Heatmap(name = "Pearson's r",
                         width = unit(5, "inch"), height = unit(5, "inch"),
                         show_column_names = F, show_column_dend = T,

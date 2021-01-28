@@ -20,7 +20,7 @@ industry_per = industry %>%
   mutate(Variable = Variable %>% str_replace(" PE", "") %>% factor(levels = c("Current", "Trailing", "Forward")))
 ```
 
-```{r, fig.width = 7, fig.height = (nrow(industry_per)/3 + 2)/4, fig.cap = "Current, trailing, and forward PE ratio by industry sector"}
+```{r, fig.width = 7, fig.height = (nrow(industry_per)/3 + 3)/4, fig.cap = "Current, trailing, and forward PE ratio by industry sector"}
 industry_per %>%
   ggplot(mapping = aes(x = `Industry Name`, y = `PE ratio`)) +
   geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +

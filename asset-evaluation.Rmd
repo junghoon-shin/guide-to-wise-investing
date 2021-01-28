@@ -188,7 +188,7 @@ index_plot_fed(US, Shiller, "Shiller P/E ratio")
 
 ## Asset correlation
 
-```{r, fig.width = 7, fig.height = 5.5, fig.cap = "Pairwise correlation between stock matket index, bond yields, REIT index, gold price, oil price, and USD/KRW exchange rate over the last 30 years"}
+```{r, include = F}
 USdaily = list(Wilshire5000, WilshireREIT, Gold, WTI, AAA, USDKRW) %>%
   reduce(full_join) %>%
   mutate(across(-DATE, as.numeric)) %>%
@@ -241,6 +241,18 @@ relabel = function(symbol) c(WILL5000PRFC = "Wilshire 5000",
 colnames(UScor) %<>% relabel
 rownames(UScor) %<>% relabel
 
+h = Heatmap(UScor, 
+        name = "Pearson's r", 
+        width = unit(3, "inch"), height = unit(3, "inch"), 
+        row_names_gp = gpar(fontsize = 10),
+        column_names_gp = gpar(fontsize = 10),
+        heatmap_legend_param = list(legend_height = unit(1.5, "inch"))) %>%
+  draw
+
+h_height = convertHeight(h@ht_list_param$height, "inch") %>% as.numeric
+```
+
+```{r, fig.width = 7, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between stock matket index, bond yields, REIT index, gold price, oil price, and USD/KRW exchange rate over the last 30 years"}
 Heatmap(UScor, 
         name = "Pearson's r", 
         width = unit(3, "inch"), height = unit(3, "inch"), 
