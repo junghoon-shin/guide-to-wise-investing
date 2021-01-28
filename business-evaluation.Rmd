@@ -536,11 +536,14 @@ These are a list of small-cap companies which interest me but need more research
 
 ### Intellia Therapeutics
 
-![](images/Intellia_Therapeutics.png){width=240px}
+[![](images/Intellia_Therapeutics.png){width=240px}](https://www.intelliatx.com/)
 
 ```{r}
 read_html("https://en.wikipedia.org/wiki/Intellia_Therapeutics", which = 1, header = T, trim = T) %>% 
-  column_to_rownames("V1") %>% t %>% as_tibble %>%
+  mutate(V2 = str_replace_all(V2, c("\\[[0-9]+\\]$" = "", "([A-Za-z])\\(" = "\\1 ("))) %>%
+  column_to_rownames("V1") %>% 
+  t %>% 
+  as_tibble %>%
   mutate(`Traded as` = str_replace_all(`Traded as`, "(.)(NASDAQ|Russell)", "\\1<br>\\2"),
          `Key people` = str_replace_all(`Key people`, "\\)([A-Z])", ")<br>\\1") %>% linebreak) %>%
   t %>% 
@@ -552,8 +555,8 @@ read_html("https://en.wikipedia.org/wiki/Intellia_Therapeutics", which = 1, head
 
 ### SI-Bone^[Wiki page is not available. The official website is https://si-bone.com/.]
 
-![](images/SI_Bone.png){width=240px}
+[![](images/SI_Bone.png){width=240px}](https://si-bone.com/)
 
 ### CymaBay Therapeutics^[Wiki page is not available. The official website is https://www.cymabay.com/.]
 
-![](images/CymaBay_Therapeutics.png){width=240px}
+[![](images/CymaBay_Therapeutics.png){width=240px}](https://www.cymabay.com/)
