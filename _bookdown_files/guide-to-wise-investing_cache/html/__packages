@@ -5,8 +5,8 @@ utils
 grDevices
 graphics
 stats
-pacman
 bookdown
+pacman
 grid
 ComplexHeatmap
 cowplot
