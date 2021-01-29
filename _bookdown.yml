@@ -1,8 +1,8 @@
-book_filename: "guide-for-wise-investing"
+book_filename: "guide-to-wise-investing"
 output_dir: "_book"
 delete_merged_file: yes
 new_session: no
-edit: https://github.com/junghoon-shin/guide-for-wise-investing/edit/master/%s
+edit: https://github.com/junghoon-shin/guide-to-wise-investing/edit/master/%s
 clean: ["_bookdown_files"]
 language:
   ui:

@@ -1,6 +1,13 @@
 base
-pacman
+methods
+datasets
+utils
+grDevices
+graphics
+stats
 bookdown
+pacman
+grid
 ComplexHeatmap
 cowplot
 DT
@@ -15,6 +22,7 @@ httr
 kableExtra
 knitr
 magrittr
+measurements
 RColorBrewer
 scales
 tidyverse
@@ -26,4 +34,3 @@ dplyr
 stringr
 forcats
 XML
-measurements
