@@ -280,10 +280,10 @@ f9 = financial_plot(company_plot, Quarterly_revenue_growth, "Quarterly revenue g
 
 n_industry = company_plot$Industry %>% unique %>% length
 
-legend_ratio = (nrow(company_plot) + 2) / ceiling(n_industry/3)
+legend_ratio = (nrow(company_plot) + 2) / (ceiling(n_industry/3) + 1)
 ```
 
-```{r, fig.width = 7, fig.height = (nrow(company_plot) + 2)/4 * 3 + (ceiling(n_industry/3)/4), fig.cap = "Key financials of my watchlist"}
+```{r, fig.width = 7, fig.height = (nrow(company_plot) + 2) * 3/4 + (ceiling(n_industry/3) + 1)/4, fig.cap = "Key financials of my watchlist"}
 ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align = "h", widths = c(1.55, 1, 1, 1)), 
           ggarrange(f1 + guides(fill = F), f5, f6, f7, nrow = 1, ncol = 4, align = "h", widths = c(1.55, 1, 1, 1)),
           ggarrange(f1 + guides(fill = F), f8, f9, nrow = 1, ncol = 3, align = "h", widths = c(1.55, 1.5, 1.5)),
