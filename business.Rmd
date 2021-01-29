@@ -539,16 +539,18 @@ These are a list of small-cap companies which interest me but need more research
 [![](images/Intellia_Therapeutics.png){width=240px}](https://www.intelliatx.com/)
 
 ```{r}
-read_html("https://en.wikipedia.org/wiki/Intellia_Therapeutics", which = 1, header = T, trim = T) %>% 
+smallcap = "Intellia_Therapeutics"
+
+read_html(str_c("https://en.wikipedia.org/wiki/", smallcap), which = 1, header = T, trim = T) %>% 
   mutate(V2 = str_replace_all(V2, c("\\[[0-9]+\\]$" = "", "([A-Za-z])\\(" = "\\1 ("))) %>%
   column_to_rownames("V1") %>% 
   t %>% 
   as_tibble %>%
   mutate(`Traded as` = str_replace_all(`Traded as`, "(.)(NASDAQ|Russell)", "\\1<br>\\2"),
-         `Key people` = str_replace_all(`Key people`, "\\)([A-Z])", ")<br>\\1") %>% linebreak) %>%
+         `Key people` = str_replace_all(`Key people`, "\\)([A-Z])", ")<br>\\1")) %>%
   t %>% 
   as_tibble(.name_repair = "minimal", rownames = "Var") %>%
-  kbl(escape = F, col.names = NULL) %>%
+  kbl(escape = F, col.names = NULL, caption = str_c("Profile of ", str_replace(smallcap, "_", " "))) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
                 full_width = F, position = "left")
 ```

@@ -5,8 +5,8 @@ utils
 grDevices
 graphics
 stats
-bookdown
 pacman
+bookdown
 grid
 ComplexHeatmap
 cowplot
@@ -23,6 +23,7 @@ kableExtra
 knitr
 magrittr
 measurements
+pander
 RColorBrewer
 scales
 tidyverse
