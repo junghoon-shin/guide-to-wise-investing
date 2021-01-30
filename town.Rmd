@@ -12,7 +12,7 @@
 
 ```{r}
 tibble(Moat = c("Strong brand", 
-                       "Painful switching<br>(Network effetcts)", 
+                       "Painful switching<br>(Network effect)", 
                        "Toll bridge<br>(Monopoly)", 
                        "Secret<br>(Patent)", 
                        "Price"),
