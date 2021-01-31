@@ -292,7 +292,7 @@ ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align
           heights = c(legend_ratio, legend_ratio, legend_ratio, 1))
 ```
 
-## Investing decision^[The value of a company in its early stage of development with zero or negative earnings cannot be determined based on its financials, but rather should be based on the subject matter knowledge about its mission, technologies, management and culture, as well as the industry overall.]
+## Investment decision^[The value of an early-stage company with zero or negative earnings cannot be determined based on its financials, but rather should be based on the subject matter knowledge about its mission, technologies, management and culture, as well as the industry overall.]
 
 ```{r, fig.width = 7, fig.height = (nrow(company) + 6)/4, fig.cap = "Investing decision made by a fundamental analysis-based algorithm for listed companies"}
 company_decision = company %>% 

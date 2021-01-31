@@ -69,7 +69,7 @@ management-numbers
 business
 comprehensive-financials
 key-financials
-investing-decision
+investment-decision
 stock-price-trend
 stock-price-correlation
 small-cap-companies
