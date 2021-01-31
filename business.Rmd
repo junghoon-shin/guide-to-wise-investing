@@ -292,9 +292,9 @@ ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align
           heights = c(legend_ratio, legend_ratio, legend_ratio, 1))
 ```
 
-## Investment decision^[The value of an early-stage company with zero or negative earnings cannot be determined based on its financials, but rather should be based on the subject matter knowledge about its mission, technologies, management and culture, as well as the industry overall.]
+## Investment decision^[The decision is made by analyzing only numerical financial data, which do not represent the value of a company as a whole. For example, the value of an early-stage company with zero or negative earnings cannot be determined based on numbers, but rather should be based on its mission, technology, management, culture, and so on, as well as the industry status overall.]
 
-```{r, fig.width = 7, fig.height = (nrow(company) + 6)/4, fig.cap = "Investing decision made by a fundamental analysis-based algorithm for listed companies"}
+```{r, fig.width = 7, fig.height = (nrow(company) + 6)/4, fig.cap = "Investment decision made by a fundamental analysis-based algorithm for the listed companies"}
 company_decision = company %>% 
   mutate(Decision = factor(Decision, levels = c("Buy",
                                                 "Maybe buy",
@@ -396,7 +396,7 @@ interesting_sectors = company_close %>% select(Name, Industry) %>% unique %>% co
 fig_height = (8 + get_legend_nrow(company_close, interesting_sectors))/2.5
 ```
 
-## Stock price trend^[All prices are normalized to 100 as of `r base_date`.]
+## Stock price trend^[Only top 15 industry sectors are shown. All prices are normalized to 100 as of `r base_date`.]
 
 ```{r, fig.width = 7, fig.height = fig_height[1], fig.cap = interesting_sectors[1]}
 close_trend(company_close, interesting_sectors[1])
@@ -516,7 +516,7 @@ h_height = h@ht_list_param$height %>% as.numeric %>% conv_unit("mm", "inch")
 ```
 
 
-```{r, fig.width = 7, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between closing prices over 6 months"}
+```{r, fig.width = 7, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between closing prices of my watchlist over the last 6 months"}
 company_cor %>% Heatmap(name = "Pearson's r",
                         width = unit(5, "inch"), height = unit(5, "inch"),
                         show_column_names = F, show_column_dend = T,
@@ -530,11 +530,11 @@ company_cor %>% Heatmap(name = "Pearson's r",
   draw(merge_legend = T, heatmap_legend_side = "bottom")
 ```
 
-## Small-cap companies^[Data are from [Wikipedia](https://en.wikipedia.org/wiki/Main_Page).]
+## Small-cap companies
 
-These are a list of small-cap companies which interest me but need more research. For comprehensive financial data of these companies, see Figure \@ref(fig:watchlist).
+These are a list of small-cap companies which interest me but need more research. For comprehensive financial data, see Figure \@ref(fig:watchlist).
 
-### Intellia Therapeutics
+### Intellia Therapeutics^[Data are from [Wikipedia](https://en.wikipedia.org/wiki/Main_Page).]
 
 [![](images/Intellia_Therapeutics.png){width=240px}](https://www.intelliatx.com/)
 

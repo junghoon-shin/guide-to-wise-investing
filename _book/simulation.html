@@ -77,6 +77,10 @@
   gtag('config', 'G-LES31PGXSP');
 </script>
 
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,300;1,400;1,600;1,700;1,800&display=swap');
+</style>
+
 
 
 <link rel="stylesheet" href="style.css" type="text/css" />
@@ -113,7 +117,7 @@
 <li class="chapter" data-level="2" data-path="town.html"><a href="town.html"><i class="fa fa-check"></i><b>2</b> Munger and Town’s lessons</a>
 <ul>
 <li class="chapter" data-level="2.1" data-path="town.html"><a href="town.html#charlie-mungers-four-principles-of-investing"><i class="fa fa-check"></i><b>2.1</b> Charlie Munger’s four principles of investing</a></li>
-<li class="chapter" data-level="2.2" data-path="town.html"><a href="town.html#five-and-a-half-moats"><i class="fa fa-check"></i><b>2.2</b> Five and a half Moats</a></li>
+<li class="chapter" data-level="2.2" data-path="town.html"><a href="town.html#moat"><i class="fa fa-check"></i><b>2.2</b> Five and a half Moats</a></li>
 <li class="chapter" data-level="2.3" data-path="town.html"><a href="town.html#big-four-numbers"><i class="fa fa-check"></i><b>2.3</b> Big four numbers</a></li>
 <li class="chapter" data-level="2.4" data-path="town.html"><a href="town.html#management-numbers"><i class="fa fa-check"></i><b>2.4</b> Management numbers</a></li>
 </ul></li>
@@ -158,11 +162,7 @@
 <li class="chapter" data-level="7.4" data-path="global-economy.html"><a href="global-economy.html#oecd-composite-leading-indicators"><i class="fa fa-check"></i><b>7.4</b> OECD Composite Leading Indicators</a></li>
 </ul></li>
 <li class="part"><span><b>III Part III</b></span></li>
-<li class="chapter" data-level="8" data-path="simulation.html"><a href="simulation.html"><i class="fa fa-check"></i><b>8</b> Asset growth simulation</a>
-<ul>
-<li class="chapter" data-level="8.1" data-path="simulation.html"><a href="simulation.html#investment-scenario"><i class="fa fa-check"></i><b>8.1</b> Investment scenario</a></li>
-<li class="chapter" data-level="8.2" data-path="simulation.html"><a href="simulation.html#simulation-1"><i class="fa fa-check"></i><b>8.2</b> Simulation</a></li>
-</ul></li>
+<li class="chapter" data-level="8" data-path="simulation.html"><a href="simulation.html"><i class="fa fa-check"></i><b>8</b> Asset growth simulation</a></li>
 <li class="chapter" data-level="" data-path="resources.html"><a href="resources.html"><i class="fa fa-check"></i>Resources</a></li>
 <li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
 <li class="divider"></li>
@@ -187,76 +187,23 @@
             <section class="normal" id="section-">
 <div id="simulation" class="section level1" number="8">
 <h1><span class="header-section-number">Chapter 8</span> Asset growth simulation</h1>
-<div id="investment-scenario" class="section level2" number="8.1">
-<h2><span class="header-section-number">8.1</span> Investment scenario</h2>
-<table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; ">
-<caption>
-<span id="tab:unnamed-chunk-71">Table 8.1: </span>Assumed investment scenario
-</caption>
-<thead>
-<tr>
-<th style="text-align:left;">
-Variable
-</th>
-<th style="text-align:left;">
-Assumption (thousand USD)
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-Initial investment
-</td>
-<td style="text-align:left;">
-20
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Monthly investment
-</td>
-<td style="text-align:left;">
-5
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Investment increment per year
-</td>
-<td style="text-align:left;">
-5%
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Target profit
-</td>
-<td style="text-align:left;">
-20%
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Inflation
-</td>
-<td style="text-align:left;">
-2%
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div id="simulation-1" class="section level2" number="8.2">
-<h2><span class="header-section-number">8.2</span> Simulation</h2>
-<div class="figure"><span id="fig:unnamed-chunk-72"></span>
-<img src="guide-to-wise-investing_files/figure-html/unnamed-chunk-72-1.png" alt="Simulated asset growth" width="100%" />
+<p>In the Shiny web application embedded below, you can freely tune your investment scenario and see how your asset will grow over time. Specifically, you can choose 6 parameters depending on the financial situation surrounding you:</p>
+<ol style="list-style-type: decimal">
+<li>Initial amount of investment in thousand USD</li>
+<li>Investment amount per month</li>
+<li>Increment of monthly investment per year</li>
+<li>Your target profit</li>
+<li>Annual inflation rate</li>
+<li>Total duration of investment</li>
+</ol>
+<div class="figure"><span id="fig:unnamed-chunk-71"></span>
+<iframe src="https://junghoonshin.shinyapps.io/asset-growth-simulation/?showcase=0" width="100%" height="1000px">
+</iframe>
 <p class="caption">
-Figure 8.1: Simulated asset growth
+Figure 8.1: A simple Shiny app for asset growth simulation. The live version is available at <a href="https://junghoonshin.shinyapps.io/asset-growth-simulation/" class="uri">https://junghoonshin.shinyapps.io/asset-growth-simulation/</a>.
 </p>
 </div>
 
-</div>
 </div>
             </section>
 

@@ -49,8 +49,7 @@ fig:unnamed-chunk-65
 fig:unnamed-chunk-67
 fig:unnamed-chunk-69
 fig:unnamed-chunk-70
-tab:unnamed-chunk-71
-fig:unnamed-chunk-72
+fig:unnamed-chunk-71
 buffett
 rule-no.-1
 value-investing
@@ -63,7 +62,7 @@ ignoring-market-noise
 index-funds
 town
 charlie-mungers-four-principles-of-investing
-five-and-a-half-moats
+moat
 big-four-numbers
 management-numbers
 business
@@ -94,5 +93,3 @@ gdp-growth
 inflation
 oecd-composite-leading-indicators
 simulation
-investment-scenario
-simulation-1

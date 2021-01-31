@@ -5,7 +5,7 @@ bookdown::gitbook:
   css: style.css
   highlight: tango
   includes:
-    in_header: google_analytics.html
+    in_header: in_header.html
   config:
     toc:
       before: |

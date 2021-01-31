@@ -2,51 +2,16 @@
 
 # Asset growth simulation {#simulation}
 
-## Investment scenario
+In the Shiny web application embedded below, you can freely tune your investment scenario and see how your asset will grow over time. Specifically, you can choose 6 parameters depending on the financial situation surrounding you:
 
-```{r}
-scenario = tibble(Variable = c("Initial investment", "Monthly investment", "Investment increment per year", "Target profit", "Inflation"),
-                  `Assumption (thousand USD)` = c("20", "5", "5%", "20%", "2%"))
+1. Initial amount of investment in thousand USD
+2. Investment amount per month
+3. Increment of monthly investment per year
+4. Your target profit
+5. Annual inflation rate
+6. Total duration of investment
 
-scenario %>% 
-  kbl(escape = F, col.names = colnames(.), caption = "Assumed investment scenario") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
-                full_width = F, position = "left")
+```{r, fig.cap = "A simple Shiny app for asset growth simulation. The live version is available at https://junghoonshin.shinyapps.io/asset-growth-simulation/."}
+include_app("https://junghoonshin.shinyapps.io/asset-growth-simulation/", height = "1000px")
 ```
 
-## Simulation
-
-```{r, cache = T, fig.width = 7, fig.height = 4, fig.cap = "Simulated asset growth"}
-annual_return = function(initial_investment, annual_increment, profit, duration, year) {
-  sum(initial_investment * annual_increment^(year - 1) * profit^(1:12/12)) * profit^(duration - year)
-}
-
-annual_return = Vectorize(annual_return, "year")
-
-final_return = function(principal, initial_investment, annual_increment, profit, duration, inflation) {
-  unadjusted_return = (principal * profit^duration) + sum(annual_return(initial_investment, annual_increment, profit, duration, 1:duration))
-  adjusted_return = ((principal * profit^duration) + sum(annual_return(initial_investment, annual_increment, profit, duration, 1:duration))) / inflation^duration
-  return(c(unadjusted = unadjusted_return, adjusted = adjusted_return))
-}
-
-final_return = Vectorize(final_return, "duration")
-
-return_simulation = final_return(principal = 20/1000, initial_investment = 5/1000, annual_increment = 1.05, profit = 1.2, duration = 1:30, inflation = 1.02) %>% 
-  t %>% 
-  as_tibble %>%
-  mutate(year = row_number())
-
-return_simulation %<>% bind_rows(tibble(unadjusted = 20/1000, adjusted = 20/1000, year = 0), .)
-
-return_simulation %<>%
-  pivot_longer(-year, names_to = "adjustment", values_to = "amount") %>%
-  mutate(adjustment = factor(adjustment, levels = c("unadjusted", "adjusted")))
-
-return_simulation %>% ggplot(mapping = aes(x = year, y = amount)) +
-  geom_line(mapping = aes(color = adjustment), size = 1) +
-  scale_x_continuous(expand = c(0, 0)) +
-  scale_color_brewer(type = "qual", labels = c("Total return", "Inflation-adjusted return"), guide = guide_legend(title = NULL)) +
-  labs(x = "Years from now", y = "Asset (million USD)") +
-  theme(legend.position = c(0, 1), legend.justification = c(0, 1), legend.key = element_rect(fill = "transparent"), legend.background = element_rect(fill = "transparent"),
-        plot.margin = unit(c(5.5, 11, 5.5, 5.5), "points"))
-```
