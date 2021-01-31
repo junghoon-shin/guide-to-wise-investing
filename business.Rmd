@@ -292,7 +292,7 @@ ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align
           heights = c(legend_ratio, legend_ratio, legend_ratio, 1))
 ```
 
-## Investment decision^[The decision is made by analyzing only numerical financial data, which do not represent the value of a company as a whole. For example, the value of an early-stage company with zero or negative earnings cannot be determined based on numbers, but rather should be based on its mission, technology, management, culture, and so on, as well as the industry status overall.]
+## Investment decision^[The decision is made by analyzing only numerical data, which do not represent the value of a business as a whole. For example, the value of an early-stage company with zero or negative earnings cannot be determined based on numbers, but rather should be assessed based on its mission, technology, management, and culture, as well as the state of the industry overall.]
 
 ```{r, fig.width = 7, fig.height = (nrow(company) + 6)/4, fig.cap = "Investment decision made by a fundamental analysis-based algorithm for the listed companies"}
 company_decision = company %>% 
