@@ -1,3 +1,6 @@
+.book.font-family-1, .book .book-header, .book .book-summary {
+  font-family: 'Lato', 'Open Sans', sans-serif;
+}
 p.caption {
   color: #777;
   margin-top: 10px;

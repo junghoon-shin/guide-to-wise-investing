@@ -4,7 +4,7 @@
 
 In the Shiny web application embedded below, you can freely tune your investment scenario and see how your asset will grow over time. Specifically, you can choose 6 parameters depending on the financial situation surrounding you:
 
-1. Initial amount of investment in thousand USD
+1. Initial amount of investment
 2. Investment amount per month
 3. Increment of monthly investment per year
 4. Your target profit
