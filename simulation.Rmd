@@ -11,6 +11,14 @@ In the Shiny web application embedded below, you can freely tune your investment
 5. Annual inflation rate
 6. Total duration of investment
 
-```{r, fig.cap = "A simple Shiny app for asset growth simulation. The live version is available at https://junghoonshin.shinyapps.io/asset-growth-simulation/."}
-include_app("https://junghoonshin.shinyapps.io/asset-growth-simulation/", height = "1200px")
+## Simulation in USD
+
+```{r, fig.cap = "Shiny web application for asset growth simulation in USD. The live version is available at https://junghoonshin.shinyapps.io/asset-growth-simulation-usd/."}
+include_app("https://junghoonshin.shinyapps.io/asset-growth-simulation-usd/", height = "1000px")
+```
+
+## Simulation in KRW
+
+```{r, fig.cap = "Shiny web application for asset growth simulation in KRW. The live version is available at https://junghoonshin.shinyapps.io/asset-growth-simulation-krw/."}
+include_app("https://junghoonshin.shinyapps.io/asset-growth-simulation-krw/", height = "1000px")
 ```
