@@ -9,7 +9,7 @@ In the Shiny web application embedded below, you can freely tune your investment
 3. Increment of monthly investment per year
 4. Your target profit
 5. Annual inflation rate
-6. Total duration of investment
+6. Total period of investment
 
 ## Simulation in USD
 
