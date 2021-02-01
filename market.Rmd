@@ -95,5 +95,5 @@ Project %>% ggplot(mapping = aes(x = Country, y = `Projected Annual Return`)) +
   scale_fill_manual(breaks = c("-1", "1", "0"), values = brewer_pal("qual", 4)(3), guide = F) +
   coord_flip() +
   labs(x = NULL) +
-  theme(axis.ticks.y = element_blank(), plot.margin = unit(c(5.5, 15, 5.5, 5.5), "points"))
+  theme(axis.ticks.y = element_blank())
 ```

@@ -386,7 +386,7 @@ close_trend = function(close, industry) {
     scale_color_manual(values = qual_col_vector[-4][1:ncompany], 
                        guide = guide_legend(title = NULL, nrow = legend_nrow)) +
     labs(x = "Recent 6 months", y = "Normalized close price") +
-    theme(legend.position = "bottom", legend.key = element_rect(fill = "transparent"), plot.margin = unit(c(5.5, 11, 5.5, 5.5), "points"))
+    theme(legend.position = "bottom", legend.key = element_rect(fill = "transparent"))
   
   ggarrange(g + guides(color = F), ggdraw(get_legend(g)), nrow = 2, ncol = 1, heights = c(8, legend_nrow))
 }
