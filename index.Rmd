@@ -18,13 +18,13 @@ description: "Investment data book containing up-to-date company financials, ind
 ---
 
 ```{r, include = F}
-# automatically create a bib database for R packages
+# Automatically create a bib database for R packages
 
 knitr::write_bib(c(.packages(), "bookdown", "knitr", "rmarkdown"), "packages.bib")
 ```
 
 ```{r, include = F}
-# initialize environment
+# Initialize environment
 
 library(pacman)
 
@@ -46,18 +46,20 @@ p_load(bookdown,
        pander,
        RColorBrewer,
        scales,
+       stringi,
        tidyverse,
        XML)
 
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, out.width = "100%")
 
 theme_set(theme_bw(base_family = "Lato"))
+
 theme_update(plot.title = element_text(hjust = 0.5, vjust = 0.5),
              plot.margin = unit(c(5.5, 11, 5.5, 5.5), "points"))
 ```
 
 ```{r}
-# define functions
+# Define functions
 
 read_html = function(url, which = integer(), header = T, trim = T) {
   readHTMLTable(rawToChar(GET(url)$content), which = which, header = header, trim = trim)
@@ -84,6 +86,31 @@ my_datatable = function(tbl, paging = F, pageLength = 5, scrollY = unit(700, "li
               caption = caption) %>%
     formatStyle(columns = 1:ncol(tbl), fontSize = "14px")
 }
+
+make_percent = function(x, times) {
+  (x * times) %>% round(1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim %>% {ifelse(. == "NA", ., str_c(., "%"))}
+}
+
+make_readable = function(x) case_when(abs(x) >= 1e12 ~ str_c(round(x/1e12, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "T"),
+                                      abs(x) >= 1e9 ~ str_c(round(x/1e9, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "B"),
+                                      abs(x) >= 1e6 ~ str_c(round(x/1e6, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "M"),
+                                      abs(x) >= 1e3 ~ str_c(round(x/1e3, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "k"),
+                                      T ~ round(x, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim)
+```
+
+```{r}
+# Define variables
+
+qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+qual_col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals))) %>% unique
+
+today = Sys.Date() %>% as.character %>% str_replace(" ", "")
+monthago = (Sys.Date() - 30) %>% as.character %>% str_replace(" ", "")
+threeyearsago = (Sys.Date() - 365 * 3) %>% as.character %>% str_replace(" ", "")
+fiveyearsago = (Sys.Date() - 365 * 5) %>% as.character %>% str_replace(" ", "")
+twentyyearsago = (Sys.Date() - 365 * 20) %>% as.character %>% str_replace(" ", "")
+thirtyyearsago = (Sys.Date() - 365 * 30) %>% as.character %>% str_replace(" ", "")
+thisyear = today %>% str_extract("^[0-9]+") %>% as.numeric
 ```
 
 # Preface {#preface .unnumbered}

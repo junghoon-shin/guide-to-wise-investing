@@ -2,7 +2,7 @@
 
 # Asset growth simulation {#simulation}
 
-In the Shiny web application embedded below, you can freely tune your investment scenario and see how your asset will grow over time. Specifically, you can choose 6 parameters depending on the financial situation surrounding you:
+In the Shiny web application embedded below, you can freely tune your investment scenario and see how your asset will grow over time. Specifically, you can choose 6 parameters depending on your financial situation:
 
 1. Initial amount of investment
 2. Investment amount per month

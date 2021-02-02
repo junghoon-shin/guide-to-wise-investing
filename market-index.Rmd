@@ -1,4 +1,4 @@
-# Asset evaluation {#asset}
+# Index evaluation {#market-index}
 
 ## Index trend (6 months)^[Data are from [Yahoo Finance](https://finance.yahoo.com/).]
 
@@ -33,7 +33,7 @@ index_plot = function(indexdata, category, title) {
   Index %>% filter(Category == category & !is.na(Close)) %>%
     ggplot(mapping = aes(x = Date, y = Close)) + 
     geom_ribbon(mapping = aes(ymin = Low, ymax = High), fill = "blue", alpha = 0.15) +
-    geom_line(color = "blue", size = 1) +
+    geom_line(color = "blue") +
     scale_x_date(expand = c(0, 0)) +
     labs(x = "Recent 6 months", y = title)
 }
@@ -144,7 +144,7 @@ index_plot_fed = function(feddata, category, y) {
   feddata %>% 
     filter(!is.na(!!category)) %>%
     ggplot(mapping = aes(x = DATE, y = !!category)) +
-    geom_line(color = "blue", size = 1) +
+    geom_line(color = "blue") +
     scale_x_date(expand = c(0, 0)) +
     labs(x = "Recent 30 years", y = y)
 }
@@ -186,7 +186,7 @@ index_plot_fed(Buffett, Buffett, "Buffett indicator")
 index_plot_fed(US, Shiller, "Shiller P/E ratio")
 ```
 
-## Asset correlation
+## Index correlation
 
 ```{r, include = F}
 USdaily = list(Wilshire5000, WilshireREIT, Gold, WTI, AAA, USDKRW) %>%
@@ -241,22 +241,42 @@ relabel = function(symbol) c(WILL5000PRFC = "Wilshire 5000",
 colnames(UScor) %<>% relabel
 rownames(UScor) %<>% relabel
 
+heatmap_body_size = unit(3.5, "inch")
+
 h = Heatmap(UScor, 
         name = "Pearson's r", 
-        width = unit(3, "inch"), height = unit(3, "inch"), 
+        width = heatmap_body_size, height = heatmap_body_size, 
         row_names_gp = gpar(fontsize = 10),
         column_names_gp = gpar(fontsize = 10),
         heatmap_legend_param = list(legend_height = unit(1.5, "inch"))) %>%
   draw
 
 h_height = convertHeight(h@ht_list_param$height, "inch") %>% as.numeric
+
+grid_size = heatmap_body_size/nrow(UScor)
 ```
 
 ```{r, fig.width = 7, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between stock matket index, bond yields, REIT index, gold price, oil price, and USD/KRW exchange rate over the last 30 years"}
 Heatmap(UScor, 
         name = "Pearson's r", 
-        width = unit(3, "inch"), height = unit(3, "inch"), 
-        row_names_gp = gpar(fontsize = 10),
-        column_names_gp = gpar(fontsize = 10),
-        heatmap_legend_param = list(legend_height = unit(1.5, "inch")))
+        width = heatmap_body_size, height = heatmap_body_size,
+        row_names_gp = gpar(fontsize = 10, fontfamily = "Lato"),
+        column_names_gp = gpar(fontsize = 10, fontfamily = "Lato"),
+        heatmap_legend_param = list(legend_height = unit(1.5, "inch"),
+                                    title_gp = gpar(fontfamily = "Lato"),
+                                    labels_gp = gpar(fontfamily = "Lato")))
+
+UScor_clustered = UScor[row_order(h), column_order(h)]
+
+for (i in 1:ncol(UScor_clustered)) {
+  for (j in 1:nrow(UScor_clustered)) {
+    decorate_heatmap_body("Pearson's r", row_slice = 1, column_slice = 1, {
+      grid.text(label = UScor_clustered[nrow(UScor_clustered) + 1 - j, i] %>% round(2),
+                x = grid_size * i - grid_size/2, 
+                y = grid_size * j - grid_size/2, 
+                just = "center",
+                gp = gpar(fontsize = 10, fontfamily = "Lato"))
+    })
+  }
+}
 ```

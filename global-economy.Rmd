@@ -3,7 +3,7 @@
 ## GDP
 
 ```{r}
-country_ranking = read_html("https://www.worldometers.info/gdp/gdp-by-country/", which = 1, header = T) %>% pull(Country) %>% .[1:15] %>% setdiff(c("Russia", "Brazil", "Mexico"))
+country_ranking = read_html("https://www.worldometers.info/gdp/gdp-by-country/", which = 1, header = T) %>% pull(Country) %>% .[1:15]
 
 download.file("https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.CD?downloadformat=csv", destfile = "gdp.zip", mode = "wb")
 
@@ -19,7 +19,7 @@ gdp %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russian Fede
   select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>% 
   pivot_longer(-`Country Name`, names_to = "Year", values_to = "GDP") %>%
   mutate(Year = as.numeric(Year)) %>%
-  filter(!is.na(GDP) & Year >= as.numeric(format(as.Date(thirtyyearsago), "%Y")) & `Country Name` %in% country_ranking) %>%
+  filter(!is.na(GDP) & Year >= (thisyear - 30) & `Country Name` %in% country_ranking) %>%
   mutate(`Country Name` = factor(`Country Name`, levels = country_ranking))
 ```
 
@@ -51,7 +51,7 @@ gdp_growth %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russi
   select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>% 
   pivot_longer(-`Country Name`, names_to = "Year", values_to = "GDP growth") %>%
   mutate(`GDP growth` = `GDP growth`/100, Year = as.numeric(Year)) %>%
-  filter(!is.na(`GDP growth`) & Year >= as.numeric(format(as.Date(thirtyyearsago), "%Y")) & `Country Name` %in% country_ranking) %>%
+  filter(!is.na(`GDP growth`) & Year >= (thisyear - 30) & `Country Name` %in% country_ranking) %>%
   mutate(`Country Name` = factor(`Country Name`, levels = country_ranking))
 ```
 
@@ -83,7 +83,7 @@ inflation %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russia
   select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>% 
   pivot_longer(-`Country Name`, names_to = "Year", values_to = "Inflation") %>%
   mutate(Inflation = Inflation/100, Year = as.numeric(Year)) %>%
-  filter(!is.na(Inflation) & Year >= as.numeric(format(as.Date(thirtyyearsago), "%Y")) & `Country Name` %in% country_ranking) %>%
+  filter(!is.na(Inflation) & Year >= (thisyear - 30) & `Country Name` %in% country_ranking) %>%
   mutate(`Country Name` = factor(`Country Name`, levels = country_ranking))
 
 ```
@@ -95,6 +95,7 @@ inflation %>%
   scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
   scale_y_continuous(labels = percent) +
   scale_color_manual(values = qual_col_vector[1:length(unique(inflation$`Country Name`))], guide = guide_legend(title = NULL)) +
+  coord_cartesian(ylim = c(min(inflation$Inflation), 0.25)) +
   labs(y = "Annual inflation") +
   theme(legend.key = element_rect(fill = "transparent"))
 ```
@@ -102,17 +103,17 @@ inflation %>%
 ## OECD Composite Leading Indicators
 
 ```{r}
-US = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "USALORSGPNOSTSAM", "&cosd=", threeyearsago, "&coed=", today,
-                              "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", threeyearsago), col_names = T)
+US = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "USALORSGPNOSTSAM", "&cosd=", fiveyearsago, "&coed=", today,
+                              "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", fiveyearsago), col_names = T)
 
-China = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "CHNLORSGPNOSTSAM", "&cosd=", threeyearsago, "&coed=", today,
-                              "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", threeyearsago), col_names = T)
+China = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "CHNLORSGPNOSTSAM", "&cosd=", fiveyearsago, "&coed=", today,
+                              "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", fiveyearsago), col_names = T)
 
-Euro = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "EA19LORSGPNOSTSAM", "&cosd=", threeyearsago, "&coed=", today,
-                              "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", threeyearsago), col_names = T)
+Euro = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "EA19LORSGPNOSTSAM", "&cosd=", fiveyearsago, "&coed=", today,
+                              "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", fiveyearsago), col_names = T)
 
-Korea = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "KORLOLITONOSTSAM", "&cosd=", threeyearsago, "&coed=", today,
-                              "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", threeyearsago), col_names = T)
+Korea = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "KORLOLITONOSTSAM", "&cosd=", fiveyearsago, "&coed=", today,
+                              "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", fiveyearsago), col_names = T)
 
 CLI = list(US, China, Euro, Korea) %>%
   reduce(full_join) %>%

@@ -5,19 +5,9 @@
 ## Comprehensive financials^[Data are automatically retrieved from [Google Finance](https://www.google.com/finance) and [Yahoo Finance](https://finance.yahoo.com/).]
 
 ```{r}
-qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
-qual_col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals))) %>% unique
-
 confident_return = 0.05
 target_return = 0.2
 per_no_growth = 7
-
-today = Sys.Date() %>% as.character %>% str_replace(" ", "")
-monthago = (Sys.Date() - 30) %>% as.character %>% str_replace(" ", "")
-threeyearsago = (Sys.Date() - 365 * 3) %>% as.character %>% str_replace(" ", "")
-twentyyearsago = (Sys.Date() - 365 * 20) %>% as.character %>% str_replace(" ", "")
-thirtyyearsago = (Sys.Date() - 365 * 30) %>% as.character %>% str_replace(" ", "")
-thisyear = today %>% str_extract("^[0-9]+") %>% as.numeric
 
 AAA_return = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "DAAA", "&cosd=", monthago, "&coed=", today,
                             "&fq=Daily&fam=avg&vintage_date=", today, "&revision_date=", today, "&nd=", monthago), col_names = T) %>% 
@@ -178,16 +168,6 @@ company %>% write_sheet(ss = drive_get("Investment/Valuation"), sheet = "Valuati
 ```
 
 ```{r watchlist, fig.cap = "Comprehensive financial data of my watchlist"}
-make_percent = function(x, times) {
-  (x * times) %>% round(1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim %>% {ifelse(. == "NA", ., str_c(., "%"))}
-}
-
-make_readable = function(x) case_when(abs(x) >= 1e12 ~ str_c(round(x/1e12, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "T"),
-                                      abs(x) >= 1e9 ~ str_c(round(x/1e9, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "B"),
-                                      abs(x) >= 1e6 ~ str_c(round(x/1e6, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "M"),
-                                      abs(x) >= 1e3 ~ str_c(round(x/1e3, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "k"),
-                                      T ~ round(x, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim)
-
 company_display = company %>% 
   select(-c(Ticker, Yahoo, Ticker3)) %>%
   mutate(Changepct = make_percent(Changepct, 1)) %>%
@@ -281,12 +261,14 @@ f9 = financial_plot(company_plot, Quarterly_revenue_growth, "Quarterly revenue g
 n_industry = company_plot$Industry %>% unique %>% length
 
 legend_ratio = (nrow(company_plot) + 2) / (ceiling(n_industry/3) + 1)
+name_width = 1.55 * max(stri_width(company_plot$Name)) / stri_width("Korea Shipbuilding &Offshore Engn Co Ltd")
+plot_width = 4.55 - name_width
 ```
 
 ```{r, fig.width = 7, fig.height = (nrow(company_plot) + 2) * 3/4 + (ceiling(n_industry/3) + 1)/4, fig.cap = "Key financials of my watchlist"}
-ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align = "h", widths = c(1.55, 1, 1, 1)), 
-          ggarrange(f1 + guides(fill = F), f5, f6, f7, nrow = 1, ncol = 4, align = "h", widths = c(1.55, 1, 1, 1)),
-          ggarrange(f1 + guides(fill = F), f8, f9, nrow = 1, ncol = 3, align = "h", widths = c(1.55, 1.5, 1.5)),
+ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))), 
+          ggarrange(f1 + guides(fill = F), f5, f6, f7, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))),
+          ggarrange(f1 + guides(fill = F), f8, f9, nrow = 1, ncol = 3, align = "h", widths = c(name_width, rep(plot_width/2, 2))),
           get_legend(f1), 
           nrow = 4, ncol = 1, 
           heights = c(legend_ratio, legend_ratio, legend_ratio, 1))
