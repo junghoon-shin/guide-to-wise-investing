@@ -108,7 +108,7 @@ qual_col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qu
 show_col(qual_col_vector)
 
 front = c(5, 6)
-back = c(12:15, 17, 22, 24, 26)
+back = c(10, 12:15, 17, 22, 24, 26)
 qual_col_vector = c(qual_col_vector[front], qual_col_vector[-c(front, back)], qual_col_vector[back])
 
 today = Sys.Date() %>% as.character %>% str_replace(" ", "")
