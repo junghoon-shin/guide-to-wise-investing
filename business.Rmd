@@ -365,7 +365,7 @@ close_trend = function(close, industry) {
     geom_hline(yintercept = 100, linetype = "dashed") +
     geom_line(mapping = aes(color = Name)) +
     scale_x_date(expand = c(0, 0)) +
-    scale_color_manual(values = qual_col_vector[-4][1:ncompany], 
+    scale_color_manual(values = qual_col_vector[-6][1:ncompany], 
                        guide = guide_legend(title = NULL, nrow = legend_nrow)) +
     labs(x = "Recent 6 months", y = "Normalized closing price") +
     theme(legend.position = "bottom", legend.key = element_rect(fill = "transparent"))
@@ -373,7 +373,7 @@ close_trend = function(close, industry) {
   ggarrange(g + guides(color = F), ggdraw(get_legend(g)), nrow = 2, ncol = 1, heights = c(8, legend_nrow))
 }
 
-interesting_sectors = company_close %>% select(Name, Industry) %>% unique %>% count(Industry) %>% arrange(desc(n)) %>% pull(Industry)
+interesting_sectors = company_close %>% select(Name, Industry) %>% unique %>% count(Industry) %>% arrange(desc(n), Industry) %>% pull(Industry)
 
 fig_height = (8 + get_legend_nrow(company_close, interesting_sectors))/2.5
 ```

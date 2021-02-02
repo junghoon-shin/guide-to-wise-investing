@@ -30,7 +30,7 @@ g = gdp %>%
   geom_line(mapping = aes(color = Country)) +
   scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
   scale_y_continuous(trans = "log10") +
-  scale_color_manual(values = qual_col_vector[1:length(unique(gdp$Country))], guide = guide_legend(title = NULL)) +
+  scale_color_manual(values = qual_col_vector[-6][1:length(unique(gdp$Country))], guide = guide_legend(title = NULL)) +
   theme(legend.key = element_rect(fill = "transparent"))
 
 ggplotly(g) %>% layout(xaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
@@ -66,7 +66,7 @@ g = gdp_growth %>%
   geom_line(mapping = aes(color = Country)) +
   scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
   scale_y_continuous(labels = percent) +
-  scale_color_manual(values = qual_col_vector[1:length(unique(gdp_growth$Country))], guide = guide_legend(title = NULL)) +
+  scale_color_manual(values = qual_col_vector[-6][1:length(unique(gdp_growth$Country))], guide = guide_legend(title = NULL)) +
   theme(legend.key = element_rect(fill = "transparent"))
 
 ggplotly(g) %>% layout(xaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
@@ -102,7 +102,7 @@ g = inflation %>%
   geom_line(mapping = aes(color = Country)) +
   scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
   scale_y_continuous(labels = percent) +
-  scale_color_manual(values = qual_col_vector[1:length(unique(inflation$Country))], guide = guide_legend(title = NULL)) +
+  scale_color_manual(values = qual_col_vector[-6][1:length(unique(inflation$Country))], guide = guide_legend(title = NULL)) +
   coord_cartesian(ylim = c(min(inflation$`Annual inflation`), 0.25)) +
   theme(legend.key = element_rect(fill = "transparent"))
 

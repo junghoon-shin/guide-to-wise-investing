@@ -51,7 +51,7 @@ p_load(bookdown,
        tidyverse,
        XML)
 
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, out.width = "100%", cache = T)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, out.width = "100%")
 
 theme_set(theme_bw(base_family = "Lato"))
 
@@ -104,6 +104,12 @@ make_readable = function(x) case_when(abs(x) >= 1e12 ~ str_c(round(x/1e12, 1) %>
 
 qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
 qual_col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals))) %>% unique
+
+show_col(qual_col_vector)
+
+front = c(5, 6)
+back = c(12:15)
+qual_col_vector = c(qual_col_vector[front], qual_col_vector[-c(front, back)], qual_col_vector[back])
 
 today = Sys.Date() %>% as.character %>% str_replace(" ", "")
 monthago = (Sys.Date() - 30) %>% as.character %>% str_replace(" ", "")

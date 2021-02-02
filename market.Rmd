@@ -1,6 +1,6 @@
 # Market evaluation {#market}
 
-## Market capitalization^[Data are from [World Bank](https://data.worldbank.org/indicator/CM.MKT.LCAP.CD?view=chart). Only the previous 5-year period for which top 3 countries' data are available is shown.]
+## Market capitalization^[`r str_c('Data are from [World Bank](https://data.worldbank.org/indicator/CM.MKT.LCAP.CD?view=chart). Only years for which top 3 countries\' data are available since ', thisyear - 5, ' are shown.')`]
 
 ```{r}
 country_ranking = read_html("https://www.worldometers.info/gdp/gdp-by-country/", which = 1, header = T) %>% pull(Country)
@@ -64,7 +64,7 @@ marketcap %>%
   facet_grid(cols = vars(Year))
 ```
 
-## GDP and Buffett indicator^[Data are retrieved from [Gurufocus.com](https://www.gurufocus.com/global-market-valuation.php).]
+## GDP and Buffett indicator^[Data are from [Gurufocus.com](https://www.gurufocus.com/global-market-valuation.php).]
 
 ```{r}
 Buffett = read_html("https://www.gurufocus.com/global-market-valuation.php", which = 3, header = T) %>% 
