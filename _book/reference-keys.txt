@@ -65,7 +65,7 @@ town
 charlie-mungers-four-principles-of-investing
 moat
 big-four-numbers
-management-numbers
+management
 business
 comprehensive-financials
 key-financials
