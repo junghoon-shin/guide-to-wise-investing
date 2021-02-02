@@ -363,7 +363,7 @@ close_trend = function(close, industry) {
   g = tmp %>%
     ggplot(mapping = aes(x = Date, y = Close)) +
     geom_hline(yintercept = 100, linetype = "dashed") +
-    geom_line(mapping = aes(color = Name), size = 1) +
+    geom_line(mapping = aes(color = Name)) +
     scale_x_date(expand = c(0, 0)) +
     scale_color_manual(values = qual_col_vector[-4][1:ncompany], 
                        guide = guide_legend(title = NULL, nrow = legend_nrow)) +

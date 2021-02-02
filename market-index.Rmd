@@ -8,6 +8,8 @@ Yahoo = c(USDKRW = "KRW=X",
           NASDAQ = "^IXIC",
           KOSPI = "^KS11",
           KOSDAQ = "^KQ11",
+          EUROSTOXX = "EXSG.F",
+          MSCIEM = "EEM",
           REIT = "^WILREIT",
           Gold = "GC=F",
           Copper = "HG=F",
@@ -57,6 +59,14 @@ index_plot(Index, "S&P500", "S&P 500")
 
 ```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "NASDAQ Composite Index"}
 index_plot(Index, "NASDAQ", "NASDAQ")
+```
+
+```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "iShares EURO STOXX Select Dividend 30 UCITS ETF"}
+index_plot(Index, "EUROSTOXX", "EURO STOXX 30")
+```
+
+```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "iShares MSCI Emerging Markets ETF"}
+index_plot(Index, "MSCIEM", "MSCI EM")
 ```
 
 ```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Wilshire US REIT Index"}
@@ -256,7 +266,7 @@ h_height = convertHeight(h@ht_list_param$height, "inch") %>% as.numeric
 grid_size = heatmap_body_size/nrow(UScor)
 ```
 
-```{r, fig.width = 7, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between stock matket index, bond yields, REIT index, gold price, oil price, and USD/KRW exchange rate over the last 30 years"}
+```{r, fig.width = 7, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between the stock matket index, REIT index, gold price, copper price, crude oil price, bond yields, and USD/KRW exchange rate over the last 30 years (averaged over stratified 5-year intervals)"}
 Heatmap(UScor, 
         name = "Pearson's r", 
         width = heatmap_body_size, height = heatmap_body_size,

@@ -56,7 +56,7 @@ marketcap %<>% mutate(`Country Name` = factor(`Country Name`, levels = country_l
 marketcap %>% 
   ggplot(mapping = aes(x = `Country Name`, y = Marketcap/1e12)) +
   geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
-  geom_text(mapping = aes(y = Marketcap/1e12 + 0.5, label = Proportion), hjust = 0, size = 10 / .pt, family = "Lato") + 
+  geom_text(mapping = aes(y = Marketcap/1e12 + 1, label = Proportion), hjust = 0, size = 9 / .pt, family = "Lato") + 
   scale_y_continuous(expand = c(0, 0), limits = c(0, max(marketcap$Marketcap/1e12) * 1.3)) +
   coord_flip() +
   labs(x = NULL, y = "Market capitalization (trillion USD)") +
@@ -150,9 +150,9 @@ cutoff = max(which(Project$Country %>% rev %>% as.character %in% c("Turkey", "In
 Project %>% ggplot(mapping = aes(x = Country, y = `Projected Annual Return`)) +
   annotation_custom(rectGrob(gp = gpar(col = "black", fill = "transparent")), xmin = cutoff) +
   annotation_custom(rectGrob(gp = gpar(col = "black", fill = "transparent")), xmax = cutoff) +
-  annotation_custom(textGrob("Developed market", x = unit(0.95, "npc"), hjust = 1, vjust = -2, gp = gpar(fontface = "bold")),
+  annotation_custom(textGrob("Developed market", x = unit(0.95, "npc"), hjust = 1, vjust = -2, gp = gpar(fontface = "bold", fontfamily = "Lato")),
                     xmin = cutoff, xmax = cutoff) +
-  annotation_custom(textGrob("Emerging market", x = unit(0.95, "npc"), hjust = 1, vjust = -2, gp = gpar(fontface = "bold")),
+  annotation_custom(textGrob("Emerging market", x = unit(0.95, "npc"), hjust = 1, vjust = -2, gp = gpar(fontface = "bold", fontfamily = "Lato")),
                     xmin = -Inf, xmax = -Inf) +
   geom_col(mapping = aes(fill = factor(sign(`Projected Annual Return`))), color = "black", width = 0.7) +
   scale_y_continuous(breaks = pretty_breaks(), labels = percent) +

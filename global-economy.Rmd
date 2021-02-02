@@ -17,21 +17,25 @@ gdp %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russian Fede
                                                                    "Korea, Rep." = "South Korea",
                                                                    "Korea, Dem. People's Rep." = "North Korea"))) %>%
   select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>% 
-  pivot_longer(-`Country Name`, names_to = "Year", values_to = "GDP") %>%
+  pivot_longer(-`Country Name`, names_to = "Year", values_to = "GDP (USD)") %>%
   mutate(Year = as.numeric(Year)) %>%
-  filter(!is.na(GDP) & Year >= (thisyear - 30) & `Country Name` %in% country_ranking) %>%
-  mutate(`Country Name` = factor(`Country Name`, levels = country_ranking))
+  filter(!is.na(`GDP (USD)`) & Year >= (thisyear - 30) & `Country Name` %in% country_ranking) %>%
+  mutate(`Country Name` = factor(`Country Name`, levels = country_ranking)) %>%
+  rename(Country = "Country Name")
 ```
 
-```{r, fig.width = 7, fig.height = 4, fig.cap = str_c("GDP over the last 30 years of ", length(unique(gdp$`Country Name`)), " major countries")}
-gdp %>% 
-  ggplot(mapping = aes(x = Year, y = `GDP`)) +
-  geom_line(mapping = aes(color = `Country Name`)) +
+```{r, fig.width = 7, fig.height = 6, fig.cap = str_c("GDP over the last 30 years of ", length(unique(gdp$Country)), " major countries")}
+g = gdp %>% 
+  ggplot(mapping = aes(x = Year, y = `GDP (USD)`)) +
+  geom_line(mapping = aes(color = Country)) +
   scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
   scale_y_continuous(trans = "log10") +
-  scale_color_manual(values = qual_col_vector[1:length(unique(gdp$`Country Name`))], guide = guide_legend(title = NULL)) +
-  labs(y = "GDP (current USD)") +
+  scale_color_manual(values = qual_col_vector[1:length(unique(gdp$Country))], guide = guide_legend(title = NULL)) +
   theme(legend.key = element_rect(fill = "transparent"))
+
+ggplotly(g) %>% layout(xaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
+                       yaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
+                       legend = list(x = 1.02, y = 0.5, font = list(size = 14)))
 ```
 
 ## GDP growth
@@ -49,21 +53,25 @@ gdp_growth %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russi
                                                                           "Korea, Rep." = "South Korea",
                                                                           "Korea, Dem. People's Rep." = "North Korea"))) %>%
   select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>% 
-  pivot_longer(-`Country Name`, names_to = "Year", values_to = "GDP growth") %>%
-  mutate(`GDP growth` = `GDP growth`/100, Year = as.numeric(Year)) %>%
-  filter(!is.na(`GDP growth`) & Year >= (thisyear - 30) & `Country Name` %in% country_ranking) %>%
-  mutate(`Country Name` = factor(`Country Name`, levels = country_ranking))
+  pivot_longer(-`Country Name`, names_to = "Year", values_to = "Annual GDP growth") %>%
+  mutate(`Annual GDP growth` = `Annual GDP growth`/100, Year = as.numeric(Year)) %>%
+  filter(!is.na(`Annual GDP growth`) & Year >= (thisyear - 30) & `Country Name` %in% country_ranking) %>%
+  mutate(`Country Name` = factor(`Country Name`, levels = country_ranking)) %>%
+  rename(Country = "Country Name")
 ```
 
-```{r, fig.width = 7, fig.height = 4, fig.cap = str_c("Annual GDP growth over the last 30 years of ", length(unique(gdp_growth$`Country Name`)), " major countries")}
-gdp_growth %>% 
-  ggplot(mapping = aes(x = Year, y = `GDP growth`)) +
-  geom_line(mapping = aes(color = `Country Name`)) +
+```{r, fig.width = 7, fig.height = 6, fig.cap = str_c("Annual GDP growth over the last 30 years of ", length(unique(gdp_growth$Country)), " major countries")}
+g = gdp_growth %>% 
+  ggplot(mapping = aes(x = Year, y = `Annual GDP growth`)) +
+  geom_line(mapping = aes(color = Country)) +
   scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
   scale_y_continuous(labels = percent) +
-  scale_color_manual(values = qual_col_vector[1:length(unique(gdp_growth$`Country Name`))], guide = guide_legend(title = NULL)) +
-  labs(y = "Annual GDP growth") +
+  scale_color_manual(values = qual_col_vector[1:length(unique(gdp_growth$Country))], guide = guide_legend(title = NULL)) +
   theme(legend.key = element_rect(fill = "transparent"))
+
+ggplotly(g) %>% layout(xaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
+                       yaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
+                       legend = list(x = 1.02, y = 0.5, font = list(size = 14)))
 ```
 
 ## Inflation
@@ -81,23 +89,26 @@ inflation %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russia
                                                                           "Korea, Rep." = "South Korea",
                                                                           "Korea, Dem. People's Rep." = "North Korea"))) %>%
   select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>% 
-  pivot_longer(-`Country Name`, names_to = "Year", values_to = "Inflation") %>%
-  mutate(Inflation = Inflation/100, Year = as.numeric(Year)) %>%
-  filter(!is.na(Inflation) & Year >= (thisyear - 30) & `Country Name` %in% country_ranking) %>%
-  mutate(`Country Name` = factor(`Country Name`, levels = country_ranking))
-
+  pivot_longer(-`Country Name`, names_to = "Year", values_to = "Annual inflation") %>%
+  mutate(`Annual inflation` = `Annual inflation`/100, Year = as.numeric(Year)) %>%
+  filter(!is.na(`Annual inflation`) & Year >= (thisyear - 30) & `Country Name` %in% country_ranking) %>%
+  mutate(`Country Name` = factor(`Country Name`, levels = country_ranking)) %>%
+  rename(Country = "Country Name")
 ```
 
-```{r, fig.width = 7, fig.height = 4, fig.cap = str_c("Annual inflation over the last 30 years of ", length(unique(inflation$`Country Name`)), " major countries")}
-inflation %>% 
-  ggplot(mapping = aes(x = Year, y = Inflation)) +
-  geom_line(mapping = aes(color = `Country Name`)) +
+```{r, fig.width = 7, fig.height = 6, fig.cap = str_c("Annual inflation over the last 30 years of ", length(unique(inflation$Country)), " major countries")}
+g = inflation %>% 
+  ggplot(mapping = aes(x = Year, y = `Annual inflation`)) +
+  geom_line(mapping = aes(color = Country)) +
   scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
   scale_y_continuous(labels = percent) +
-  scale_color_manual(values = qual_col_vector[1:length(unique(inflation$`Country Name`))], guide = guide_legend(title = NULL)) +
-  coord_cartesian(ylim = c(min(inflation$Inflation), 0.25)) +
-  labs(y = "Annual inflation") +
+  scale_color_manual(values = qual_col_vector[1:length(unique(inflation$Country))], guide = guide_legend(title = NULL)) +
+  coord_cartesian(ylim = c(min(inflation$`Annual inflation`), 0.25)) +
   theme(legend.key = element_rect(fill = "transparent"))
+
+ggplotly(g) %>% layout(xaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
+                       yaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
+                       legend = list(x = 1.02, y = 0.5, font = list(size = 14)))
 ```
 
 ## OECD Composite Leading Indicators
@@ -126,7 +137,7 @@ relabelCLI = function(symbol) c(USALORSGPNOSTSAM = "US",
                                 KORLOLITONOSTSAM = "Korea")[symbol]
 ```
 
-```{r, fig.width = 7, fig.height = 4, fig.cap = "OECD Composite Leading Indicators (CLIs) normalized for US, China, Euro, and South Korea"}
+```{r, fig.width = 7, fig.height = 4, fig.cap = "OECD Composite Leading Indicators (CLIs) normalized for US, China, Euro, and South Korea over the last 5 years"}
 CLI %>% 
   pivot_longer(-DATE, names_to = "Region", values_to = "CLI") %>% 
   mutate(Region = relabelCLI(Region) %>% factor(levels = c("US", "China", "Euro", "Korea"))) %>%
@@ -138,7 +149,7 @@ CLI %>%
   scale_y_continuous(labels = function(x) x + 100) +
   scale_color_brewer(type = "qual", palette = 6, guide = guide_legend(title = NULL)) +
   scale_fill_brewer(type = "qual", palette = 6, guide = guide_legend(title = NULL)) +
-  labs(x = "Recent 3 years", y = "CLI")
+  labs(x = "Year", y = "CLI")
 ```
 
 [What are OECD CLIs?](https://www.oecd.org/sdd/compositeleadingindicatorsclifrequentlyaskedquestionsfaqs.htm)

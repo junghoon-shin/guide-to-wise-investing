@@ -31,8 +31,8 @@ fig:unnamed-chunk-41
 fig:unnamed-chunk-42
 fig:unnamed-chunk-43
 fig:unnamed-chunk-44
+fig:unnamed-chunk-45
 fig:unnamed-chunk-46
-fig:unnamed-chunk-47
 fig:unnamed-chunk-48
 fig:unnamed-chunk-49
 fig:unnamed-chunk-50
@@ -40,6 +40,7 @@ fig:unnamed-chunk-51
 fig:unnamed-chunk-52
 fig:unnamed-chunk-53
 fig:unnamed-chunk-54
+fig:unnamed-chunk-55
 fig:unnamed-chunk-56
 fig:unnamed-chunk-58
 fig:unnamed-chunk-60
@@ -49,9 +50,10 @@ fig:unnamed-chunk-66
 fig:unnamed-chunk-68
 fig:unnamed-chunk-70
 fig:unnamed-chunk-72
-fig:unnamed-chunk-73
 fig:unnamed-chunk-74
 fig:unnamed-chunk-75
+fig:unnamed-chunk-76
+fig:unnamed-chunk-77
 buffett
 rule-no.-1
 value-investing
