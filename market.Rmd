@@ -107,8 +107,21 @@ g2 = combined %>%
 g_legend = get_legend(g2)
 ```
 
-```{r, fig.width = 7, fig.height = 5 * length(unique(combined$Year)), fig.cap = str_c("Market capitalization relative to GDP across ", length(unique(combined$`Country Name`)), " major countries")}
+```{r buffett, fig.width = 7, fig.height = 5 * length(unique(combined$Year)), fig.cap = str_c("Market capitalization relative to GDP across ", length(unique(combined$`Country Name`)), " major countries")}
 ggarrange(g, g_legend, widths = c(4, 1))
+```
+
+(ref:buffett-text) Same data as in Figure \@ref(fig:buffett)
+
+```{r, fig.width = 7, fig.height = 6.5 * length(unique(combined$Year)), fig.cap = "(ref:buffett-text)"}
+combined %>%
+  ggplot(mapping = aes(x = GDP/1e12, y = Marketcap/1e12)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray") +
+  geom_text(mapping = aes(label = `Country Name`), hjust = 0.5, vjust = 0.5, size = 10/.pt, family = "Lato") +
+  scale_x_continuous(trans = "log10", expand = c(0.1, 0)) +
+  scale_y_continuous(trans = "log10", expand = c(0.1, 0)) +
+  labs(x = "GDP ($Trillion)", y = "Market capitalization ($Trillion)") +
+  facet_grid(rows = vars(Year))
 ```
 
 ## GDP and Buffett indicator^[Data are from [Gurufocus.com](https://www.gurufocus.com/global-market-valuation.php).]

@@ -44,6 +44,7 @@ fig:unnamed-chunk-56
 fig:unnamed-chunk-57
 fig:unnamed-chunk-59
 fig:unnamed-chunk-61
+fig:buffett
 fig:unnamed-chunk-63
 fig:unnamed-chunk-65
 fig:unnamed-chunk-67
