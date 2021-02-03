@@ -40,8 +40,6 @@ major_country = marketcap %>%
   filter(min_Proportion >= 0.001) %>% 
   pull(`Country Name`)
 
-notNA_country = marketcap %>% group_by(`Country Name`) %>% summarise(notNA = sum(Marketcap > 0)) %>% filter(notNA > 0) %>% pull(`Country Name`)
-
 marketcap %<>%
   filter(`Country Name` %in% major_country & Year %in% notNA_year) %>%
   mutate(Proportion = ifelse(Proportion == 0, "No data", make_percent(Proportion, 100))) %>%
@@ -59,9 +57,58 @@ marketcap %>%
   geom_text(mapping = aes(y = Marketcap/1e12 + 1, label = Proportion), hjust = 0, size = 9 / .pt, family = "Lato") + 
   scale_y_continuous(expand = c(0, 0), limits = c(0, max(marketcap$Marketcap/1e12) * 1.3)) +
   coord_flip() +
-  labs(x = NULL, y = "Market capitalization (trillion USD)") +
+  labs(x = NULL, y = "Market capitalization ($Trillion)") +
   theme(axis.ticks.y = element_blank()) +
   facet_grid(cols = vars(Year))
+```
+
+## GDP and market capitalization
+
+```{r}
+download.file("https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.CD?downloadformat=csv", destfile = "gdp.zip", mode = "wb")
+
+gdp_csv = unzip("gdp.zip", list = T) %>% pull(Name) %>% str_subset("^(?!Metadata)")
+
+unzip("gdp.zip", files = gdp_csv, overwrite = T, exdir = "gdp")
+
+gdp = read_csv(file.path("gdp", gdp_csv), skip = 4, col_names = T, trim_ws = T)
+
+gdp %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russian Federation" = "Russia",
+                                                                   "Korea, Rep." = "South Korea",
+                                                                   "Korea, Dem. People's Rep." = "North Korea"))) %>%
+  select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>% 
+  pivot_longer(-`Country Name`, names_to = "Year", values_to = "GDP") %>%
+  mutate(Year = as.numeric(Year)) %>%
+  filter(Year >= (thisyear - 5) & `Country Name` %in% country_ranking)
+
+country_level_rev = rev(country_level)
+
+combined = inner_join(gdp, marketcap) %>% filter(Marketcap > 0) %>% mutate(`Country Name` = factor(`Country Name`, levels = country_level_rev))
+
+g = combined %>% 
+  ggplot(mapping = aes(x = GDP/1e12, y = Marketcap/1e12)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray") +
+  geom_point(mapping = aes(color = `Country Name`), size = 3) +
+  scale_x_continuous(trans = "log10") +
+  scale_y_continuous(trans = "log10") +
+  scale_color_manual(values = c(line_color[1:10], rep("black", length(country_level_rev) - 10)), guide = F) +
+  labs(x = "GDP ($Trillion)", y = "Market capitalization ($Trillion)") +
+  facet_grid(rows = vars(Year))
+
+g2 = combined %>% 
+  filter(`Country Name` %in% country_level_rev[1:11]) %>%
+  ggplot(mapping = aes(x = GDP, y = Marketcap)) +
+  geom_point(mapping = aes(color = `Country Name`), size = 3) +
+  scale_x_continuous(trans = "log10") +
+  scale_y_continuous(trans = "log10") +
+  scale_color_manual(values = c(line_color[1:10], rep("black", 11)), labels = c(country_level_rev[1:10], "Other countries"), guide = guide_legend(title = NULL)) +
+  facet_grid(rows = vars(Year))
+
+g_legend = get_legend(g2)
+```
+
+```{r, fig.width = 7, fig.height = 10, fig.cap = str_c("Market capitalization relative to GDP across ", length(unique(combined$`Country Name`)), " major countries")}
+ggarrange(g, g_legend, widths = c(4, 1))
 ```
 
 ## GDP and Buffett indicator^[Data are from [Gurufocus.com](https://www.gurufocus.com/global-market-valuation.php).]
@@ -131,7 +178,7 @@ f2 = All %>%
 ggarrange(f1, f2, nrow = 1, legend = "right", common.legend = T)
 ```
 
-## Projected annual return^[Source data and details can be found at [Gurufocus.com](https://www.gurufocus.com/global-market-valuation.php).]
+## Projected annual return
 
 ```{r}
 Project = read_html("https://www.gurufocus.com/global-market-valuation.php", which = 1, header = T) %>% 
