@@ -109,7 +109,7 @@ ggplotly(g) %>% layout(xaxis = list(title = list(font = list(size = 16)), tickfo
 ## OECD Composite Leading Indicators
 
 ```{r}
-US = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "USALORSGPNOSTSAM", "&cosd=", fiveyearsago, "&coed=", today,
+USA = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "USALORSGPNOSTSAM", "&cosd=", fiveyearsago, "&coed=", today,
                               "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", fiveyearsago), col_names = T)
 
 China = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "CHNLORSGPNOSTSAM", "&cosd=", fiveyearsago, "&coed=", today,
@@ -121,20 +121,20 @@ Euro = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "EA
 Korea = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "KORLOLITONOSTSAM", "&cosd=", fiveyearsago, "&coed=", today,
                               "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", fiveyearsago), col_names = T)
 
-relabelCLI = function(symbol) c(USALORSGPNOSTSAM = "US", 
+relabelCLI = function(symbol) c(USALORSGPNOSTSAM = "USA", 
                                 CHNLORSGPNOSTSAM = "China", 
                                 EA19LORSGPNOSTSAM = "Euro", 
                                 KORLOLITONOSTSAM = "Korea")[symbol]
 
-CLI = list(US, China, Euro, Korea) %>%
+CLI = list(USA, China, Euro, Korea) %>%
   reduce(full_join) %>%
   mutate(across(-DATE, as.numeric)) %>%
   arrange(DATE) %>% 
   pivot_longer(-DATE, names_to = "Region", values_to = "CLI") %>% 
-  mutate(Region = relabelCLI(Region) %>% factor(levels = c("US", "China", "Euro", "Korea"), labels = c("US", "China", "Euro", "Korea")))
+  mutate(Region = relabelCLI(Region) %>% factor(levels = c("USA", "China", "Euro", "Korea")))
 ```
 
-```{r, fig.width = 7, fig.height = 4, fig.cap = "OECD Composite Leading Indicators (CLIs) normalized for US, China, Euro, and South Korea over the last 5 years"}
+```{r, fig.width = 7, fig.height = 4, fig.cap = "OECD Composite Leading Indicators (CLIs) normalized for USA, China, Euro, and South Korea over the last 5 years"}
 CLI %>% 
   ggplot(mapping = aes(x = DATE, y = CLI - 100)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
@@ -142,8 +142,8 @@ CLI %>%
   geom_line(mapping = aes(color = Region)) +
   scale_x_date(expand = c(0, 0)) +
   scale_y_continuous(labels = function(x) x + 100) +
-  scale_color_manual(values = line_color[1:length(unique(CLI$Region))], labels = c("US", "China", "Euro", "Korea"), guide = guide_legend(title = NULL)) +
-  scale_fill_manual(values = line_color[1:length(unique(CLI$Region))], labels = c("US", "China", "Euro", "Korea"), guide = guide_legend(title = NULL)) +
+  scale_color_manual(values = line_color[1:length(unique(CLI$Region))], labels = c("USA", "China", "Euro", "Korea"), guide = guide_legend(title = NULL)) +
+  scale_fill_manual(values = line_color[1:length(unique(CLI$Region))], labels = c("USA", "China", "Euro", "Korea"), guide = guide_legend(title = NULL)) +
   labs(x = "Year", y = "CLI")
 ```
 

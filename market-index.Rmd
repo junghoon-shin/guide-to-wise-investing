@@ -74,15 +74,15 @@ index_plot(Index, "REIT", "Wilshire REIT")
 ```
 
 ```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Gold Price"}
-index_plot(Index, "Gold", "Gold")
+index_plot(Index, "Gold", "Gold price")
 ```
 
 ```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Copper Price"}
-index_plot(Index, "Copper", "Copper")
+index_plot(Index, "Copper", "Copper price")
 ```
 
 ```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Crude Oil Price"}
-index_plot(Index, "Oil", "Crude oil")
+index_plot(Index, "Oil", "Crude oil price")
 ```
 
 ## Index trend (30 years)^[Data are from [Federal Reserve Bank of St. Louis](https://fred.stlouisfed.org/).]
@@ -172,7 +172,7 @@ index_plot_fed(US, WILLREITIND, "Wilshire REIT")
 index_plot_fed(US, GOLDAMGBD228NLBM, "Gold fixing price")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Global Price of Copper"}
+```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Global Price of Copper (U.S. Dollars per Metric Ton)"}
 index_plot_fed(US, PCOPPUSDM, "Copper price")
 ```
 
