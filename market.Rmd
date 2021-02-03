@@ -107,7 +107,7 @@ g2 = combined %>%
 g_legend = get_legend(g2)
 ```
 
-```{r, fig.width = 7, fig.height = 10, fig.cap = str_c("Market capitalization relative to GDP across ", length(unique(combined$`Country Name`)), " major countries")}
+```{r, fig.width = 7, fig.height = 10/3 * length(unique(combined$Year)), fig.cap = str_c("Market capitalization relative to GDP across ", length(unique(combined$`Country Name`)), " major countries")}
 ggarrange(g, g_legend, widths = c(4, 1))
 ```
 
