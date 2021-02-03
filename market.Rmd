@@ -95,8 +95,6 @@ All = bind_rows(USA, Others)
 
 names(All) %<>% str_trim
 
-col = brewer_pal("div", 5)(5)
-
 All %<>% 
   filter(`Ratio = Total Market Cap / GDP` %>% str_detect("Where are we today")) %>%
   mutate(Valuation = str_extract(Valuation, "(Significantly|Modestly|Fair) (Overvalued|Undervalued|valued)")) %>%
@@ -154,9 +152,9 @@ Project %>% ggplot(mapping = aes(x = Country, y = `Projected Annual Return`)) +
                     xmin = cutoff, xmax = cutoff) +
   annotation_custom(textGrob("Emerging market", x = unit(0.95, "npc"), hjust = 1, vjust = -2, gp = gpar(fontface = "bold", fontfamily = "Lato")),
                     xmin = -Inf, xmax = -Inf) +
-  geom_col(mapping = aes(fill = factor(sign(`Projected Annual Return`))), color = "black", width = 0.7) +
+  geom_col(mapping = aes(fill = factor(sign(`Projected Annual Return`), levels = c(-1, 1, 0))), color = "black", width = 0.7) +
   scale_y_continuous(breaks = pretty_breaks(), labels = percent) +
-  scale_fill_manual(breaks = c("-1", "1", "0"), values = brewer_pal("qual", 4)(3), guide = F) +
+  scale_fill_brewer(type = "qual", palette = 4, guide = F) +
   coord_flip() +
   labs(x = NULL) +
   theme(axis.ticks.y = element_blank())

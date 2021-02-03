@@ -30,7 +30,7 @@ g = gdp %>%
   geom_line(mapping = aes(color = Country)) +
   scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
   scale_y_continuous(trans = "log10") +
-  scale_color_manual(values = qual_col_vector[-6][1:length(unique(gdp$Country))], guide = guide_legend(title = NULL)) +
+  scale_color_manual(values = line_color[1:length(unique(gdp$Country))], guide = guide_legend(title = NULL)) +
   theme(legend.key = element_rect(fill = "transparent"))
 
 ggplotly(g) %>% layout(xaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
@@ -66,7 +66,7 @@ g = gdp_growth %>%
   geom_line(mapping = aes(color = Country)) +
   scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
   scale_y_continuous(labels = percent) +
-  scale_color_manual(values = qual_col_vector[-6][1:length(unique(gdp_growth$Country))], guide = guide_legend(title = NULL)) +
+  scale_color_manual(values = line_color[1:length(unique(gdp_growth$Country))], guide = guide_legend(title = NULL)) +
   theme(legend.key = element_rect(fill = "transparent"))
 
 ggplotly(g) %>% layout(xaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
@@ -102,7 +102,7 @@ g = inflation %>%
   geom_line(mapping = aes(color = Country)) +
   scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
   scale_y_continuous(labels = percent) +
-  scale_color_manual(values = qual_col_vector[-6][1:length(unique(inflation$Country))], guide = guide_legend(title = NULL)) +
+  scale_color_manual(values = line_color[1:length(unique(inflation$Country))], guide = guide_legend(title = NULL)) +
   coord_cartesian(ylim = c(min(inflation$`Annual inflation`), 0.25)) +
   theme(legend.key = element_rect(fill = "transparent"))
 
@@ -126,29 +126,29 @@ Euro = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "EA
 Korea = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "KORLOLITONOSTSAM", "&cosd=", fiveyearsago, "&coed=", today,
                               "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", fiveyearsago), col_names = T)
 
-CLI = list(US, China, Euro, Korea) %>%
-  reduce(full_join) %>%
-  mutate(across(-DATE, as.numeric)) %>%
-  arrange(DATE)
-
 relabelCLI = function(symbol) c(USALORSGPNOSTSAM = "US", 
                                 CHNLORSGPNOSTSAM = "China", 
                                 EA19LORSGPNOSTSAM = "Euro", 
                                 KORLOLITONOSTSAM = "Korea")[symbol]
+
+CLI = list(US, China, Euro, Korea) %>%
+  reduce(full_join) %>%
+  mutate(across(-DATE, as.numeric)) %>%
+  arrange(DATE) %>% 
+  pivot_longer(-DATE, names_to = "Region", values_to = "CLI") %>% 
+  mutate(Region = relabelCLI(Region) %>% factor(levels = c("US", "China", "Euro", "Korea"), labels = c("US", "China", "Euro", "Korea")))
 ```
 
 ```{r, fig.width = 7, fig.height = 4, fig.cap = "OECD Composite Leading Indicators (CLIs) normalized for US, China, Euro, and South Korea over the last 5 years"}
 CLI %>% 
-  pivot_longer(-DATE, names_to = "Region", values_to = "CLI") %>% 
-  mutate(Region = relabelCLI(Region) %>% factor(levels = c("US", "China", "Euro", "Korea"))) %>%
   ggplot(mapping = aes(x = DATE, y = CLI - 100)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   geom_area(mapping = aes(fill = Region), alpha = 0.3, position = "identity") +
   geom_line(mapping = aes(color = Region)) +
   scale_x_date(expand = c(0, 0)) +
   scale_y_continuous(labels = function(x) x + 100) +
-  scale_color_brewer(type = "qual", palette = 6, guide = guide_legend(title = NULL)) +
-  scale_fill_brewer(type = "qual", palette = 6, guide = guide_legend(title = NULL)) +
+  scale_color_manual(values = line_color[1:length(unique(CLI$Region))], labels = c("US", "China", "Euro", "Korea"), guide = guide_legend(title = NULL)) +
+  scale_fill_manual(values = line_color[1:length(unique(CLI$Region))], labels = c("US", "China", "Euro", "Korea"), guide = guide_legend(title = NULL)) +
   labs(x = "Year", y = "CLI")
 ```
 

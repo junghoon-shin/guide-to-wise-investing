@@ -224,7 +224,7 @@ f1 = company_plot %>%
   geom_col(mapping = aes(fill = Industry), color = "transparent") +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 0)) +
   scale_fill_manual(limits = unique(company_plot$Industry), 
-                    values = qual_col_vector[length(unique(company$Industry)):1], 
+                    values = fill_color[length(unique(company_plot$Industry)):1],
                     guide = guide_legend(title = NULL, ncol = 3, reverse = T, override.aes = list(color = "black"))) +
   coord_flip() +
   labs(x = NULL, y = NULL) +
@@ -243,7 +243,9 @@ financial_plot = function(financials, variable, title = NULL, labels = NULL) {
     ggplot(mapping = aes(x = Name, y = !!variable)) + 
     geom_col(mapping = aes(fill = Industry), color = "black", width = 0.7) +
     scale_y_continuous(expand = c(0.05, 0), breaks = pretty_breaks(3), labels = labels) +
-    scale_fill_manual(limits = unique(financials$Industry), values = qual_col_vector[length(unique(financials$Industry)):1], guide = F) +
+    scale_fill_manual(limits = unique(company_plot$Industry), 
+                      values = fill_color[length(unique(financials$Industry)):1], 
+                      guide = F) +
     coord_flip() +
     labs(x = NULL, y = title) +
     theme(axis.ticks.y = element_blank(), axis.ticks.length.y = unit(0, "npc"), axis.text.y = element_blank(), plot.margin = unit(c(5.5, 5.5, 5.5, 0), "points"))
@@ -276,7 +278,7 @@ ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align
 
 ## Investment decision^[The decision is made by analyzing only numerical data, which do not represent the value of a business as a whole. For example, the value of an early-stage company with zero or negative earnings cannot be determined based on numbers, but rather should be assessed based on its mission, technology, management, and culture, as well as the state of the industry overall.]
 
-```{r, fig.width = 7, fig.height = (nrow(company) + 6)/4, fig.cap = "Investment decision made by a fundamental analysis-based algorithm for the listed companies"}
+```{r}
 company_decision = company %>% 
   mutate(Decision = factor(Decision, levels = c("Buy",
                                                 "Maybe buy",
@@ -285,16 +287,18 @@ company_decision = company %>%
                                                 "Zero or negative earnings", 
                                                 "Zero or negative growth", 
                                                 "High debt-to-equity ratio", 
-                                                "Negative equity"))) %>%
+                                                "Negative equity")))
+```
+
+```{r, fig.width = 7, fig.height = (nrow(company_decision) + 6)/4, fig.cap = "Investment decision made by a fundamental analysis-based algorithm for the listed companies"}
+company_decision %>%
   ggplot(mapping = aes(x = Name, y = Decision)) +
   geom_point(mapping = aes(fill = Decision), shape = 21, size = 3, stroke = 1) +
   scale_x_discrete(limits = sort(company$Name, decreasing = T)) +
-  scale_fill_brewer(type = "qual", palette = 1) +
+  scale_fill_manual(values = fill_color[1:length(unique(company_decision$Decision))]) +
   coord_flip() +
   labs(x = NULL) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.key = element_rect(fill = "transparent"))
-
-company_decision
 ```
 
 ```{r}
@@ -365,7 +369,7 @@ close_trend = function(close, industry) {
     geom_hline(yintercept = 100, linetype = "dashed") +
     geom_line(mapping = aes(color = Name)) +
     scale_x_date(expand = c(0, 0)) +
-    scale_color_manual(values = qual_col_vector[-6][1:ncompany], 
+    scale_color_manual(values = line_color[1:ncompany], 
                        guide = guide_legend(title = NULL, nrow = legend_nrow)) +
     labs(x = "Recent 6 months", y = "Normalized closing price") +
     theme(legend.position = "bottom", legend.key = element_rect(fill = "transparent"))
@@ -459,9 +463,9 @@ company_annotation = company %>%
 
 n_industry = company_annotation$Industry %>% unique %>% length
 
-broad_group_color = qual_col_vector[1:length(unique(company_annotation$`Broad group`))] %>% setNames(sort(unique(company_annotation$`Broad group`)))
-country_color = qual_col_vector[1:length(unique(company_annotation$Country))] %>% setNames(sort(unique(company_annotation$Country)))
-industry_color = qual_col_vector[1:length(unique(company_annotation$Industry))] %>% setNames(sort(unique(company_annotation$Industry)))
+broad_group_color = fill_color[1:length(unique(company_annotation$`Broad group`))] %>% setNames(sort(unique(company_annotation$`Broad group`)))
+country_color = fill_color[1:length(unique(company_annotation$Country))] %>% setNames(sort(unique(company_annotation$Country)))
+industry_color = fill_color[1:length(unique(company_annotation$Industry))] %>% setNames(sort(unique(company_annotation$Industry)))
 
 column_annotation = HeatmapAnnotation(df = company_annotation,
                                       col = list(Industry = industry_color,

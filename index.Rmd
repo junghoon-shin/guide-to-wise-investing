@@ -105,11 +105,13 @@ make_readable = function(x) case_when(abs(x) >= 1e12 ~ str_c(round(x/1e12, 1) %>
 qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
 qual_col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals))) %>% unique
 
-show_col(qual_col_vector)
+front = c(5, 6, 52:57)
+back = c(1, 10, 12:15, 17:18, 22, 24, 26:47, 49)
+fill_color = c(qual_col_vector[front], qual_col_vector[-c(front, back)], qual_col_vector[back])
 
-front = c(5, 6)
-back = c(10, 12:15, 17, 22, 24, 26:47, 49)
-qual_col_vector = c(qual_col_vector[front], qual_col_vector[-c(front, back)], qual_col_vector[back])
+front = c(5, 6, 52:57)
+back = c(1, 4, 10, 12:15, 17:18, 22, 24, 26:47, 49)
+line_color = c(qual_col_vector[front], qual_col_vector[-c(front, back)], qual_col_vector[back])
 
 today = Sys.Date() %>% as.character %>% str_replace(" ", "")
 monthago = (Sys.Date() - 30) %>% as.character %>% str_replace(" ", "")

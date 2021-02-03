@@ -38,9 +38,9 @@ industry %>%
   arrange(`Expected growth - next 5 years`) %>%
   mutate(`Industry Name` = factor(`Industry Name`, levels = `Industry Name`)) %>%
   ggplot(mapping = aes(x = `Industry Name`, y = `Expected growth - next 5 years`)) +
-  geom_col(mapping = aes(fill = factor(sign(`Expected growth - next 5 years`))), color = "black", width = 0.7) +
+  geom_col(mapping = aes(fill = factor(sign(`Expected growth - next 5 years`), levels = c(-1, 1, 0))), color = "black", width = 0.7) +
   scale_y_continuous(labels = percent) +
-  scale_fill_manual(breaks = c("-1", "1", "0"), values = brewer_pal("qual", 4)(3), guide = F) +
+  scale_fill_brewer(type = "qual", palette = 4, guide = F) +
   coord_flip() +
   labs(x = NULL, y = "Expected growth rate - next 5 years") +
   theme(axis.ticks.y = element_blank())
