@@ -242,10 +242,10 @@ BVPS: book value per share\
 DCF10: discounted cash flow in 10 years as defined [here](https://www.investopedia.com/terms/d/dcf.asp)\
 EPS: earnings per share\
 High52: 52-week high price\
-IC: Invested capital\
+IC: invested capital\
 Industry PER: data from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html)\
 Low52: 52-week low price\
-NOPAT: Net operating profit after taxes\
+NOPAT: net operating profit after taxes\
 PBR: price/book value ratio\
 PEG: price/earnings-to-growth ratio\
 PER: price/earnings ratio\
