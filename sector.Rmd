@@ -78,7 +78,7 @@ industry2 %<>%
          across(c(`After-tax Operating Margin`, `Return on Capital`), ~str_replace(., "%", "") %>% as.numeric %>% divide_by(100)))
 ```
 
-```{r, fig.width = 7, fig.height = (nrow(industry2 %>% filter(!is.na(`Return on Capital`))) + 2)/4, fig.cap = "Expected growth rate for the next 5 years by industry sector"}
+```{r, fig.width = 7, fig.height = (nrow(industry2 %>% filter(!is.na(`Return on Capital`))) + 2)/4, fig.cap = "Return on invested capital by industry sector"}
 industry2 %>%
   filter(!is.na(`Return on Capital`)) %>%
   arrange(`Return on Capital`) %>%
