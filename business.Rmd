@@ -2,7 +2,7 @@
 
 # Business evaluation {#business}
 
-## Comprehensive financials^[Data are automatically retrieved from [Google Finance](https://www.google.com/finance) and [Yahoo Finance](https://finance.yahoo.com/).]
+## Comprehensive financials^[Data are automatically retrieved from [Google Finance](https://www.google.com/finance) and [Yahoo Finance](https://finance.yahoo.com/).] {#comprehensive}
 
 ```{r}
 confident_return = 0.05
@@ -79,8 +79,27 @@ yahoo_data = future_map_dfr(company$Yahoo, ~{
   })
 })
 
+financials = future_map_dfr(company$Yahoo, get_financials)
+
 plan("default")
 
+financials %<>% 
+  rename(Yahoo = ticker) %>%
+  mutate(date = as.Date(date))
+
+ROIC = financials %>%
+  group_by(Yahoo) %>%
+  group_modify(~arrange(., desc(date)) %>% slice(1)) %>%
+  ungroup %>%
+  mutate(NOPAT = ebit - incomeTaxExpense,
+         IC = totalStockholderEquity + longTermDebt + shortLongTermDebt - cash,
+         ROIC = NOPAT/IC) %>%
+  select(Yahoo, NOPAT, IC, ROIC)
+
+yahoo_data %<>% left_join(ROIC)
+```
+
+```{r}
 company %<>% left_join(yahoo_data)
 
 company %<>% 
@@ -96,7 +115,7 @@ company %<>%
                 ~as.numeric(.)/100)) %>%
   mutate(across(c(Profit_margin, 
                   ROA,
-                  ROE, 
+                  ROE,
                   Quarterly_revenue_growth, 
                   Quarterly_earnings_growth, 
                   Forward_annual_dividend_yield, 
@@ -132,7 +151,6 @@ company %<>%
          `Price/DCF10` = Price / DCF10,
          `Price/Graham` = Price / Adjusted_Graham_formula,
          `Relative_price` = exp(mean(log(c(`Price/Target`, PEG, `Price/DCF10`, `Price/Graham`) %>% sort %>% .[2:3])))) %>%
-  rowwise %>%
   mutate(Decision = case_when(BVPS < 0 ~ "Negative equity",
                               DER > 2.5 ~ "High debt-to-equity ratio",
                               EPS <= 0 ~ "Zero or negative earnings",
@@ -146,19 +164,20 @@ company %<>%
   relocate(Revenue_growth_estimate_current, Revenue_growth_estimate_next, Earnings_growth_estimate_next_5yrs,
            Operating_cash_flow, Levered_free_cash_flow,
            Profit_margin,
-           DER, ROA, ROE, PER, `Industry PER`, PSR, PBR, .before = `Price/Target`) %>%
-  relocate(Retention_ratio, .after = Payout_ratio)
+           DER, ROA, ROIC, ROE, PER, `Industry PER`, PSR, PBR, .before = `Price/Target`) %>%
+  relocate(Retention_ratio, .after = Payout_ratio) %>%
+  relocate(matches("^[a-z].+"), .after = Decision)
 
 company_plot = company
 
 company %<>% 
-  arrange(Industry, Name) %>%
   rename(`Debt-to-equity ratio` = DER,
          `5yrs average dividend yield` = Average_dividend_yield_5yrs,
          `Revenue growth estimate (current year)` = Revenue_growth_estimate_current,
          `Revenue growth estimate (next year)` = Revenue_growth_estimate_next,
          `Earnings growth (past 5yrs)` = Earnings_growth_past_5yrs,
-         `Earnings growth estimate (next 5yrs)` = Earnings_growth_estimate_next_5yrs)
+         `Earnings growth estimate (next 5yrs)` = Earnings_growth_estimate_next_5yrs) %>%
+  arrange(Name)
 
 names(company) %<>% str_replace_all(., "_", " ")
 ```
@@ -167,7 +186,7 @@ names(company) %<>% str_replace_all(., "_", " ")
 company %>% write_sheet(ss = drive_get("Investment/Valuation"), sheet = "Valuation")
 ```
 
-```{r watchlist, fig.cap = "Comprehensive financial data of my watchlist"}
+```{r, fig.cap = "Summarized statistics of my watchlist"}
 company_display = company %>% 
   select(-c(Ticker, Yahoo, Ticker3)) %>%
   mutate(Changepct = make_percent(Changepct, 1)) %>%
@@ -176,11 +195,14 @@ company_display = company %>%
                   `Retention ratio`, 
                   `Profit margin`, 
                   `Debt-to-equity ratio`, 
-                  ROA, 
+                  ROA,
+                  ROIC,
                   ROE, 
                   contains(c("growth", "yield"))), 
                 ~make_percent(., 100))) %>%
   mutate(across(c(Marketcap, 
+                  NOPAT,
+                  IC,
                   `Operating cash flow`, 
                   `Levered free cash flow`), 
                 make_readable)) %>%
@@ -194,18 +216,42 @@ company_display = company %>%
 my_datatable(company_display, paging = T, pageLength = 5, scrollY = NULL, caption = NULL)
 ```
 
+```{r, fig.cap = "Income statement, balance sheet, and cash flow data over the last 4 years"}
+financials %<>% 
+  left_join(company %>% select(Yahoo, Name)) %>%
+  relocate(Name) %>%
+  select(-Yahoo)
+
+names(financials) %<>% 
+  str_replace_all(c("([a-z])([A-Z])" = "\\1 \\2",
+                    "Liab$" = "Liabilities",
+                    "Netincome" = "Net income")) %>%
+  str_to_sentence
+
+financials %<>% 
+  rename(EBIT = Ebit) %>% 
+  mutate(across(-c(Name, Date), make_readable)) %>%
+  mutate(across(-Date, ~replace(., . == "NA", NA))) %>%
+  arrange(Name, Date)
+
+my_datatable(financials, paging = T, pageLength = 10, scrollY = NULL, caption = NULL)
+```
+
 Adjusted Graham formula: as defined [here](https://www.oldschoolvalue.com/stock-valuation/benjamin-graham-formula/)\
 BVPS: book value per share\
 DCF10: discounted cash flow in 10 years as defined [here](https://www.investopedia.com/terms/d/dcf.asp)\
 EPS: earnings per share\
 High52: 52-week high price\
+IC: Invested capital\
 Industry PER: data from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html)\
 Low52: 52-week low price\
+NOPAT: Net operating profit after taxes\
 PBR: price/book value ratio\
 PEG: price/earnings-to-growth ratio\
 PER: price/earnings ratio\
 PSR: price/sales ratio\
 ROA: return on asset\
+ROIC: return on invested capital\
 ROE: return on equity\
 Sustainable growth rate: ROE $\times$ retention ratio
 
@@ -214,8 +260,8 @@ Sustainable growth rate: ROE $\times$ retention ratio
 ```{r}
 company_plot %<>% 
   mutate(`Earnings-to-price` = 1/PER,
-         `Book-to-price` = 1/PBR,
-         `Sales-to-price` = 1/PSR) %>%
+         `Sales-to-price` = 1/PSR,
+         `Book-to-price` = 1/PBR) %>%
   arrange(desc(Industry), !is.na(`Earnings-to-price`), `Earnings-to-price`, !is.na(`Sales-to-price`), `Sales-to-price`, !is.na(`Book-to-price`), `Book-to-price`) %>%
   mutate(Name = factor(Name, levels = Name))
 
@@ -233,9 +279,9 @@ f1 = company_plot %>%
         panel.background = element_rect(fill = "transparent"), 
         plot.margin = unit(c(5.5, 0, 5.5, 5.5), "points"))
 
-financial_plot = function(financials, variable, title = NULL, labels = NULL) {
+financial_plot = function(financials, variable, title = NULL, labels = waiver()) {
+  
   if (is.null(title)) title = enquo(variable)
-  if (is.null(labels)) labels = waiver()
   
   variable = enquo(variable)
   
@@ -249,16 +295,18 @@ financial_plot = function(financials, variable, title = NULL, labels = NULL) {
     coord_flip() +
     labs(x = NULL, y = title) +
     theme(axis.ticks.y = element_blank(), axis.ticks.length.y = unit(0, "npc"), axis.text.y = element_blank(), plot.margin = unit(c(5.5, 5.5, 5.5, 0), "points"))
+  
 }
 
 f2 = financial_plot(company_plot, `Earnings-to-price`, "Earnings/Price")
 f3 = financial_plot(company_plot, `Sales-to-price`, "Sales/Price")
 f4 = financial_plot(company_plot, `Book-to-price`, "Book/Price")
-f5 = financial_plot(company_plot, ROE, "Return on equity")
-f6 = financial_plot(company_plot, ROA, "Return on asset")
-f7 = financial_plot(company_plot, DER, "Debt/Equity")
-f8 = financial_plot(company_plot, Quarterly_earnings_growth, "Quarterly earnings growth (yoy)", percent)
-f9 = financial_plot(company_plot, Quarterly_revenue_growth, "Quarterly revenue growth (yoy)", percent)
+f5 = financial_plot(company_plot, ROE, "ROE")
+f6 = financial_plot(company_plot, ROIC, "ROIC")
+f7 = financial_plot(company_plot, ROA, "ROA")
+f8 = financial_plot(company_plot, DER, "Debt/Equity")
+f9 = financial_plot(company_plot, Quarterly_earnings_growth, "Earnings growth (yoy)", percent)
+f10 = financial_plot(company_plot, Quarterly_revenue_growth, "Revenue growth (yoy)", percent)
 
 n_industry = company_plot$Industry %>% unique %>% length
 
@@ -270,10 +318,93 @@ plot_width = 4.55 - name_width
 ```{r, fig.width = 7, fig.height = (nrow(company_plot) + 2) * 3/4 + (ceiling(n_industry/3) + 1)/4, fig.cap = "Key financials of my watchlist"}
 ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))), 
           ggarrange(f1 + guides(fill = F), f5, f6, f7, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))),
-          ggarrange(f1 + guides(fill = F), f8, f9, nrow = 1, ncol = 3, align = "h", widths = c(name_width, rep(plot_width/2, 2))),
-          get_legend(f1), 
-          nrow = 4, ncol = 1, 
+          ggarrange(f1 + guides(fill = F), f8, f9, f10, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))),
+          get_legend(f1),
+          nrow = 4, ncol = 1,
           heights = c(legend_ratio, legend_ratio, legend_ratio, 1))
+```
+
+```{r}
+exchange = getQuote(str_c("USD", company_plot$Currency, "=X"), src = "yahoo") %>% 
+  rownames_to_column("Ticker") %>% 
+  mutate(Currency = str_extract(Ticker, "(?<=USD)[A-Z]+(?=\\=)")) %>%
+  select(Currency, Last) %>%
+  rename(Exchange = Last)
+
+company_plot %<>% 
+  left_join(exchange) %>%
+  mutate(Marketcap_USD = Marketcap / Exchange) %>%
+  arrange(desc(Marketcap_USD)) %>%
+  mutate(Name_trimmed = Name %>% 
+           str_replace_all(c("Inc\\.*" = "",
+                             "Ltd\\.*" = "",
+                             "Mfg\\.*" = "",
+                             "Common Stock" = "",
+                             "(& )*Co(rporation|rp|\\.)*" = "",
+                             "(SA|AG)$" = "",
+                             "," = "",
+                             "\\s+" = " ")) %>% 
+           str_trim,
+         Name_trimmed = case_when(Name_trimmed == "Taiwan Semiconductor" ~ "TSMC", 
+                                  Name_trimmed == "Pacific Biosciences of California" ~ "PacBio",
+                                  T ~ Name_trimmed))
+
+relation_plot = function(financials, x, y, xtrans = "identity", xlab = NULL, ylab = NULL, xlabels = waiver(), ylabels = waiver()) {
+  
+  if (is.null(xlab)) xlab = enquo(x)
+  if (is.null(ylab)) ylab = enquo(y)
+  
+  x = enquo(x)
+  y = enquo(y)
+  
+  g = financials %>%
+    filter(!is.na(!!x) & !is.na(!!y)) %>%
+    ggplot(mapping = aes(!!x, !!y)) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+    geom_text(mapping = aes(label = Name_trimmed, size = Marketcap_USD/1e9), hjust = 0.5, vjust = 0.5, family = "Lato") +
+    scale_x_continuous(trans = xtrans, expand = c(0.25, 0), labels = xlabels) +
+    scale_y_continuous(labels = ylabels) +
+    scale_size_continuous(trans = "log10", guide = guide_legend(title = "Market\ncapitalization\n($Billion)")) +
+    labs(x = xlab, y = ylab)
+  
+  g = ggplotGrob(g)
+  
+  label_indices = sapply(g$grobs[[15]][[1]][[1]]$grobs, function(i) "label" %in% names(i)) %>% which
+  
+  for (i in label_indices) {
+    g$grobs[[15]][[1]][[1]]$grobs[[i]]$label = "A"
+  }
+  
+  g %>% ggdraw
+  
+}
+
+f1 = relation_plot(company_plot, `Earnings-to-price`, Earnings_growth_past_5yrs, 
+              xlab = "Earnings/Price", ylab = "Earnings growth per annum (past 5 years)", 
+              ylabels = percent)
+
+f2 = relation_plot(company_plot, `Earnings-to-price`, Earnings_growth_estimate_next_5yrs, 
+              xlab = "Earnings/Price", ylab = "Earnings growth per annum (next 5 years)",
+              ylabels = percent)
+
+f3 = relation_plot(company_plot, `Sales-to-price`, Revenue_growth_estimate_current, 
+              xlab = "Sales/Price", ylab = "Revenue growth estimate (current year)",
+              ylabels = percent)
+
+f4 = relation_plot(company_plot, `Sales-to-price`, Revenue_growth_estimate_next, 
+              xlab = "Sales/Price", ylab = "Revenue growth estimate (next year)",
+              ylabels = percent)
+
+f5 = relation_plot(company_plot, ROE, ROIC)
+
+f6 = relation_plot(company_plot, DER, ROE, xtrans = "reverse", xlab = "Debt/Equity (reverse axis)")
+
+f7 = relation_plot(company_plot, DER, ROIC, xtrans = "reverse", xlab = "Debt/Equity (reverse axis)")
+```
+
+```{r, fig.width = 7, fig.height = 40, fig.cap = "Scatterplot of key statistics"}
+ggarrange(f1, f2, f3, f4, f5, f6, f7, nrow = 7, ncol = 1, align = "v")
 ```
 
 ## Investment decision^[The decision is made by analyzing only numerical data, which do not represent the value of a business as a whole. For example, the value of an early-stage company with zero or negative earnings cannot be determined based on numbers, but rather should be assessed based on its mission, technology, management, and culture, as well as the state of the industry overall.]
@@ -518,7 +649,7 @@ company_cor %>% Heatmap(name = "Pearson's r",
 
 ## Small-cap companies
 
-These are a list of small-cap companies which interest me but need more research. For comprehensive financial data, see Figure \@ref(fig:watchlist).
+These are a list of small-cap companies which interest me but need more research. For comprehensive financial data, see Section \@ref(comprehensive).
 
 ### Intellia Therapeutics^[Data are from [Wikipedia](https://en.wikipedia.org/wiki/Main_Page).]
 
