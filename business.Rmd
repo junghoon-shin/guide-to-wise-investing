@@ -261,8 +261,12 @@ Sustainable growth rate: ROE $\times$ retention ratio
 company_plot %<>% 
   mutate(`Earnings-to-price` = 1/PER,
          `Sales-to-price` = 1/PSR,
-         `Book-to-price` = 1/PBR) %>%
-  arrange(desc(Industry), !is.na(`Earnings-to-price`), `Earnings-to-price`, !is.na(`Sales-to-price`), `Sales-to-price`, !is.na(`Book-to-price`), `Book-to-price`) %>%
+         `Book-to-price` = 1/PBR,
+         Name = clean_name(Name)) %>%
+  arrange(desc(Industry), 
+          !is.na(`Earnings-to-price`), `Earnings-to-price`, 
+          !is.na(`Sales-to-price`), `Sales-to-price`, 
+          !is.na(`Book-to-price`), `Book-to-price`) %>%
   mutate(Name = factor(Name, levels = Name))
 
 f1 = company_plot %>%
@@ -275,9 +279,11 @@ f1 = company_plot %>%
   coord_flip() +
   labs(x = NULL, y = NULL) +
   theme(axis.ticks = element_blank(), axis.text.x = element_blank(),
-        legend.position = "bottom",
+        panel.border = element_blank(),
+        panel.grid = element_blank(),
         panel.background = element_rect(fill = "transparent"), 
-        plot.margin = unit(c(5.5, 0, 5.5, 5.5), "points"))
+        plot.margin = unit(c(5.5, 0, 5.5, 5.5), "points"),
+        legend.position = "bottom")
 
 financial_plot = function(financials, variable, title = NULL, labels = waiver()) {
   
@@ -309,13 +315,13 @@ f9 = financial_plot(company_plot, Quarterly_earnings_growth, "Earnings growth (y
 f10 = financial_plot(company_plot, Quarterly_revenue_growth, "Revenue growth (yoy)", percent)
 
 n_industry = company_plot$Industry %>% unique %>% length
-
-legend_ratio = (nrow(company_plot) + 2) / (ceiling(n_industry/3) + 1)
-name_width = 1.55 * max(stri_width(company_plot$Name)) / stri_width("Korea Shipbuilding &Offshore Engn Co Ltd")
-plot_width = 4.55 - name_width
 ```
 
 ```{r, fig.width = 7, fig.height = (nrow(company_plot) + 2) * 3/4 + (ceiling(n_industry/3) + 1)/4, fig.cap = "Key financials of my watchlist"}
+legend_ratio = (nrow(company_plot) + 2) / (ceiling(n_industry/3) + 1)
+name_width = 1.2 * max(stri_width(company_plot$Name)) / stri_width("Korea Shipbuilding &Offshore Engn")
+plot_width = 4.2 - name_width
+
 ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))), 
           ggarrange(f1 + guides(fill = F), f5, f6, f7, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))),
           ggarrange(f1 + guides(fill = F), f8, f9, f10, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))),
@@ -335,16 +341,7 @@ company_plot %<>%
   left_join(exchange) %>%
   mutate(Marketcap_USD = Marketcap / Exchange) %>%
   arrange(desc(Marketcap_USD)) %>%
-  mutate(Name_trimmed = Name %>% 
-           str_replace_all(c("Inc\\.*" = "",
-                             "Ltd\\.*" = "",
-                             "Mfg\\.*" = "",
-                             "Common Stock" = "",
-                             "(& )*Co(rporation|rp|\\.)*" = "",
-                             "(SA|AG)$" = "",
-                             "," = "",
-                             "\\s+" = " ")) %>% 
-           str_trim,
+  mutate(Name_trimmed = clean_name(Name),
          Name_trimmed = case_when(Name_trimmed == "Taiwan Semiconductor" ~ "TSMC", 
                                   Name_trimmed == "Pacific Biosciences of California" ~ "PacBio",
                                   T ~ Name_trimmed))
@@ -432,165 +429,149 @@ company_decision %>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.key = element_rect(fill = "transparent"))
 ```
 
+## [Adjusted stock price trend](https://www.investopedia.com/terms/a/adjusted_closing_price.asp)
+
 ```{r}
-nona = function(x) ifelse(sum(!is.na(x)) > 0, x[!is.na(x)], NA)
 yahoo_to_name = function(Yahoo) company$Name[match(Yahoo, company$Yahoo)]
 
-plan(multisession)
+price_data = tq_get(company$Yahoo, get = "stock.prices", from = twoyearsago)
 
-company_close = company$Yahoo %>% future_map(~{
-  read_html(file.path("https://finance.yahoo.com/quote", .x, "history"), which = 1, header = T) %>% select(Date, `Close*`)
-})
+price_data %<>% 
+  mutate(Name = yahoo_to_name(symbol)) %>% 
+  left_join(company %>% select(Name, Industry))
+```
 
-plan("default")
+```{r, fig.width = 7, fig.height = 2.5 * length(unique(price_data$Name)), fig.cap = "Adjusted closing stock price over the last 2 years"}
+price_data %>% 
+  ggplot(mapping = aes(x = date, y = adjusted)) +
+  geom_line(color = line_color[1]) +
+  scale_x_date(expand = c(0, 0)) +
+  labs(x = "Date", y = "Adjusted closing price") +
+  facet_grid(rows = vars(Name), scales = "free", space = "free_x")
+```
 
-company_close %<>% 
-  setNames(company$Yahoo) %>% 
-  imap_dfr(~mutate(.x, Yahoo = .y)) %>% 
-  rename(Close = "Close*") %>% 
-  mutate(Event = Close %>% 
-           str_extract("^.+[a-zA-Z].+$") %>% 
-           str_replace("Stock Split", " stock split") %>% 
-           str_replace("Dividend", " dividend") %>%
-           str_replace(",", ""))
-
-company_close$Date %<>%
-  str_match("([^ ,]+) ([^ ,]+), ([^ ,]+)") %>% 
-  .[, -1] %>% 
-  as_tibble %>% 
-  setNames(c("m", "d", "y")) %>% 
-  mutate(m = match(m, month.abb), date = str_c(y, m, d, sep = "-")) %>% 
-  pull(date) %>% 
-  as.Date
-
-company_close %<>%
-  group_by(Date, Yahoo) %>%
-  summarise(Close = nona(as.numeric(str_replace(Close, ",", ""))), Event = nona(Event)) %>%
-  ungroup %>%
-  filter(!is.na(Close)) %>%
-  arrange(Yahoo, Date) %>%
-  left_join(company %>% select(Yahoo, Name, Industry))
-
-company_with_sufficient_data = company_close %>% count(Name) %>% filter(n > 10) %>% pull(Name)
-
-company_close %<>% 
-  filter(Name %in% company_with_sufficient_data) %>%
-  mutate(Name = str_replace_all(Name, c("Taiwan Semiconductor Mfg. Co. Ltd." = "TSMC")))
-
-base_date = company_close %>% count(Date) %>% filter(n == length(company_with_sufficient_data)) %>% pull(Date) %>% min
-
+```{r}
 get_legend_nrow = function(close, industry) {
   max(round((close %>% filter(Industry == industry) %>% pull(Name) %>% unique %>% length)/3), 1)
 }
 
 get_legend_nrow = Vectorize(get_legend_nrow, "industry")
 
-close_trend = function(close, industry) {
-  tmp = close %>% 
+normalized_price_trend = function(price, industry) {
+  price_subset = price %>% 
     filter(Industry == industry) %>%
-    group_by(Name) %>%
-    mutate(Close = Close / Close[Date == base_date] * 100) %>%
-    ungroup
+    mutate(Name = clean_name(Name))
   
-  ncompany = length(unique(tmp$Name))
+  base_date = price_subset %>% count(date) %>% arrange(desc(n), date) %>% slice(1) %>% pull(date)
+  
+  price_subset %<>% 
+    group_by(Name) %>%
+    mutate(normalized = adjusted/adjusted[date == base_date] * 100) %>%
+    ungroup
+
+  ncompany = length(unique(price_subset$Name))
   legend_nrow = max(round(ncompany/3), 1)
   
-  g = tmp %>%
-    ggplot(mapping = aes(x = Date, y = Close)) +
-    geom_hline(yintercept = 100, linetype = "dashed") +
+  g = price_subset %>%
+    ggplot(mapping = aes(x = date, y = normalized)) +
+    geom_vline(xintercept = base_date, linetype = "dashed") +
     geom_line(mapping = aes(color = Name)) +
     scale_x_date(expand = c(0, 0)) +
     scale_color_manual(values = line_color[1:ncompany], 
                        guide = guide_legend(title = NULL, nrow = legend_nrow)) +
-    labs(x = "Recent 6 months", y = "Normalized closing price") +
+    labs(x = "Date", y = "Normalized closing price") +
+    annotation_custom(textGrob(str_c("Normalized to 100 as of ", base_date), 
+                               y = unit(0.95, "npc"), 
+                               hjust = ifelse(base_date < yearago, -0.03, 1.03), vjust = 1,
+                               gp = gpar(fontfamily = "Lato", fontsize = 10)),
+                      xmin = base_date, xmax = base_date) +
     theme(legend.position = "bottom", legend.key = element_rect(fill = "transparent"))
   
   ggarrange(g + guides(color = F), ggdraw(get_legend(g)), nrow = 2, ncol = 1, heights = c(8, legend_nrow))
 }
 
-interesting_sectors = company_close %>% select(Name, Industry) %>% unique %>% count(Industry) %>% arrange(desc(n), Industry) %>% pull(Industry)
+interesting_sectors = price_data %>% select(Name, Industry) %>% unique %>% count(Industry) %>% arrange(desc(n), Industry) %>% pull(Industry)
 
-fig_height = (8 + get_legend_nrow(company_close, interesting_sectors))/2.5
+fig_height = (8 + get_legend_nrow(price_data, interesting_sectors))/2.5
 ```
 
-## Stock price trend^[Only top 15 industry sectors are shown. All prices are normalized to 100 as of `r base_date`.]
+## Normalized stock price trend^[Only top 15 industry sectors are shown.]
 
 ```{r, fig.width = 7, fig.height = fig_height[1], fig.cap = interesting_sectors[1]}
-close_trend(company_close, interesting_sectors[1])
+normalized_price_trend(price_data, interesting_sectors[1])
 ```
 
 ```{r, fig.width = 7, fig.height = fig_height[2], fig.cap = interesting_sectors[2]}
-close_trend(company_close, interesting_sectors[2])
+normalized_price_trend(price_data, interesting_sectors[2])
 ```
 
 ```{r, fig.width = 7, fig.height = fig_height[3], fig.cap = interesting_sectors[3]}
-close_trend(company_close, interesting_sectors[3])
+normalized_price_trend(price_data, interesting_sectors[3])
 ```
 
 ```{r, fig.width = 7, fig.height = fig_height[4], fig.cap = interesting_sectors[4]}
-close_trend(company_close, interesting_sectors[4])
+normalized_price_trend(price_data, interesting_sectors[4])
 ```
 
 ```{r, fig.width = 7, fig.height = fig_height[5], fig.cap = interesting_sectors[5]}
-close_trend(company_close, interesting_sectors[5])
+normalized_price_trend(price_data, interesting_sectors[5])
 ```
 
 ```{r, fig.width = 7, fig.height = fig_height[6], fig.cap = interesting_sectors[6]}
-close_trend(company_close, interesting_sectors[6])
+normalized_price_trend(price_data, interesting_sectors[6])
 ```
 
 ```{r, fig.width = 7, fig.height = fig_height[7], fig.cap = interesting_sectors[7]}
-close_trend(company_close, interesting_sectors[7])
+normalized_price_trend(price_data, interesting_sectors[7])
 ```
 
 ```{r, fig.width = 7, fig.height = fig_height[8], fig.cap = interesting_sectors[8]}
-close_trend(company_close, interesting_sectors[8])
+normalized_price_trend(price_data, interesting_sectors[8])
 ```
 
 ```{r, fig.width = 7, fig.height = fig_height[9], fig.cap = interesting_sectors[9]}
-close_trend(company_close, interesting_sectors[9])
+normalized_price_trend(price_data, interesting_sectors[9])
 ```
 
 ```{r, fig.width = 7, fig.height = fig_height[10], fig.cap = interesting_sectors[10]}
-close_trend(company_close, interesting_sectors[10])
+normalized_price_trend(price_data, interesting_sectors[10])
 ```
 
 ```{r, fig.width = 7, fig.height = fig_height[11], fig.cap = interesting_sectors[11]}
-close_trend(company_close, interesting_sectors[11])
+normalized_price_trend(price_data, interesting_sectors[11])
 ```
 
 ```{r, fig.width = 7, fig.height = fig_height[12], fig.cap = interesting_sectors[12]}
-close_trend(company_close, interesting_sectors[12])
+normalized_price_trend(price_data, interesting_sectors[12])
 ```
 
 ```{r, fig.width = 7, fig.height = fig_height[13], fig.cap = interesting_sectors[13]}
-close_trend(company_close, interesting_sectors[13])
+normalized_price_trend(price_data, interesting_sectors[13])
 ```
 
 ```{r, fig.width = 7, fig.height = fig_height[14], fig.cap = interesting_sectors[14]}
-close_trend(company_close, interesting_sectors[14])
+normalized_price_trend(price_data, interesting_sectors[14])
 ```
 
 ```{r, fig.width = 7, fig.height = fig_height[15], fig.cap = interesting_sectors[15]}
-close_trend(company_close, interesting_sectors[15])
+normalized_price_trend(price_data, interesting_sectors[15])
 ```
 
 ## Stock price correlation^[Industry sector classification is based on data from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html).]
 
 ```{r, include = F}
-company_event = company_close %>% filter(!is.na(Event)) %>% select(Date, Yahoo, Event)
-
-company_close_wide = company_close %>% select(-Event) %>% pivot_wider(id_cols = Date, names_from = Yahoo, values_from = Close)
-
-company_cor = company_close_wide %>% column_to_rownames("Date") %>% cor(use = "pairwise.complete.obs")
-
-colnames(company_cor) %<>% yahoo_to_name
-rownames(company_cor) %<>% yahoo_to_name
+price_cor = price_data %>% 
+  mutate(Name = clean_name(Name)) %>%
+  select(Name, date, adjusted) %>%
+  pivot_wider(id_cols = date, names_from = Name, values_from = adjusted) %>%
+  column_to_rownames("date") %>%
+  cor(use = "pairwise.complete.obs")
 
 company_annotation = company %>% 
   select(Name, `Broad group`, Country, Industry) %>% 
+  mutate(Name = clean_name(Name)) %>%
   column_to_rownames("Name") %>% 
-  .[rownames(company_cor), ]
+  .[rownames(price_cor), ]
 
 n_industry = company_annotation$Industry %>% unique %>% length
 
@@ -617,8 +598,8 @@ column_annotation = HeatmapAnnotation(df = company_annotation,
                                                                                      title_gp = gpar(fontsize = 8, fontface = "bold"),
                                                                                      labels_gp = gpar(fontsize = 7))))
 
-h = company_cor %>% Heatmap(name = "Pearson's r",
-                        width = unit(5, "inch"), height = unit(5, "inch"),
+h = price_cor %>% Heatmap(name = "Pearson's r",
+                        width = unit(5.25, "inch"), height = unit(5.25, "inch"),
                         show_column_names = F, show_column_dend = T,
                         show_row_names = T, show_row_dend = F,
                         row_names_gp = gpar(fontsize = 6),
@@ -632,19 +613,8 @@ h = company_cor %>% Heatmap(name = "Pearson's r",
 h_height = h@ht_list_param$height %>% as.numeric %>% conv_unit("mm", "inch")
 ```
 
-
-```{r, fig.width = 7, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between closing prices of my watchlist over the last 6 months"}
-company_cor %>% Heatmap(name = "Pearson's r",
-                        width = unit(5, "inch"), height = unit(5, "inch"),
-                        show_column_names = F, show_column_dend = T,
-                        show_row_names = T, show_row_dend = F,
-                        row_names_gp = gpar(fontsize = 6),
-                        heatmap_legend_param = list(legend_height = unit(ceiling(n_industry/2) * 4, "mm"),
-                                                    grid_width = unit(4, "mm"),
-                                                    title_gp = gpar(fontsize = 8, fontface = "bold"),
-                                                    labels_gp = gpar(fontsize = 7)),
-                        top_annotation = column_annotation) %>% 
-  draw(merge_legend = T, heatmap_legend_side = "bottom")
+```{r, fig.width = 7, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between closing prices of my watchlist over the last 2 years"}
+h
 ```
 
 ## Small-cap companies

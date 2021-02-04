@@ -54,6 +54,7 @@ p_load(bookdown,
        rvest,
        scales,
        stringi,
+       tidyquant,
        tidyverse,
        XML,
        yfinance)
@@ -104,6 +105,18 @@ make_readable = function(x) case_when(abs(x) >= 1e12 ~ str_c(round(x/1e12, 1) %>
                                       abs(x) >= 1e6 ~ str_c(round(x/1e6, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "M"),
                                       abs(x) >= 1e3 ~ str_c(round(x/1e3, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "k"),
                                       T ~ round(x, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim)
+
+clean_name = function(name) {
+  name %>% str_replace_all(c("Inc\\.*" = "",
+                             "Ltd\\.*" = "",
+                             "Mfg\\.*" = "",
+                             "Common Stock" = "",
+                             "(& )*Co(rporation|rp|\\.)*" = "",
+                             "(SA|AG)$" = "",
+                             "," = "",
+                             "\\s+" = " ")) %>% 
+    str_trim
+}
 ```
 
 ```{r}
@@ -122,6 +135,8 @@ line_color = c(qual_col_vector[front], qual_col_vector[-c(front, back)], qual_co
 
 today = Sys.Date() %>% as.character %>% str_replace(" ", "")
 monthago = (Sys.Date() - 30) %>% as.character %>% str_replace(" ", "")
+yearago = (Sys.Date() - 365) %>% as.character %>% str_replace(" ", "")
+twoyearsago = (Sys.Date() - 365 * 2) %>% as.character %>% str_replace(" ", "")
 threeyearsago = (Sys.Date() - 365 * 3) %>% as.character %>% str_replace(" ", "")
 fiveyearsago = (Sys.Date() - 365 * 5) %>% as.character %>% str_replace(" ", "")
 twentyyearsago = (Sys.Date() - 365 * 20) %>% as.character %>% str_replace(" ", "")
