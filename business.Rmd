@@ -335,6 +335,60 @@ ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align
 ```
 
 ```{r}
+process_textplot = function(g) {
+  gt = ggplot_gtable(ggplot_build(g))
+  
+  gt$heights[gt$layout$t[gt$layout$name == "panel-1-1"]] = gt$heights[gt$layout$t[gt$layout$name == "panel-1-1"]] * 0.25
+  gt$heights[gt$layout$t[gt$layout$name == "panel-3-1"]] = gt$heights[gt$layout$t[gt$layout$name == "panel-3-1"]] * 0.25
+  
+  ggrob = as_grob(gt)
+  
+  label_indices = sapply(ggrob$grobs[[20]][[1]][[1]]$grobs, function(i) "label" %in% names(i)) %>% which
+  
+  for (i in label_indices) {
+    ggrob$grobs[[20]][[1]][[1]]$grobs[[i]]$label = "A"
+  }
+  
+  ggdraw(ggrob)
+}
+
+relation_plot = function(financials, x, y, xtrans = "identity", xlab = NULL, ylab = NULL, xlabels = waiver(), ylabels = waiver()) {
+  
+  if (is.null(xlab)) xlab = enquo(x)
+  if (is.null(ylab)) ylab = enquo(y)
+  
+  x = enquo(x)
+  y = enquo(y)
+  
+  b = financials %>% pull(!!y) %>% boxplot
+  base_limits = b$stats[c(1, 5), ]
+  
+  financials %<>%
+    filter(!is.na(!!x) & !is.na(!!y)) %>%
+    mutate(group = case_when(!!y > base_limits[1] & !!y < base_limits[2] ~ "Main",
+                             !!y <= base_limits[1] ~ "Low",
+                             !!y >= base_limits[2] ~ "High") %>% 
+             factor(levels = c("High", "Main", "Low")))
+  
+  g = financials %>%
+    ggplot(mapping = aes(!!x, !!y)) +
+    annotation_custom(linesGrob(gp = gpar(lty = "dashed", col = "gray")), ymin = 0, ymax = 0) +
+    annotation_custom(linesGrob(gp = gpar(lty = "dashed", col = "gray")), xmin = 0, xmax = 0) +
+    geom_text(mapping = aes(label = Name_trimmed, size = Marketcap_USD/1e9), hjust = 0.5, vjust = 0.5, family = "Lato") +
+    scale_x_continuous(trans = xtrans, expand = c(0.25, 0), labels = xlabels) +
+    scale_size_continuous(trans = "log10", guide = guide_legend(title = "Market\ncapitalization\n($Billion)")) +
+    labs(x = xlab, y = ylab) +
+    facet_grid_sc(rows = vars(group), 
+                  scales = list(y = list(High = scale_y_continuous(labels = ylabels, expand = c(0.16, 0)),
+                                         Main = scale_y_continuous(labels = ylabels, expand = c(0.04, 0)),
+                                         Low = scale_y_continuous(labels = ylabels, expand = c(0.16, 0)))),
+                  labeller = labeller(group = c(High = "Upper outlier", Main = "Majority", Low = "Lower outlier")))
+  
+  process_textplot(g)
+}
+```
+
+```{r, include = F}
 exchange = getQuote(str_c("USD", company_plot$Currency, "=X"), src = "yahoo") %>% 
   rownames_to_column("Ticker") %>% 
   mutate(Currency = str_extract(Ticker, "(?<=USD)[A-Z]+(?=\\=)")) %>%
@@ -349,37 +403,6 @@ company_plot %<>%
          Name_trimmed = case_when(Name_trimmed == "Taiwan Semiconductor" ~ "TSMC", 
                                   Name_trimmed == "Pacific Biosciences of California" ~ "PacBio",
                                   T ~ Name_trimmed))
-
-relation_plot = function(financials, x, y, xtrans = "identity", xlab = NULL, ylab = NULL, xlabels = waiver(), ylabels = waiver()) {
-  
-  if (is.null(xlab)) xlab = enquo(x)
-  if (is.null(ylab)) ylab = enquo(y)
-  
-  x = enquo(x)
-  y = enquo(y)
-  
-  g = financials %>%
-    filter(!is.na(!!x) & !is.na(!!y)) %>%
-    ggplot(mapping = aes(!!x, !!y)) +
-    geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
-    geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
-    geom_text(mapping = aes(label = Name_trimmed, size = Marketcap_USD/1e9), hjust = 0.5, vjust = 0.5, family = "Lato") +
-    scale_x_continuous(trans = xtrans, expand = c(0.25, 0), labels = xlabels) +
-    scale_y_continuous(labels = ylabels) +
-    scale_size_continuous(trans = "log10", guide = guide_legend(title = "Market\ncapitalization\n($Billion)")) +
-    labs(x = xlab, y = ylab)
-  
-  g = ggplotGrob(g)
-  
-  label_indices = sapply(g$grobs[[15]][[1]][[1]]$grobs, function(i) "label" %in% names(i)) %>% which
-  
-  for (i in label_indices) {
-    g$grobs[[15]][[1]][[1]]$grobs[[i]]$label = "A"
-  }
-  
-  g %>% ggdraw
-  
-}
 
 f1 = relation_plot(company_plot, `Earnings-to-price`, Earnings_growth_past_5yrs, 
               xlab = "Earnings/Price", ylab = "Earnings growth per annum (past 5 years)", 
@@ -399,12 +422,12 @@ f4 = relation_plot(company_plot, `Sales-to-price`, Revenue_growth_estimate_next,
 
 f5 = relation_plot(company_plot, ROIC, ROE)
 
-f6 = relation_plot(company_plot, DER, ROE, xtrans = "reverse", xlab = "Debt/Equity (reverse axis)")
+f6 = relation_plot(company_plot, -DER, ROE, xlab = "Debt/Equity (reverse axis)", xlabels = function(x) {-x})
 
-f7 = relation_plot(company_plot, DER, ROIC, xtrans = "reverse", xlab = "Debt/Equity (reverse axis)")
+f7 = relation_plot(company_plot, -DER, ROIC, xlab = "Debt/Equity (reverse axis)", xlabels = function(x) {-x})
 ```
 
-```{r, fig.width = 7, fig.height = 40, fig.cap = "Scatterplot of key statistics"}
+```{r, fig.width = 7, fig.height = 60, fig.cap = "Scatterplot of key statistics"}
 ggarrange(f1, f2, f3, f4, f5, f6, f7, nrow = 7, ncol = 1, align = "v")
 ```
 
@@ -422,7 +445,7 @@ company_decision = company %>%
                                                 "Negative equity")))
 ```
 
-```{r, fig.width = 7, fig.height = (nrow(company_decision) + 6)/4, fig.cap = "Investment decision made by a fundamental analysis-based algorithm for the listed companies"}
+```{r, fig.width = 7, fig.height = (nrow(company_decision) + 6)/4, fig.cap = "Investment decision made by a fundamental analysis-based algorithm for listed companies"}
 company_decision %>%
   ggplot(mapping = aes(x = Name, y = Decision)) +
   geom_point(mapping = aes(fill = Decision), shape = 21, size = 3, stroke = 1) +

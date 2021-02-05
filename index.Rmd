@@ -30,12 +30,17 @@ if (!"yfinance" %in% installed.packages()) {
   remotes::install_github("ljupch0/yfinance")
 }
 
+if (!"facetscales" %in% installed.packages()) {
+  devtools::install_github("zeehio/facetscales")
+}
+
 library(pacman)
 
 p_load(bookdown,
        ComplexHeatmap,
        cowplot,
        DT,
+       facetscales,
        furrr,
        ggpubr,
        googledrive,
