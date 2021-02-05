@@ -65,7 +65,14 @@ marketcap %>%
 ## GDP and market capitalization
 
 ```{r}
-download.file("https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.CD?downloadformat=csv", destfile = "gdp.zip", mode = "wb")
+tryCatch(
+  {
+    download.file("https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.CD?downloadformat=csv", destfile = "gdp.zip", mode = "wb")
+  },
+  error = function(cond) {
+    message(cond)
+    return(NULL)
+})
 
 gdp_csv = unzip("gdp.zip", list = T) %>% pull(Name) %>% str_subset("^(?!Metadata)")
 
@@ -105,15 +112,20 @@ g2 = combined %>%
   facet_grid(rows = vars(Year))
 
 g_legend = get_legend(g2)
+
+legend_padding = (theme_get()$legend.margin + theme_get()$legend.box.spacing)[1] %>% convertUnit("inch") %>% as.numeric
+legend_key_width = theme_get()$legend.key.size %>% convertUnit("inch") %>% as.numeric
+legend_label_width = c(country_level_rev[1:10], "Other countries") %>% stringWidth %>% convertUnit("inch") %>% max %>% as.numeric %>% multiply_by(0.8)
+legend_width = sum(legend_label_width, legend_key_width, legend_padding)
 ```
 
-```{r buffett, fig.width = 7, fig.height = 5 * length(unique(combined$Year)), fig.cap = str_c("Market capitalization relative to GDP across ", length(unique(combined$`Country Name`)), " major countries")}
-ggarrange(g, g_legend, widths = c(4, 1))
+```{r buffett, fig.width = 7, fig.height = 5 * length(unique(combined$Year)) + 1/2, fig.cap = str_c("Market capitalization relative to GDP across ", length(unique(combined$`Country Name`)), " major countries")}
+ggarrange(g, g_legend, widths = c(7 - legend_width, legend_width))
 ```
 
 (ref:buffett-text) Same data as in Figure \@ref(fig:buffett)
 
-```{r, fig.width = 7, fig.height = 6.5 * length(unique(combined$Year)), fig.cap = "(ref:buffett-text)"}
+```{r, fig.width = 7, fig.height = 5 * 7 / (7 - legend_width) * length(unique(combined$Year)) + 1/2, fig.cap = "(ref:buffett-text)"}
 combined %>%
   mutate(`Country Name` = replace(as.character(`Country Name`), `Country Name` == "United States", "USA")) %>%
   ggplot(mapping = aes(x = GDP/1e12, y = Marketcap/1e12)) +

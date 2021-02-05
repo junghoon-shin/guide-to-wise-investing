@@ -36,47 +36,51 @@ plan(multisession)
 
 yahoo_data = future_map_dfr(company$Yahoo, ~{
   ticker = .
+  
+  out = tryCatch(
+    {
+      Summary = read_html(file.path("https://finance.yahoo.com/quote", ticker), header = F) %>% bind_rows
+      Profile = read_html(file.path("https://finance.yahoo.com/quote" , ticker, "profile"), which = 1, header = T)
+      Statistics = read_html(file.path("https://finance.yahoo.com/quote", ticker, "key-statistics"), header = F) %>% map_dfr(~select(., 1:2))
+      Statistics$V1 %<>% str_replace(" [0-9]$", "")
+      Revenue = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 2, header = F)
+      Growth = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 6, header = T)
+      
+      tibble(Yahoo = ticker,
+             Beta = Summary %>% filter(V1 == "Beta (5Y Monthly)") %>% pull(V2),
+             Target = Summary %>% filter(V1 == "1y Target Est") %>% pull(V2),
+             CEO = Profile %>% slice(1) %>% pull(Name),
+             CEO_title = Profile %>% slice(1) %>% pull(Title),
+             CEO_pay = Profile %>% slice(1) %>% pull(Pay),
+             CEO_age = thisyear - (Profile %>% slice(1) %>% pull(`Year Born`) %>% as.numeric),
+             Profit_margin = Statistics %>% filter(V1 == "Profit Margin") %>% pull(V2),
+             ROA = Statistics %>% filter(V1 == "Return on Assets (ttm)") %>% pull(V2),
+             ROE = Statistics %>% filter(V1 == "Return on Equity (ttm)") %>% pull(V2),
+             Revenue_per_share = Statistics %>% filter(V1 == "Revenue Per Share (ttm)") %>% pull(V2),
+             Quarterly_revenue_growth = Statistics %>% filter(V1 == "Quarterly Revenue Growth (yoy)") %>% pull(V2),
+             Diluted_EPS = Statistics %>% filter(V1 == "Diluted EPS (ttm)") %>% pull(V2),
+             Quarterly_earnings_growth = Statistics %>% filter(V1 == "Quarterly Earnings Growth (yoy)") %>% pull(V2),
+             DER = Statistics %>% filter(V1 == "Total Debt/Equity (mrq)") %>% pull(V2),
+             BVPS = Statistics %>% filter(V1 == "Book Value Per Share (mrq)") %>% pull(V2),
+             Operating_cash_flow = Statistics %>% filter(V1 == "Operating Cash Flow (ttm)") %>% pull(V2),
+             Levered_free_cash_flow = Statistics %>% filter(V1 == "Levered Free Cash Flow (ttm)") %>% pull(V2),
+             Forward_annual_dividend_yield = Statistics %>% filter(V1 == "Forward Annual Dividend Yield") %>% pull(V2),
+             Trailing_annual_dividend_yield = Statistics %>% filter(V1 == "Trailing Annual Dividend Yield") %>% pull(V2),
+             Average_dividend_yield_5yrs = Statistics %>% filter(V1 == "5 Year Average Dividend Yield") %>% pull(V2),
+             Payout_ratio = Statistics %>% filter(V1 == "Payout Ratio") %>% pull(V2),
+             Revenue_growth_estimate_current = Revenue %>% filter(V1 == "Sales Growth (year/est)") %>% pull(V4),
+             Revenue_growth_estimate_next = Revenue %>% filter(V1 == "Sales Growth (year/est)") %>% pull(V5),
+             Earnings_growth_past_5yrs = Growth %>% filter(`Growth Estimates` == "Past 5 Years (per annum)") %>% pull(ticker),
+             Earnings_growth_estimate_next_5yrs = Growth %>% filter(`Growth Estimates` == "Next 5 Years (per annum)") %>% pull(ticker))
+    },
     
-  tryCatch({
-    Summary = read_html(file.path("https://finance.yahoo.com/quote", ticker), header = F) %>% bind_rows
-    Profile = read_html(file.path("https://finance.yahoo.com/quote" , ticker, "profile"), which = 1, header = T)
-    Statistics = read_html(file.path("https://finance.yahoo.com/quote", ticker, "key-statistics"), header = F) %>% map_dfr(~select(., 1:2))
-    Statistics$V1 %<>% str_replace(" [0-9]$", "")
-    Revenue = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 2, header = F)
-    Growth = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 6, header = T)
-    
-    tibble(Yahoo = ticker,
-           Beta = Summary %>% filter(V1 == "Beta (5Y Monthly)") %>% pull(V2),
-           Target = Summary %>% filter(V1 == "1y Target Est") %>% pull(V2),
-           CEO = Profile %>% slice(1) %>% pull(Name),
-           CEO_title = Profile %>% slice(1) %>% pull(Title),
-           CEO_pay = Profile %>% slice(1) %>% pull(Pay),
-           CEO_age = thisyear - (Profile %>% slice(1) %>% pull(`Year Born`) %>% as.numeric),
-           Profit_margin = Statistics %>% filter(V1 == "Profit Margin") %>% pull(V2),
-           ROA = Statistics %>% filter(V1 == "Return on Assets (ttm)") %>% pull(V2),
-           ROE = Statistics %>% filter(V1 == "Return on Equity (ttm)") %>% pull(V2),
-           Revenue_per_share = Statistics %>% filter(V1 == "Revenue Per Share (ttm)") %>% pull(V2),
-           Quarterly_revenue_growth = Statistics %>% filter(V1 == "Quarterly Revenue Growth (yoy)") %>% pull(V2),
-           Diluted_EPS = Statistics %>% filter(V1 == "Diluted EPS (ttm)") %>% pull(V2),
-           Quarterly_earnings_growth = Statistics %>% filter(V1 == "Quarterly Earnings Growth (yoy)") %>% pull(V2),
-           DER = Statistics %>% filter(V1 == "Total Debt/Equity (mrq)") %>% pull(V2),
-           BVPS = Statistics %>% filter(V1 == "Book Value Per Share (mrq)") %>% pull(V2),
-           Operating_cash_flow = Statistics %>% filter(V1 == "Operating Cash Flow (ttm)") %>% pull(V2),
-           Levered_free_cash_flow = Statistics %>% filter(V1 == "Levered Free Cash Flow (ttm)") %>% pull(V2),
-           Forward_annual_dividend_yield = Statistics %>% filter(V1 == "Forward Annual Dividend Yield") %>% pull(V2),
-           Trailing_annual_dividend_yield = Statistics %>% filter(V1 == "Trailing Annual Dividend Yield") %>% pull(V2),
-           Average_dividend_yield_5yrs = Statistics %>% filter(V1 == "5 Year Average Dividend Yield") %>% pull(V2),
-           Payout_ratio = Statistics %>% filter(V1 == "Payout Ratio") %>% pull(V2),
-           Revenue_growth_estimate_current = Revenue %>% filter(V1 == "Sales Growth (year/est)") %>% pull(V4),
-           Revenue_growth_estimate_next = Revenue %>% filter(V1 == "Sales Growth (year/est)") %>% pull(V5),
-           Earnings_growth_past_5yrs = Growth %>% filter(`Growth Estimates` == "Past 5 Years (per annum)") %>% pull(ticker),
-           Earnings_growth_estimate_next_5yrs = Growth %>% filter(`Growth Estimates` == "Next 5 Years (per annum)") %>% pull(ticker))
-  },
-  error = function(cond) {
-    message(str_c("Error: ", ticker))
-    message(cond)
-    return(NULL)
+    error = function(cond) {
+      message(str_c("Error: ", ticker))
+      message(cond)
+      return(NULL)
   })
+  
+  return(out)
 })
 
 financials = future_map_dfr(company$Yahoo, get_financials)
@@ -218,8 +222,8 @@ my_datatable(company_display, paging = T, pageLength = 5, scrollY = NULL, captio
 
 ```{r, fig.cap = "Income statement, balance sheet, and cash flow data over the last 4 years"}
 financials %<>% 
-  left_join(company %>% select(Yahoo, Name)) %>%
-  relocate(Name) %>%
+  left_join(company %>% select(Yahoo, Name, Currency)) %>%
+  relocate(Name, Currency) %>%
   select(-Yahoo)
 
 names(financials) %<>% 
@@ -230,7 +234,7 @@ names(financials) %<>%
 
 financials %<>% 
   rename(EBIT = Ebit) %>% 
-  mutate(across(-c(Name, Date), make_readable)) %>%
+  mutate(across(-c(Name, Currency, Date), make_readable)) %>%
   mutate(across(-Date, ~replace(., . == "NA", NA))) %>%
   arrange(Name, Date)
 
@@ -319,7 +323,7 @@ n_industry = company_plot$Industry %>% unique %>% length
 
 ```{r, fig.width = 7, fig.height = (nrow(company_plot) + 2) * 3/4 + (ceiling(n_industry/3) + 1)/4, fig.cap = "Key financials of my watchlist"}
 legend_ratio = (nrow(company_plot) + 2) / (ceiling(n_industry/3) + 1)
-name_width = 1.2 * max(stri_width(company_plot$Name)) / stri_width("Korea Shipbuilding &Offshore Engn")
+name_width = 1.2 * max(stringWidth(company_plot$Name) %>% convertUnit("inch") %>% as.numeric) / (stringWidth("Korea Shipbuilding &Offshore Engn") %>% convertUnit("inch") %>% as.numeric)
 plot_width = 4.2 - name_width
 
 ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))), 
@@ -393,7 +397,7 @@ f4 = relation_plot(company_plot, `Sales-to-price`, Revenue_growth_estimate_next,
               xlab = "Sales/Price", ylab = "Revenue growth estimate (next year)",
               ylabels = percent)
 
-f5 = relation_plot(company_plot, ROE, ROIC)
+f5 = relation_plot(company_plot, ROIC, ROE)
 
 f6 = relation_plot(company_plot, DER, ROE, xtrans = "reverse", xlab = "Debt/Equity (reverse axis)")
 
@@ -447,7 +451,7 @@ price_data %>%
   geom_line(color = line_color[1]) +
   scale_x_date(expand = c(0, 0)) +
   labs(x = "Date", y = "Adjusted closing price") +
-  facet_grid(rows = vars(Name), scales = "free", space = "free_x")
+  facet_grid(rows = vars(Name), scales = "free_y")
 ```
 
 ```{r}
@@ -456,6 +460,8 @@ get_legend_nrow = function(close, industry) {
 }
 
 get_legend_nrow = Vectorize(get_legend_nrow, "industry")
+
+legend_key_size = theme_get()$legend.key.size %>% convertUnit("inch") %>% as.numeric
 
 normalized_price_trend = function(price, industry) {
   price_subset = price %>% 
@@ -474,25 +480,39 @@ normalized_price_trend = function(price, industry) {
   
   g = price_subset %>%
     ggplot(mapping = aes(x = date, y = normalized)) +
-    geom_vline(xintercept = base_date, linetype = "dashed") +
     geom_line(mapping = aes(color = Name)) +
     scale_x_date(expand = c(0, 0)) +
     scale_color_manual(values = line_color[1:ncompany], 
                        guide = guide_legend(title = NULL, nrow = legend_nrow)) +
     labs(x = "Date", y = "Normalized closing price") +
+    annotation_custom(segmentsGrob(x0 = unit(0.5, "npc"), 
+                                   x1 = unit(0.5, "npc"), 
+                                   y0 = unit(0, "npc"), 
+                                   y1 = unit(1.1, "npc"),
+                                   gp = gpar(lty = "dashed")),
+                      xmin = base_date, xmax = base_date) +
     annotation_custom(textGrob(str_c("Normalized to 100 as of ", base_date), 
-                               y = unit(0.95, "npc"), 
-                               hjust = ifelse(base_date < yearago, -0.03, 1.03), vjust = 1,
+                               x = unit(0.5, "npc"),
+                               y = unit(1.05, "npc"), 
+                               hjust = ifelse(base_date < yearago, -0.03, 1.03), 
+                               vjust = 0.5,
                                gp = gpar(fontfamily = "Lato", fontsize = 10)),
                       xmin = base_date, xmax = base_date) +
-    theme(legend.position = "bottom", legend.key = element_rect(fill = "transparent"))
+    theme(legend.position = "bottom", legend.key = element_rect(fill = "transparent"),
+          plot.margin = unit(c(convertUnit(unit(0.35, "inch"), unitTo = "points") %>% as.numeric, 5.5, 5.5, 5.5), "points"))
   
-  ggarrange(g + guides(color = F), ggdraw(get_legend(g)), nrow = 2, ncol = 1, heights = c(8, legend_nrow))
+  g_legend = get_legend(g)
+  
+  g = ggplot_gtable(ggplot_build(g + guides(color = F)))
+  
+  g$layout$clip[g$layout$name == "panel"] = "off"
+  
+  ggarrange(ggdraw(g), g_legend, nrow = 2, ncol = 1, heights = c(3.5, legend_nrow * legend_key_size + 0.1 * 2))
 }
 
 interesting_sectors = price_data %>% select(Name, Industry) %>% unique %>% count(Industry) %>% arrange(desc(n), Industry) %>% pull(Industry)
 
-fig_height = (8 + get_legend_nrow(price_data, interesting_sectors))/2.5
+fig_height = 3.5 + get_legend_nrow(price_data, interesting_sectors) * legend_key_size + 0.1 * 2
 ```
 
 ## Normalized stock price trend^[Only top 15 industry sectors are shown.]

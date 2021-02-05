@@ -93,7 +93,7 @@ ticker = tribble(
   "AAA", "DAAA",
   "USDKRW", "DEXKOUS")
 
-index_30yr = tq_get(ticker$symbol, get = "economic.data", from = thirtyyearsago)
+index_30yr = tq_get(ticker$symbol, get = "economic.data", from = as.Date(thirtyyearsago) - 30)
 
 index_30yr %<>% left_join(ticker) %>% select(-symbol)
 
