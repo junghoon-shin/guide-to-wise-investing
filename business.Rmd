@@ -335,6 +335,23 @@ ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align
 ```
 
 ```{r}
+exchange = getQuote(str_c("USD", company_plot$Currency, "=X"), src = "yahoo") %>% 
+  rownames_to_column("Ticker") %>% 
+  mutate(Currency = str_extract(Ticker, "(?<=USD)[A-Z]+(?=\\=)")) %>%
+  select(Currency, Last) %>%
+  rename(Exchange = Last)
+
+company_plot %<>% 
+  left_join(exchange) %>%
+  mutate(Marketcap_USD = Marketcap / Exchange) %>%
+  arrange(desc(Marketcap_USD)) %>%
+  mutate(Name_trimmed = clean_name(Name),
+         Name_trimmed = case_when(Name_trimmed == "Taiwan Semiconductor" ~ "TSMC", 
+                                  Name_trimmed == "Pacific Biosciences of California" ~ "PacBio",
+                                  T ~ Name_trimmed))
+```
+
+```{r}
 process_textplot = function(g) {
   gt = ggplot_gtable(ggplot_build(g))
   
@@ -370,13 +387,24 @@ relation_plot = function(financials, x, y, xtrans = "identity", xlab = NULL, yla
                              !!y >= base_limits[2] ~ "High") %>% 
              factor(levels = c("High", "Main", "Low")))
   
+  padding = financials %>% 
+    mutate(fontsize = rescale(log10(Marketcap_USD/1e9), to = c(1, 6)),
+           basewidth = stringWidth(Name_trimmed) %>% convertUnit("mm") %>% as.numeric,
+           realwidth = basewidth * fontsize / (9 / .pt),
+           xpos = rescale(!!x, to = c(0, panelwidth)),
+           leftbound = xpos - realwidth/2,
+           rightbound = xpos + realwidth/2) %>%
+    summarise(leftmargin = -min(leftbound), rightmargin = max(rightbound - panelwidth)) %>%
+    mutate(left = leftmargin / (panelwidth - leftmargin - rightmargin),
+           right = rightmargin / (panelwidth - leftmargin - rightmargin))
+  
   g = financials %>%
     ggplot(mapping = aes(!!x, !!y)) +
     annotation_custom(linesGrob(gp = gpar(lty = "dashed", col = "gray")), ymin = 0, ymax = 0) +
     annotation_custom(linesGrob(gp = gpar(lty = "dashed", col = "gray")), xmin = 0, xmax = 0) +
     geom_text(mapping = aes(label = Name_trimmed, size = Marketcap_USD/1e9), hjust = 0.5, vjust = 0.5, family = "Lato") +
-    scale_x_continuous(trans = xtrans, expand = c(0.25, 0), labels = xlabels) +
-    scale_size_continuous(trans = "log10", guide = guide_legend(title = "Market\ncapitalization\n($Billion)")) +
+    scale_x_continuous(trans = xtrans, expand = c(padding$left, 0, padding$right, 0), labels = xlabels) +
+    scale_size(trans = "log10", range = c(1, 6), guide = guide_legend(title = "Market\ncapitalization\n($Billion)")) +
     labs(x = xlab, y = ylab) +
     facet_grid_sc(rows = vars(group), 
                   scales = list(y = list(High = scale_y_continuous(labels = ylabels, expand = c(0.16, 0)),
@@ -389,20 +417,7 @@ relation_plot = function(financials, x, y, xtrans = "identity", xlab = NULL, yla
 ```
 
 ```{r, include = F}
-exchange = getQuote(str_c("USD", company_plot$Currency, "=X"), src = "yahoo") %>% 
-  rownames_to_column("Ticker") %>% 
-  mutate(Currency = str_extract(Ticker, "(?<=USD)[A-Z]+(?=\\=)")) %>%
-  select(Currency, Last) %>%
-  rename(Exchange = Last)
-
-company_plot %<>% 
-  left_join(exchange) %>%
-  mutate(Marketcap_USD = Marketcap / Exchange) %>%
-  arrange(desc(Marketcap_USD)) %>%
-  mutate(Name_trimmed = clean_name(Name),
-         Name_trimmed = case_when(Name_trimmed == "Taiwan Semiconductor" ~ "TSMC", 
-                                  Name_trimmed == "Pacific Biosciences of California" ~ "PacBio",
-                                  T ~ Name_trimmed))
+panelwidth = convertUnit(unit(4.7, "inch"), "mm") %>% as.numeric
 
 f1 = relation_plot(company_plot, `Earnings-to-price`, Earnings_growth_past_5yrs, 
               xlab = "Earnings/Price", ylab = "Earnings growth per annum (past 5 years)", 

@@ -26,12 +26,14 @@ knitr::write_bib(c(.packages(), "bookdown", "knitr", "rmarkdown"), "packages.bib
 ```{r, include = F}
 # Initialize environment
 
+library(remotes)
+
 if (!"yfinance" %in% installed.packages()) {
-  remotes::install_github("ljupch0/yfinance")
+  install_github("ljupch0/yfinance")
 }
 
 if (!"facetscales" %in% installed.packages()) {
-  devtools::install_github("zeehio/facetscales")
+  install_github("zeehio/facetscales")
 }
 
 library(pacman)
