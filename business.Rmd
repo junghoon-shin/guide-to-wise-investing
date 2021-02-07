@@ -400,8 +400,8 @@ relation_plot = function(financials, x, y, xtrans = "identity", xlab = NULL, yla
   
   g = financials %>%
     ggplot(mapping = aes(!!x, !!y)) +
-    annotation_custom(linesGrob(gp = gpar(lty = "dashed", col = "gray")), ymin = 0, ymax = 0) +
-    annotation_custom(linesGrob(gp = gpar(lty = "dashed", col = "gray")), xmin = 0, xmax = 0) +
+    annotation_custom(linesGrob(gp = gpar(lty = "dashed")), ymin = 0, ymax = 0) +
+    annotation_custom(linesGrob(gp = gpar(lty = "dashed")), xmin = 0, xmax = 0) +
     geom_text(mapping = aes(label = Name_trimmed, size = Marketcap_USD/1e9), hjust = 0.5, vjust = 0.5, family = "Lato") +
     scale_x_continuous(trans = xtrans, expand = c(padding$left, 0, padding$right, 0), labels = xlabels) +
     scale_size(trans = "log10", range = c(1, 6), guide = guide_legend(title = "Market\ncapitalization\n($Billion)")) +
