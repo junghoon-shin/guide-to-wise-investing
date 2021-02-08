@@ -103,6 +103,19 @@ ROIC = financials %>%
 yahoo_data %<>% left_join(ROIC)
 ```
 
+```{r, eval = F}
+tmp = financials %>% filter(Yahoo == "AAPL")
+tmp %<>%
+  mutate(changeToAccountsPayable = c(accountsPayable[-length(accountsPayable)] - accountsPayable[-1], NA))
+  
+tmp$netIncome
+tmp$depreciation
+tmp$changeToAccountReceivables
+tmp$changeToAccountsPayable
+tmp$incomeTaxExpense
+tmp$capitalExpenditures
+```
+
 ```{r}
 company %<>% left_join(yahoo_data)
 
