@@ -91,6 +91,21 @@ financials %<>%
   rename(Yahoo = ticker) %>%
   mutate(date = as.Date(date))
 
+tmp = financials %>% filter(Yahoo == "AAPL")
+tmp %<>% 
+  mutate(changeToAccountsPayable = c(accountsPayable[-length(accountsPayable)] - accountsPayable[-1], NA))
+
+tmp$netIncome
+tmp$depreciation
+tmp$changeToAccountReceivables
+tmp$changeToAccountsPayable
+tmp$incomeTaxExpense
+tmp$capitalExpenditures
+
+```
+
+
+```{r}
 ROIC = financials %>%
   group_by(Yahoo) %>%
   group_modify(~arrange(., desc(date)) %>% slice(1)) %>%
