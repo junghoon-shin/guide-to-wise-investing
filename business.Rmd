@@ -402,8 +402,8 @@ relation_plot = function(financials, x, y, xtrans = "identity", xlab = NULL, yla
   
   padding = financials %>% 
     mutate(fontsize = rescale(log10(Marketcap_USD/1e9), to = c(1, 6)),
-           basewidth = stringWidth(Name_trimmed) %>% convertUnit("mm") %>% as.numeric,
-           realwidth = basewidth * fontsize / (9 / .pt),
+           basewidth = stringWidth(Name_trimmed) %>% convertUnit("inch") %>% as.numeric,
+           realwidth = basewidth * fontsize / (8 / .pt),
            xpos = rescale(!!x, to = c(0, panelwidth)),
            leftbound = xpos - realwidth/2,
            rightbound = xpos + realwidth/2) %>%
@@ -430,7 +430,7 @@ relation_plot = function(financials, x, y, xtrans = "identity", xlab = NULL, yla
 ```
 
 ```{r, include = F}
-panelwidth = convertUnit(unit(4.7, "inch"), "mm") %>% as.numeric
+panelwidth = 4.7
 
 f1 = relation_plot(company_plot, `Earnings-to-price`, Earnings_growth_past_5yrs, 
               xlab = "Earnings/Price", ylab = "Earnings growth per annum (past 5 years)", 
