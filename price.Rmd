@@ -1,4 +1,4 @@
-# Stock price {#price}
+# Stock price trend {#price}
 
 ## [Adjusted stock price trend](https://www.investopedia.com/terms/a/adjusted_closing_price.asp)
 
