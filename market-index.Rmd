@@ -40,12 +40,6 @@ index_plot = function(indexdata, .name, title) {
     scale_x_date(expand = c(0, 0)) +
     labs(x = "Date", y = title)
 }
-
-index_2yr %>% filter(name == "WilshireREIT") %>% pull(close) %>% summary
-index_2yr %>% filter(name == "WilshireREIT") %>% pull(high) %>% summary
-index_2yr %>% filter(name == "WilshireREIT") %>% pull(low) %>% summary
-
-
 ```
 
 ```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "South Korea/U.S. Foreign Exchange Rate"}
