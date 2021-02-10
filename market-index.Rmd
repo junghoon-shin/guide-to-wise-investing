@@ -21,7 +21,15 @@ index_2yr = tq_get(ticker$symbol, get = "stock.prices", from = twoyearsago)
 
 index_2yr %<>% left_join(ticker)
 
-index_2yr$low[index_2yr$name == "KOSPI" & index_2yr$date == "2020-05-06"] = 1925.55
+index_2yr$low[index_2yr$name == "KOSPI" & index_2yr$date == "2020-05-06"] = 1925.55 # Correct wrong data
+
+index_2yr %<>% 
+  mutate(low = case_when(low == 0 & high == 0 ~ close,
+                         low > close ~ close, 
+                         T ~ low),
+         high = case_when(low == 0 & high == 0 ~ close,
+                          high < close ~ close, 
+                          T ~ high))
 
 index_plot = function(indexdata, .name, title) {
   indexdata %>% 
@@ -32,6 +40,12 @@ index_plot = function(indexdata, .name, title) {
     scale_x_date(expand = c(0, 0)) +
     labs(x = "Date", y = title)
 }
+
+index_2yr %>% filter(name == "WilshireREIT") %>% pull(close) %>% summary
+index_2yr %>% filter(name == "WilshireREIT") %>% pull(high) %>% summary
+index_2yr %>% filter(name == "WilshireREIT") %>% pull(low) %>% summary
+
+
 ```
 
 ```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "South Korea/U.S. Foreign Exchange Rate"}
