@@ -199,10 +199,6 @@ company %<>%
 names(company) %<>% str_replace_all(., "_", " ")
 ```
 
-```{r}
-company %>% write_sheet(ss = drive_get("Investment/Valuation"), sheet = "Valuation")
-```
-
 ```{r, fig.cap = "Summarized statistics of my watchlist"}
 company_display = company %>% 
   select(-c(Ticker, Yahoo, Ticker3)) %>%
