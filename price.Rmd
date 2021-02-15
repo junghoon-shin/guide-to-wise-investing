@@ -1,6 +1,6 @@
 # Stock price trend {#price}
 
-## [Adjusted stock price trend](https://www.investopedia.com/terms/a/adjusted_closing_price.asp)
+## Normalized stock price trend^[Only top 15 industry sectors are shown.]
 
 ```{r}
 yahoo_to_name = function(Yahoo) company$Name[match(Yahoo, company$Yahoo)]
@@ -10,15 +10,6 @@ price_data = tq_get(company$Yahoo, get = "stock.prices", from = twoyearsago)
 price_data %<>% 
   mutate(Name = yahoo_to_name(symbol)) %>% 
   left_join(company %>% select(Name, Industry))
-```
-
-```{r, fig.width = 7, fig.height = 2.5 * length(unique(price_data$Name)), fig.cap = "Adjusted closing stock price over the last 2 years"}
-price_data %>% 
-  ggplot(mapping = aes(x = date, y = adjusted)) +
-  geom_line(color = line_color[1]) +
-  scale_x_date(expand = c(0, 0)) +
-  labs(x = "Date", y = "Adjusted closing price") +
-  facet_grid(rows = vars(Name), scales = "free_y")
 ```
 
 ```{r}
@@ -82,8 +73,6 @@ interesting_sectors = price_data %>% select(Name, Industry) %>% unique %>% count
 fig_height = 3.5 + get_legend_nrow(price_data, interesting_sectors) * legend_key_size + 0.1 * 2
 ```
 
-## Normalized stock price trend^[Only top 15 industry sectors are shown.]
-
 ```{r, fig.width = 7, fig.height = fig_height[1], fig.cap = interesting_sectors[1]}
 normalized_price_trend(price_data, interesting_sectors[1])
 ```
@@ -142,6 +131,17 @@ normalized_price_trend(price_data, interesting_sectors[14])
 
 ```{r, fig.width = 7, fig.height = fig_height[15], fig.cap = interesting_sectors[15]}
 normalized_price_trend(price_data, interesting_sectors[15])
+```
+
+## [Adjusted stock price trend](https://www.investopedia.com/terms/a/adjusted_closing_price.asp)
+
+```{r, fig.width = 7, fig.height = 2.5 * length(unique(price_data$Name)), fig.cap = "Adjusted closing stock price over the last 2 years"}
+price_data %>% 
+  ggplot(mapping = aes(x = date, y = adjusted)) +
+  geom_line(color = line_color[1]) +
+  scale_x_date(expand = c(0, 0)) +
+  labs(x = "Date", y = "Adjusted closing price") +
+  facet_grid(rows = vars(Name), scales = "free_y")
 ```
 
 ## Stock price correlation^[Industry sector classification is based on data from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html).]
