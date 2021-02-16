@@ -76,6 +76,7 @@ charlie-mungers-four-principles-of-investing
 moat
 big-four-numbers
 management
+pricing-methods
 business
 largest-companies
 comprehensive
@@ -85,6 +86,8 @@ small-cap-companies
 intellia-therapeutics
 si-bone
 cymabay-therapeutics
+nano-x-imaging
+gc-labcell
 price
 normalized-closing-price
 adjusted-closing-price

@@ -7,9 +7,12 @@ yahoo_to_name = function(Yahoo) company$Name[match(Yahoo, company$Yahoo)]
 
 price_data = tq_get(company$Yahoo, get = "stock.prices", from = twoyearsago)
 
+sufficient_data = price_data %>% count(symbol) %>% filter(n >= 30) %>% pull(symbol) %>% unique
+
 price_data %<>% 
   mutate(Name = yahoo_to_name(symbol)) %>% 
-  left_join(company %>% select(Name, Industry))
+  left_join(company %>% select(Name, Industry)) %>%
+  filter(symbol %in% sufficient_data)
 ```
 
 ```{r}

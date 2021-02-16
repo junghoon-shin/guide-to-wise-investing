@@ -51,48 +51,47 @@ plan(multisession)
 yahoo_data = future_map_dfr(company$Yahoo, ~{
   ticker = .
   
-  out = tryCatch(
-    {
-      Summary = read_html(file.path("https://finance.yahoo.com/quote", ticker), header = F) %>% bind_rows
-      Profile = read_html(file.path("https://finance.yahoo.com/quote" , ticker, "profile"), which = 1, header = T)
-      Statistics = read_html(file.path("https://finance.yahoo.com/quote", ticker, "key-statistics"), header = F) %>% map_dfr(~select(., 1:2))
-      Statistics$V1 %<>% str_replace(" [0-9]$", "")
-      Revenue = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 2, header = F)
-      Growth = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 6, header = T)
-      
-      tibble(Yahoo = ticker,
-             Beta = Summary %>% filter(V1 == "Beta (5Y Monthly)") %>% pull(V2),
-             Target = Summary %>% filter(V1 == "1y Target Est") %>% pull(V2),
-             CEO = Profile %>% slice(1) %>% pull(Name),
-             CEO_title = Profile %>% slice(1) %>% pull(Title),
-             CEO_pay = Profile %>% slice(1) %>% pull(Pay),
-             CEO_age = thisyear - (Profile %>% slice(1) %>% pull(`Year Born`) %>% as.numeric),
-             Profit_margin = Statistics %>% filter(V1 == "Profit Margin") %>% pull(V2),
-             ROA = Statistics %>% filter(V1 == "Return on Assets (ttm)") %>% pull(V2),
-             ROE = Statistics %>% filter(V1 == "Return on Equity (ttm)") %>% pull(V2),
-             Revenue_per_share = Statistics %>% filter(V1 == "Revenue Per Share (ttm)") %>% pull(V2),
-             Quarterly_revenue_growth = Statistics %>% filter(V1 == "Quarterly Revenue Growth (yoy)") %>% pull(V2),
-             Diluted_EPS = Statistics %>% filter(V1 == "Diluted EPS (ttm)") %>% pull(V2),
-             Quarterly_earnings_growth = Statistics %>% filter(V1 == "Quarterly Earnings Growth (yoy)") %>% pull(V2),
-             DER = Statistics %>% filter(V1 == "Total Debt/Equity (mrq)") %>% pull(V2),
-             BVPS = Statistics %>% filter(V1 == "Book Value Per Share (mrq)") %>% pull(V2),
-             Operating_cash_flow = Statistics %>% filter(V1 == "Operating Cash Flow (ttm)") %>% pull(V2),
-             Levered_free_cash_flow = Statistics %>% filter(V1 == "Levered Free Cash Flow (ttm)") %>% pull(V2),
-             Forward_annual_dividend_yield = Statistics %>% filter(V1 == "Forward Annual Dividend Yield") %>% pull(V2),
-             Trailing_annual_dividend_yield = Statistics %>% filter(V1 == "Trailing Annual Dividend Yield") %>% pull(V2),
-             Average_dividend_yield_5yrs = Statistics %>% filter(V1 == "5 Year Average Dividend Yield") %>% pull(V2),
-             Payout_ratio = Statistics %>% filter(V1 == "Payout Ratio") %>% pull(V2),
-             Revenue_growth_estimate_current = Revenue %>% filter(V1 == "Sales Growth (year/est)") %>% pull(V4),
-             Revenue_growth_estimate_next = Revenue %>% filter(V1 == "Sales Growth (year/est)") %>% pull(V5),
-             Earnings_growth_past_5yrs = Growth %>% filter(`Growth Estimates` == "Past 5 Years (per annum)") %>% pull(ticker),
-             Earnings_growth_estimate_next_5yrs = Growth %>% filter(`Growth Estimates` == "Next 5 Years (per annum)") %>% pull(ticker))
+  out = tryCatch({
+    Summary = read_html(file.path("https://finance.yahoo.com/quote", ticker), header = F) %>% bind_rows
+    Profile = read_html(file.path("https://finance.yahoo.com/quote" , ticker, "profile"), which = 1, header = T)
+    Statistics = read_html(file.path("https://finance.yahoo.com/quote", ticker, "key-statistics"), header = F) %>% map_dfr(~select(., 1:2))
+    Statistics$V1 %<>% str_replace(" [0-9]$", "")
+    Revenue = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 2, header = F)
+    Growth = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 6, header = T)
+    
+    tibble(Yahoo = ticker,
+           Beta = Summary %>% filter(V1 == "Beta (5Y Monthly)") %>% pull(V2),
+           Target = Summary %>% filter(V1 == "1y Target Est") %>% pull(V2),
+           CEO = Profile %>% slice(1) %>% pull(Name),
+           CEO_title = Profile %>% slice(1) %>% pull(Title),
+           CEO_pay = Profile %>% slice(1) %>% pull(Pay),
+           CEO_age = thisyear - (Profile %>% slice(1) %>% pull(`Year Born`) %>% as.numeric),
+           Profit_margin = Statistics %>% filter(V1 == "Profit Margin") %>% pull(V2),
+           ROA = Statistics %>% filter(V1 == "Return on Assets (ttm)") %>% pull(V2),
+           ROE = Statistics %>% filter(V1 == "Return on Equity (ttm)") %>% pull(V2),
+           Revenue_per_share = Statistics %>% filter(V1 == "Revenue Per Share (ttm)") %>% pull(V2),
+           Quarterly_revenue_growth = Statistics %>% filter(V1 == "Quarterly Revenue Growth (yoy)") %>% pull(V2),
+           Diluted_EPS = Statistics %>% filter(V1 == "Diluted EPS (ttm)") %>% pull(V2),
+           Quarterly_earnings_growth = Statistics %>% filter(V1 == "Quarterly Earnings Growth (yoy)") %>% pull(V2),
+           DER = Statistics %>% filter(V1 == "Total Debt/Equity (mrq)") %>% pull(V2),
+           BVPS = Statistics %>% filter(V1 == "Book Value Per Share (mrq)") %>% pull(V2),
+           Operating_cash_flow = Statistics %>% filter(V1 == "Operating Cash Flow (ttm)") %>% pull(V2),
+           Levered_free_cash_flow = Statistics %>% filter(V1 == "Levered Free Cash Flow (ttm)") %>% pull(V2),
+           Forward_annual_dividend_yield = Statistics %>% filter(V1 == "Forward Annual Dividend Yield") %>% pull(V2),
+           Trailing_annual_dividend_yield = Statistics %>% filter(V1 == "Trailing Annual Dividend Yield") %>% pull(V2),
+           Average_dividend_yield_5yrs = Statistics %>% filter(V1 == "5 Year Average Dividend Yield") %>% pull(V2),
+           Payout_ratio = Statistics %>% filter(V1 == "Payout Ratio") %>% pull(V2),
+           Revenue_growth_estimate_current = Revenue %>% filter(V1 == "Sales Growth (year/est)") %>% pull(V4),
+           Revenue_growth_estimate_next = Revenue %>% filter(V1 == "Sales Growth (year/est)") %>% pull(V5),
+           Earnings_growth_past_5yrs = Growth %>% filter(`Growth Estimates` == "Past 5 Years (per annum)") %>% pull(ticker),
+           Earnings_growth_estimate_next_5yrs = Growth %>% filter(`Growth Estimates` == "Next 5 Years (per annum)") %>% pull(ticker))
     },
     
-    error = function(cond) {
-      message(str_c("Error: ", ticker))
-      message(cond)
+    error = function(e) {
+      print(str_c("Error: ", ticker))
+      print(e$message)
       return(NULL)
-  })
+    })
   
   return(out)
 })
@@ -497,9 +496,9 @@ company_decision %>%
 
 ## Small-cap companies
 
-These are a list of small-cap companies which interest me but need more research. For comprehensive financial data, see Section \@ref(comprehensive).
+These are a list of small-cap companies which interest me but need more research. Brief profile of each company is shown when available at [Wikipedia](https://en.wikipedia.org/wiki/Main_Page). For comprehensive financial data, see Section \@ref(comprehensive).
 
-### Intellia Therapeutics^[Data are from [Wikipedia](https://en.wikipedia.org/wiki/Main_Page).]
+### Intellia Therapeutics
 
 [![](images/Intellia_Therapeutics.png){width=240px}](https://www.intelliatx.com/)
 
@@ -520,10 +519,18 @@ read_html(str_c("https://en.wikipedia.org/wiki/", smallcap), which = 1, header =
                 full_width = F, position = "left")
 ```
 
-### SI-Bone^[Wiki page is not available. The official website is https://si-bone.com/.]
+### SI-Bone
 
 [![](images/SI_Bone.png){width=240px}](https://si-bone.com/)
 
-### CymaBay Therapeutics^[Wiki page is not available. The official website is https://www.cymabay.com/.]
+### CymaBay Therapeutics
 
 [![](images/CymaBay_Therapeutics.png){width=240px}](https://www.cymabay.com/)
+
+### Nano X Imaging
+
+[![](images/NanoX.svg){width=240px}](https://www.nanox.vision/)
+
+### GC labcell
+
+[![](images/GC_labcell.png){width=240px}](https://www.gclabcell.com/)
