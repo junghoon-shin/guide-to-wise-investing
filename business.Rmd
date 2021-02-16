@@ -367,7 +367,8 @@ company_plot %<>%
          Name_trimmed = case_when(Name_trimmed == "Taiwan Semiconductor" ~ "TSMC", 
                                   Name_trimmed == "Pacific Biosciences of California" ~ "PacBio",
                                   Name_trimmed == "Alibaba Group Holding - ADR" ~ "Alibaba",
-                                  Name_trimmed == 
+                                  Name_trimmed == "Logitech International" ~ "Logitech",
+                                  Name_trimmed == "Dell Technologies" ~ "Dell",
                                   T ~ Name_trimmed))
 ```
 
