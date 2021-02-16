@@ -86,8 +86,8 @@ intellia-therapeutics
 si-bone
 cymabay-therapeutics
 price
-normalized-stock-price-trend
-adjusted-stock-price-trend
+normalized-closing-price
+adjusted-closing-price
 stock-price-correlation
 sector
 pe-ratio

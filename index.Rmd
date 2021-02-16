@@ -128,6 +128,7 @@ clean_name = function(name) {
 get_relative_price = function(x) {
   x = x[!is.na(x)]
   x = sort(x)[-c(1, length(x))]
+  x %>% log %>% mean %>% exp
 }
 ```
 

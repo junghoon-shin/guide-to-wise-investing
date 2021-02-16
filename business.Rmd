@@ -171,15 +171,14 @@ company %<>%
          `Price/Graham` = Price / Adjusted_Graham_formula,
          `Price/DCF10` = Price / DCF10,
          `Marketcap/Payback8` = Marketcap / Payback8,
-         
-         `Relative_price` = exp(mean(log(c(`Price/Target`, PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`) %>% sort %>% .[2:4])))) %>%
-  mutate(Decision = case_when(BVPS < 0 ~ "Negative equity",
+         `Relative_price` = get_relative_price(c(`Price/Target`, PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`)),
+         Decision = case_when(BVPS < 0 ~ "Negative equity",
                               DER > 2.5 ~ "High debt-to-equity ratio",
                               EPS <= 0 ~ "Zero or negative earnings",
                               Earnings_growth_estimate_next_5yrs <= 0 ~ "Zero or negative growth",
                               Free_cash_flow <= 0 ~ "Zero or negative cash flow",
                               Relative_price < 1 ~ "Buy",
-                              sum(`Price/Target` < 1, PEG < 1, `Price/Graham` < 1, `Price/DCF10` < 1, `Marketcap/Payback8` < 1) > 1 ~ "Maybe buy",
+                              sum(`Price/Target` < 1, PEG < 1, `Price/Graham` < 1, `Price/DCF10` < 1, `Marketcap/Payback8` < 1, na.rm = T) > 1 ~ "Maybe buy",
                               T ~ "Wait")) %>%
   ungroup %>%
   relocate(Diluted_EPS, Revenue_per_share, BVPS, .after = EPS) %>%
@@ -209,22 +208,22 @@ names(company) %<>% str_replace_all(., "_", " ")
 company_display = company %>% 
   select(-c(Ticker, Yahoo, Ticker3)) %>%
   mutate(Changepct = make_percent(Changepct, 1)) %>%
-  mutate(across(c(`Expected payout ratio change rate`, 
+  mutate(across(c(`Expected payout ratio change rate`,
                   `Payout ratio`,
                   `Retention ratio`,
                   `Profit margin`,
                   `Debt-to-equity ratio`,
                   ROA,
                   ROIC,
-                  ROE, 
-                  contains(c("growth", "yield"))), 
+                  ROE,
+                  contains(c("growth", "yield"))),
                 ~make_percent(., 100))) %>%
-  mutate(across(c(Marketcap, 
+  mutate(across(c(Marketcap,
                   NOPAT,
                   IC,
-                  `Operating cash flow`, 
+                  `Operating cash flow`,
                   `Levered free cash flow`,
-                  `Free cash flow`), 
+                  `Free cash flow`),
                 make_readable)) %>%
   mutate(across(c(Price:Closeyest,
                   Low52:Target, 
@@ -268,7 +267,7 @@ IC: invested capital\
 Industry PER: data from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html)\
 Low52: 52-week low price\
 NOPAT: net operating profit after taxes\
-Payback8: 8-year payback time buy price [@lee2020]\
+Payback8: 8-year payback time buy price [@town2018]\
 PBR: price/book value ratio\
 PEG: price/earnings-to-growth ratio\
 PER: price/earnings ratio\
