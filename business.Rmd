@@ -88,8 +88,8 @@ yahoo_data = future_map_dfr(company$Yahoo, ~{
     },
     
     error = function(e) {
-      print(str_c("Error: ", ticker))
-      print(e$message)
+      message(str_c("Error: ", ticker))
+      message(e$message)
       return(NULL)
     })
   
