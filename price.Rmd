@@ -133,7 +133,7 @@ normalized_price_trend(price_data, interesting_sectors[14])
 normalized_price_trend(price_data, interesting_sectors[15])
 ```
 
-## [Adjusted closing price](https://www.investopedia.com/terms/a/adjusted_closing_price.asp)
+## Adjusted closing price^[https://www.investopedia.com/terms/a/adjusted_closing_price.asp]
 
 ```{r, fig.width = 7, fig.height = 2.5 * length(unique(price_data$Name)), fig.cap = "Adjusted closing stock price over the last 2 years"}
 price_data %>% 

@@ -8,6 +8,6 @@
 - [Gurufocus](https://www.gurufocus.com/new_index/)
 - [Investopedia](https://www.investopedia.com/)
 - [Wikipedia](https://en.wikipedia.org/wiki/Main_Page)
+- [Company ranking by market cap](https://companiesmarketcap.com/)
 - [Industry sector classification](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html)
 - [Adjusted Graham formula](https://www.oldschoolvalue.com/stock-valuation/benjamin-graham-formula/)
-- [Discounted cash flow](https://www.investopedia.com/terms/d/dcf.asp)
