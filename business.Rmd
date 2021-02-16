@@ -218,17 +218,20 @@ company_display = company %>%
                   ROE,
                   contains(c("growth", "yield"))),
                 ~make_percent(., 100))) %>%
-  mutate(across(c(Marketcap,
+  mutate(across(c(Shares,
+                  Marketcap,
                   NOPAT,
                   IC,
+                  Payback8,
                   `Operating cash flow`,
                   `Levered free cash flow`,
                   `Free cash flow`),
                 make_readable)) %>%
   mutate(across(c(Price:Closeyest,
                   Low52:Target, 
-                  `Expected PE in 10yrs`:`Adjusted Graham formula`,
-                  PER:`Relative price`), 
+                  `Expected PE in 10yrs`:DCF10,
+                  `Adjusted Graham formula`,
+                  PBR:`Relative price`), 
                 ~round(., 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim)) %>%
   replace(. == "NA", NA)
 

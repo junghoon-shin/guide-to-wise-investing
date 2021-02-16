@@ -37,3 +37,9 @@ tibble(Moat = c("Strong brand",
 1. Return on equity
 2. Return on invested capital (equity + debt)
 3. Debt
+
+## Pricing methods
+
+1. Ten cap (10-year owner earnings)
+2. Payback time (8-year payback)
+3. Margin of safety
