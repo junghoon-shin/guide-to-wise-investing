@@ -124,6 +124,11 @@ clean_name = function(name) {
                              "\\s+" = " ")) %>% 
     str_trim
 }
+
+get_relative_price = function(x) {
+  x = x[!is.na(x)]
+  x = sort(x)[-c(1, length(x))]
+}
 ```
 
 ```{r}
@@ -165,7 +170,7 @@ From that moment on, I tried to read what the great investors wrote, collect see
 
 After those struggling days I started to work on this project. It was initially aimed to serve as my personal resource of automatically updated financial data which include only understandable and useful information that can aid me to make unbiased and premeditated investment decision. As the project went along, it slowly evolved into what I thought could also help others who were interested in investing but found existing sources of information [exhausting](https://www.sec.gov/ix?doc=/Archives/edgar/data/320193/000032019320000096/aapl-20200926.htm). This project is designed to help specifically those who seek a reliable source of investment information that contain only concise, tidy, and easy-to-get data.
 
-This is a non-profit, public-access, ongoing project still in its infant stage, and I am always open to suggestions from whoever hopes to make it better. Please feel free to [contact me](#author), or even better make a [pull request](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests) anytime anywhere. This project has been hugely inspired by [Warren Buffett](https://www.berkshirehathaway.com/letters/letters.html), @town2018, @graham2003, and @lee2020. All data presented here are automatically updated at least once a day. They were last updated at **`r paste({t = Sys.time(); attributes(t)$tzone = "Europe/London"; t}, "GMT")`**. Check them out daily and find out how easily investment can be incorporated into your life.\
+This is a non-profit, public-access, ongoing project still in its infant stage, and I am always open to suggestions from whoever hopes to make it better. Please feel free to [contact me](#author), or even better make a [pull request](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests) anytime anywhere. This project has been hugely inspired by [Warren Buffett](https://www.berkshirehathaway.com/letters/letters.html), @town2018, @graham2003, and @lee2020. All data presented here are automatically updated every hour. They were last updated at **`r paste({t = Sys.time(); attributes(t)$tzone = "Europe/London"; t}, "GMT")`**. Check them out daily and find out how easily investment can be incorporated into your life.\
 \
 
 ![](images/CC-BY-NC-SA-4.0.png){width=180px}

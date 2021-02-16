@@ -171,6 +171,7 @@ company %<>%
          `Price/Graham` = Price / Adjusted_Graham_formula,
          `Price/DCF10` = Price / DCF10,
          `Marketcap/Payback8` = Marketcap / Payback8,
+         
          `Relative_price` = exp(mean(log(c(`Price/Target`, PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`) %>% sort %>% .[2:4])))) %>%
   mutate(Decision = case_when(BVPS < 0 ~ "Negative equity",
                               DER > 2.5 ~ "High debt-to-equity ratio",
