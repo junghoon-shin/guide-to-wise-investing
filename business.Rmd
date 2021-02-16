@@ -174,9 +174,9 @@ company %<>%
          `Relative_price` = exp(mean(log(c(`Price/Target`, PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`) %>% sort %>% .[2:4])))) %>%
   mutate(Decision = case_when(BVPS < 0 ~ "Negative equity",
                               DER > 2.5 ~ "High debt-to-equity ratio",
+                              Earnings_growth_estimate_next_5yrs <= 0 ~ "Zero or negative growth",
                               EPS <= 0 ~ "Zero or negative earnings",
                               Free_cash_flow <= 0 ~ "Zero or negative cash flow",
-                              Earnings_growth_estimate_next_5yrs <= 0 ~ "Zero or negative growth",
                               Relative_price < 1 ~ "Buy",
                               sum(`Price/Target` < 1, PEG < 1, `Price/Graham` < 1, `Price/DCF10` < 1, `Marketcap/Payback8` < 1) > 1 ~ "Maybe buy",
                               T ~ "Wait")) %>%
@@ -474,8 +474,8 @@ company_decision = company %>%
   mutate(Decision = factor(Decision, levels = c("Buy",
                                                 "Maybe buy",
                                                 "Wait", 
-                                                "Zero or negative earnings", 
                                                 "Zero or negative cash flow",
+                                                "Zero or negative earnings", 
                                                 "Zero or negative growth",
                                                 "High debt-to-equity ratio", 
                                                 "Negative equity")))
