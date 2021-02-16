@@ -2,9 +2,9 @@
 
 # Business evaluation {#business}
 
-## Largest companies by market cap^[Data are from https://companiesmarketcap.com/.]
+## Largest companies^[Data are from https://companiesmarketcap.com/.]
 
-```{r}
+```{r, fig.cap = "Largest companies in the world by market capitalization"}
 largest = read_html("https://companiesmarketcap.com/", which = 1, header = T, trim = T)
 
 largest %<>% 
@@ -16,7 +16,7 @@ largest %<>%
 my_datatable(largest, paging = T, pageLength = 10, scrollY = NULL, caption = NULL)
 ```
 
-## Comprehensive financials^[Data are automatically retrieved from [Google Finance](https://www.google.com/finance) and [Yahoo Finance](https://finance.yahoo.com/).] {#comprehensive}
+## My watchlist^[Data are automatically retrieved from [Google Finance](https://www.google.com/finance) and [Yahoo Finance](https://finance.yahoo.com/).] {#comprehensive}
 
 ```{r}
 confident_return = 0.05
@@ -105,29 +105,17 @@ financials %<>%
   rename(Yahoo = ticker) %>%
   mutate(date = as.Date(date))
 
-ROIC = financials %>%
+tmp = financials %>%
   group_by(Yahoo) %>%
   group_modify(~arrange(., desc(date)) %>% slice(1)) %>%
   ungroup %>%
   mutate(NOPAT = ebit - incomeTaxExpense,
          IC = totalStockholderEquity + longTermDebt + shortLongTermDebt - cash,
-         ROIC = NOPAT/IC) %>%
-  select(Yahoo, NOPAT, IC, ROIC)
+         ROIC = NOPAT/IC,
+         Free_cash_flow = totalCashFromOperatingActivities + capitalExpenditures) %>%
+  select(Yahoo, NOPAT, IC, ROIC, Free_cash_flow)
 
-yahoo_data %<>% left_join(ROIC)
-```
-
-```{r, eval = F}
-tmp = financials %>% filter(Yahoo == "AAPL")
-tmp %<>%
-  mutate(changeToAccountsPayable = c(accountsPayable[-length(accountsPayable)] - accountsPayable[-1], NA))
-  
-tmp$netIncome
-tmp$depreciation
-tmp$changeToAccountReceivables
-tmp$changeToAccountsPayable
-tmp$incomeTaxExpense
-tmp$capitalExpenditures
+yahoo_data %<>% left_join(tmp)
 ```
 
 ```{r}
@@ -158,9 +146,9 @@ company %<>%
                   Earnings_growth_estimate_next_5yrs), 
                 ~as.numeric(str_replace(., "%", ""))/100)) %>%
   mutate(across(c(Operating_cash_flow, Levered_free_cash_flow),
-                ~case_when(str_detect(., "M$") ~ str_replace(., "M", "") %>% as.numeric %>% multiply_by(10e6),
-                           str_detect(., "B$") ~ str_replace(., "B", "") %>% as.numeric %>% multiply_by(10e9),
-                           str_detect(., "T$") ~ str_replace(., "T", "") %>% as.numeric %>% multiply_by(10e12))))
+                ~case_when(str_detect(., "M$") ~ str_replace(., "M", "") %>% as.numeric %>% multiply_by(1e6),
+                           str_detect(., "B$") ~ str_replace(., "B", "") %>% as.numeric %>% multiply_by(1e9),
+                           str_detect(., "T$") ~ str_replace(., "T", "") %>% as.numeric %>% multiply_by(1e12))))
 
 company %<>% 
   rowwise %>%
@@ -176,26 +164,29 @@ company %<>%
          Reinvested_dividend_in_10yrs = sum(EPS * Payout_ratio * (1 + Expected_dividend_growth_rate)^(1:10) * (1 + confident_return)^(10 - 1:10)),
          Expected_price_in_10yrs = Estimated_price_in_10yrs + Reinvested_dividend_in_10yrs,
          DCF10 = Expected_price_in_10yrs / (1 + target_return)^10,
+         Payback8 = sum(Free_cash_flow * (1 + Earnings_growth_estimate_next_5yrs)^(1:8)),
          Adjusted_Graham_formula = EPS * (per_no_growth + 100 * Earnings_growth_estimate_next_5yrs) * 4.4 / AAA_return,
          `Price/Target` = Price/Target,
          PEG = PER/(100 * Earnings_growth_estimate_next_5yrs),
-         `Price/DCF10` = Price / DCF10,
          `Price/Graham` = Price / Adjusted_Graham_formula,
-         `Relative_price` = exp(mean(log(c(`Price/Target`, PEG, `Price/DCF10`, `Price/Graham`) %>% sort %>% .[2:3])))) %>%
+         `Price/DCF10` = Price / DCF10,
+         `Marketcap/Payback8` = Marketcap / Payback8,
+         `Relative_price` = exp(mean(log(c(`Price/Target`, PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`) %>% sort %>% .[2:4])))) %>%
   mutate(Decision = case_when(BVPS < 0 ~ "Negative equity",
                               DER > 2.5 ~ "High debt-to-equity ratio",
                               EPS <= 0 ~ "Zero or negative earnings",
+                              Free_cash_flow <= 0 ~ "Zero or negative cash flow",
                               Earnings_growth_estimate_next_5yrs <= 0 ~ "Zero or negative growth",
-                              ROE < 0.05 ~ "ROE < 5%",
                               Relative_price < 1 ~ "Buy",
-                              sum(`Price/Target` < 1, PEG < 1, `Price/DCF10` < 1, `Price/Graham` < 1) > 1 ~ "Maybe buy",
+                              sum(`Price/Target` < 1, PEG < 1, `Price/Graham` < 1, `Price/DCF10` < 1, `Marketcap/Payback8` < 1) > 1 ~ "Maybe buy",
                               T ~ "Wait")) %>%
   ungroup %>%
   relocate(Diluted_EPS, Revenue_per_share, BVPS, .after = EPS) %>%
   relocate(Revenue_growth_estimate_current, Revenue_growth_estimate_next, Earnings_growth_estimate_next_5yrs,
-           Operating_cash_flow, Levered_free_cash_flow,
+           Operating_cash_flow, Levered_free_cash_flow, Free_cash_flow,
            Profit_margin,
-           DER, ROA, ROIC, ROE, PER, `Industry PER`, PSR, PBR, .before = `Price/Target`) %>%
+           DER, ROA, ROIC, ROE, PBR, PSR, PER, `Industry PER`, 
+           .before = `Price/Target`) %>%
   relocate(Retention_ratio, .after = Payout_ratio) %>%
   relocate(matches("^[a-z].+"), .after = Decision)
 
@@ -213,15 +204,15 @@ company %<>%
 names(company) %<>% str_replace_all(., "_", " ")
 ```
 
-```{r, fig.cap = "Summarized statistics of my watchlist"}
+```{r}
 company_display = company %>% 
   select(-c(Ticker, Yahoo, Ticker3)) %>%
   mutate(Changepct = make_percent(Changepct, 1)) %>%
   mutate(across(c(`Expected payout ratio change rate`, 
-                  `Payout ratio`, 
-                  `Retention ratio`, 
-                  `Profit margin`, 
-                  `Debt-to-equity ratio`, 
+                  `Payout ratio`,
+                  `Retention ratio`,
+                  `Profit margin`,
+                  `Debt-to-equity ratio`,
                   ROA,
                   ROIC,
                   ROE, 
@@ -231,7 +222,8 @@ company_display = company %>%
                   NOPAT,
                   IC,
                   `Operating cash flow`, 
-                  `Levered free cash flow`), 
+                  `Levered free cash flow`,
+                  `Free cash flow`), 
                 make_readable)) %>%
   mutate(across(c(Price:Closeyest,
                   Low52:Target, 
@@ -240,10 +232,6 @@ company_display = company %>%
                 ~round(., 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim)) %>%
   replace(. == "NA", NA)
 
-my_datatable(company_display, paging = T, pageLength = 5, scrollY = NULL, caption = NULL)
-```
-
-```{r, fig.cap = "Income statement, balance sheet, and cash flow data over the last 4 years"}
 financials %<>% 
   left_join(company %>% select(Yahoo, Name, Currency)) %>%
   relocate(Name, Currency) %>%
@@ -260,7 +248,13 @@ financials %<>%
   mutate(across(-c(Name, Currency, Date), make_readable)) %>%
   mutate(across(-Date, ~replace(., . == "NA", NA))) %>%
   arrange(Name, Date)
+```
 
+```{r, fig.cap = "Summarized statistics of my watchlist"}
+my_datatable(company_display, paging = T, pageLength = 5, scrollY = NULL, caption = NULL)
+```
+
+```{r, fig.cap = "Income statement, balance sheet, and cash flow data over the last 4 years"}
 my_datatable(financials, paging = T, pageLength = 10, scrollY = NULL, caption = NULL)
 ```
 
@@ -273,6 +267,7 @@ IC: invested capital\
 Industry PER: data from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html)\
 Low52: 52-week low price\
 NOPAT: net operating profit after taxes\
+Payback8: 8-year payback time buy price [@lee2020]\
 PBR: price/book value ratio\
 PEG: price/earnings-to-growth ratio\
 PER: price/earnings ratio\
@@ -371,6 +366,8 @@ company_plot %<>%
   mutate(Name_trimmed = clean_name(Name),
          Name_trimmed = case_when(Name_trimmed == "Taiwan Semiconductor" ~ "TSMC", 
                                   Name_trimmed == "Pacific Biosciences of California" ~ "PacBio",
+                                  Name_trimmed == "Alibaba Group Holding - ADR" ~ "Alibaba",
+                                  Name_trimmed == 
                                   T ~ Name_trimmed))
 ```
 
@@ -476,9 +473,9 @@ company_decision = company %>%
   mutate(Decision = factor(Decision, levels = c("Buy",
                                                 "Maybe buy",
                                                 "Wait", 
-                                                "ROE < 5%",
                                                 "Zero or negative earnings", 
-                                                "Zero or negative growth", 
+                                                "Zero or negative cash flow",
+                                                "Zero or negative growth",
                                                 "High debt-to-equity ratio", 
                                                 "Negative equity")))
 ```
