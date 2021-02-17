@@ -360,13 +360,12 @@ company_plot %<>%
   left_join(exchange) %>%
   mutate(Marketcap_USD = Marketcap / Exchange) %>%
   arrange(desc(Marketcap_USD)) %>%
-  mutate(Name_trimmed = clean_name(Name),
-         Name_trimmed = case_when(Name_trimmed == "Taiwan Semiconductor" ~ "TSMC", 
-                                  Name_trimmed == "Pacific Biosciences of California" ~ "PacBio",
-                                  Name_trimmed == "Alibaba Group Holding - ADR" ~ "Alibaba",
-                                  Name_trimmed == "Logitech International" ~ "Logitech",
-                                  Name_trimmed == "Dell Technologies" ~ "Dell",
-                                  T ~ Name_trimmed))
+  mutate(Name_trimmed = clean_name(Name) %>% str_replace_all(c("Taiwan Semiconductor" = "TSMC", 
+                                                               "Pacific Biosciences of California" = "PacBio",
+                                                               "Alibaba Group Holding - ADR" = "Alibaba",
+                                                               "Logitech International" = "Logitech",
+                                                               "Dell Technologies" = "Dell",
+                                                               "Amazon.com" = "Amazon")))
 ```
 
 ```{r}
