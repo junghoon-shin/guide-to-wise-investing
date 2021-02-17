@@ -43,8 +43,9 @@ company = drive_get("Investment/Valuation") %>% read_sheet(sheet = "Company") %>
                              "\\.NYSE" = "",
                              "\\.NASDAQ" = "",
                              "\\.EPA" = ".PA",
-                             "\\.TPE" = ".TW",
+                             "\\.HKG" = "\\.HK",
                              "\\.SWX" = "\\.SW",
+                             "\\.TPE" = ".TW",
                              "RO\\.SW" = "ROG\\.SW"))) %>%
   relocate(Yahoo, .after = Ticker)
 
@@ -62,6 +63,7 @@ yahoo_data = future_map_dfr(company$Yahoo, ~{
     Growth = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 6, header = T)
     
     tibble(Yahoo = ticker,
+           Marketcap = Summary %>% filter(V1 == "Market Cap") %>% pull(V2),
            Beta = Summary %>% filter(V1 == "Beta (5Y Monthly)") %>% pull(V2),
            Target = Summary %>% filter(V1 == "1y Target Est") %>% pull(V2),
            CEO = Profile %>% slice(1) %>% pull(Name),
@@ -143,8 +145,9 @@ company %<>%
                   Earnings_growth_past_5yrs, 
                   Earnings_growth_estimate_next_5yrs), 
                 ~as.numeric(str_replace(., "%", ""))/100)) %>%
-  mutate(across(c(Operating_cash_flow, Levered_free_cash_flow),
-                ~case_when(str_detect(., "M$") ~ str_replace(., "M", "") %>% as.numeric %>% multiply_by(1e6),
+  mutate(across(c(Marketcap, Operating_cash_flow, Levered_free_cash_flow),
+                ~case_when(str_detect(., "[Kk]$") ~ str_replace(., "[Kk]", "") %>% as.numeric %>% multiply_by(1e3),
+                           str_detect(., "M$") ~ str_replace(., "M", "") %>% as.numeric %>% multiply_by(1e6),
                            str_detect(., "B$") ~ str_replace(., "B", "") %>% as.numeric %>% multiply_by(1e9),
                            str_detect(., "T$") ~ str_replace(., "T", "") %>% as.numeric %>% multiply_by(1e12)))) %>% 
   rowwise %>%
@@ -176,6 +179,7 @@ company %<>%
                               sum(c_across(c(`Price/Target`, PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`)) < 1, na.rm = T) > 1 ~ "Maybe buy",
                               T ~ "Wait")) %>%
   ungroup %>%
+  relocate(Marketcap, .after = Shares) %>%
   relocate(Diluted_EPS, Revenue_per_share, BVPS, .after = EPS) %>%
   relocate(Revenue_growth_estimate_current, Revenue_growth_estimate_next, Earnings_growth_estimate_next_5yrs,
            Operating_cash_flow, Levered_free_cash_flow, Free_cash_flow,
@@ -492,10 +496,6 @@ company_decision %>%
 
 These are a list of small-cap companies that interest me but need more research. Brief profile of each company is shown when available at [Wikipedia](https://en.wikipedia.org/wiki/Main_Page). For comprehensive financial data, see Section \@ref(comprehensive).
 
-### Intellia Therapeutics
-
-[![](images/Intellia_Therapeutics.png){width=240px}](https://www.intelliatx.com/)
-
 ```{r}
 make_wikitable = function(name) {
   wikitable = read_html(str_c("https://en.wikipedia.org/wiki/", name), which = 1, header = T, trim = T) %>% 
@@ -525,6 +525,16 @@ display_wikitable = function(wikitable, caption) {
                   full_width = F, position = "left")
 }
 
+marketcap = company_plot %>% select(Name, Marketcap_USD)
+
+marketcap %>% filter(Name == "Intellia Therapeutics") %>% pull(Marketcap_USD) %>% make_readable
+```
+
+### Intellia Therapeutics
+
+[![](images/Intellia_Therapeutics.png){width=240px}](https://www.intelliatx.com/)
+
+```{r}
 "Intellia_Therapeutics" %>% make_wikitable %>% display_wikitable("Intellia Therapeutics")
 ```
 
