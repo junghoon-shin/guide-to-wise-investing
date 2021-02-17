@@ -115,12 +115,9 @@ tmp = financials %>%
   select(Yahoo, NOPAT, IC, ROIC, Free_cash_flow)
 
 yahoo_data %<>% left_join(tmp)
-```
-
-```{r}
-company %<>% left_join(yahoo_data)
 
 company %<>% 
+  left_join(yahoo_data) %>% 
   replace(. == "N/A", NA) %>%
   mutate(across(c(Beta, 
                   Target, 
@@ -147,9 +144,7 @@ company %<>%
   mutate(across(c(Operating_cash_flow, Levered_free_cash_flow),
                 ~case_when(str_detect(., "M$") ~ str_replace(., "M", "") %>% as.numeric %>% multiply_by(1e6),
                            str_detect(., "B$") ~ str_replace(., "B", "") %>% as.numeric %>% multiply_by(1e9),
-                           str_detect(., "T$") ~ str_replace(., "T", "") %>% as.numeric %>% multiply_by(1e12))))
-
-company %<>% 
+                           str_detect(., "T$") ~ str_replace(., "T", "") %>% as.numeric %>% multiply_by(1e12)))) %>% 
   rowwise %>%
   mutate(PSR = Price / Revenue_per_share,
          PBR = Price / BVPS,
@@ -170,14 +165,13 @@ company %<>%
          `Price/Graham` = Price / Adjusted_Graham_formula,
          `Price/DCF10` = Price / DCF10,
          `Marketcap/Payback8` = Marketcap / Payback8,
-         `Relative_price` = get_relative_price(c(`Price/Target`, PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`)),
          Decision = case_when(BVPS < 0 ~ "Negative equity",
                               DER > 2.5 ~ "High debt-to-equity ratio",
                               EPS <= 0 ~ "Zero or negative earnings",
                               Earnings_growth_estimate_next_5yrs <= 0 ~ "Zero or negative growth",
                               Free_cash_flow <= 0 ~ "Zero or negative cash flow",
-                              Relative_price < 1 ~ "Buy",
-                              sum(`Price/Target` < 1, PEG < 1, `Price/Graham` < 1, `Price/DCF10` < 1, `Marketcap/Payback8` < 1, na.rm = T) > 1 ~ "Maybe buy",
+                              sum(c_across(c(`Price/Target`, PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`)) < 1, na.rm = T) > 2 ~ "Buy",
+                              sum(c_across(c(`Price/Target`, PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`)) < 1, na.rm = T) > 1 ~ "Maybe buy",
                               T ~ "Wait")) %>%
   ungroup %>%
   relocate(Diluted_EPS, Revenue_per_share, BVPS, .after = EPS) %>%
@@ -186,8 +180,7 @@ company %<>%
            Profit_margin,
            DER, ROA, ROIC, ROE, PBR, PSR, PER, `Industry PER`, 
            .before = `Price/Target`) %>%
-  relocate(Retention_ratio, .after = Payout_ratio) %>%
-  relocate(matches("^[a-z].+"), .after = Decision)
+  relocate(Retention_ratio, .after = Payout_ratio)
 
 company_plot = company
 
@@ -230,7 +223,7 @@ company_display = company %>%
                   Low52:Target, 
                   `Expected PE in 10yrs`:DCF10,
                   `Adjusted Graham formula`,
-                  PBR:`Relative price`), 
+                  PBR:`Marketcap/Payback8`), 
                 ~round(., 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim)) %>%
   replace(. == "NA", NA)
 
@@ -533,4 +526,4 @@ read_html(str_c("https://en.wikipedia.org/wiki/", smallcap), which = 1, header =
 
 ### GC labcell
 
-[![](images/GC_labcell.png){width=240px}](https://www.gclabcell.com/)
+[![](images/GC_Labcell.png){width=240px}](https://www.gclabcell.com/)
