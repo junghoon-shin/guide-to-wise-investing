@@ -189,7 +189,7 @@ column_annotation = HeatmapAnnotation(df = company_annotation,
                                                                                      labels_gp = gpar(fontsize = 7))))
 
 h = price_cor %>% Heatmap(name = "Pearson's r",
-                        width = unit(5.25, "inch"), height = unit(5.25, "inch"),
+                        width = unit(5.25, "inch"), height = unit(0.11 * nrow(price_cor), "inch"),
                         show_column_names = F, show_column_dend = T,
                         show_row_names = T, show_row_dend = F,
                         row_names_gp = gpar(fontsize = 6),
@@ -203,6 +203,6 @@ h = price_cor %>% Heatmap(name = "Pearson's r",
 h_height = h@ht_list_param$height %>% as.numeric %>% conv_unit("mm", "inch")
 ```
 
-```{r, fig.width = 7, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between closing prices of my watchlist over the last 2 years"}
+```{r, fig.width = 7, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between adjusted closing prices over 2 years of my watchlist"}
 h
 ```

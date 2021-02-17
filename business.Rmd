@@ -4,7 +4,7 @@
 
 ## Largest companies^[Data are from https://companiesmarketcap.com/.]
 
-```{r, fig.cap = "Largest companies in the world by market capitalization"}
+```{r, fig.cap = "Largest companies in the world by market value"}
 largest = read_html("https://companiesmarketcap.com/", which = 1, header = T, trim = T)
 
 largest %<>% 
@@ -43,7 +43,9 @@ company = drive_get("Investment/Valuation") %>% read_sheet(sheet = "Company") %>
                              "\\.NYSE" = "",
                              "\\.NASDAQ" = "",
                              "\\.EPA" = ".PA",
-                             "\\.TPE" = ".TW"))) %>%
+                             "\\.TPE" = ".TW",
+                             "\\.SWX" = "\\.SW",
+                             "RO\\.SW" = "ROG\\.SW"))) %>%
   relocate(Yahoo, .after = Ticker)
 
 plan(multisession)
@@ -520,10 +522,10 @@ read_html(str_c("https://en.wikipedia.org/wiki/", smallcap), which = 1, header =
 
 [![](images/CymaBay_Therapeutics.png){width=240px}](https://www.cymabay.com/)
 
-### Nano X Imaging
+### Nano-X Imaging
 
 [![](images/NanoX.svg){width=240px}](https://www.nanox.vision/)
 
-### GC labcell
+### GC Labcell
 
 [![](images/GC_Labcell.png){width=240px}](https://www.gclabcell.com/)
