@@ -120,7 +120,8 @@ clean_name = function(name) {
                              "Ltd\\.*([, ]*|$)" = "",
                              "Mfg\\.*([, ]*|$)" = "",
                              "(& )*Co(rporation|rp|\\.)*([, ]*|$)" = "",
-                             "(SA|AG|NV)$" = "",
+                             "Holding([, ]*|$)" = "",
+                             " (SA|AG|NV)([, ]*|$)" = "",
                              ",\\s*$" = "",
                              "\\s+" = " ")) %>% 
     str_trim
