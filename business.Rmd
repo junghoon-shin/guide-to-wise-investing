@@ -285,15 +285,15 @@ company_plot %<>%
   mutate(`Earnings-to-price` = 1/PER,
          `Sales-to-price` = 1/PSR,
          `Book-to-price` = 1/PBR,
-         Name = clean_name(Name)) %>%
+         Name_trimmed = clean_name(Name)) %>%
   arrange(desc(Industry), 
           !is.na(`Earnings-to-price`), `Earnings-to-price`, 
           !is.na(`Sales-to-price`), `Sales-to-price`, 
           !is.na(`Book-to-price`), `Book-to-price`) %>%
-  mutate(Name = factor(Name, levels = Name))
+  mutate(Name_trimmed = factor(Name_trimmed, levels = Name_trimmed))
 
 f1 = company_plot %>%
-  ggplot(mapping = aes(x = Name, y = 0)) + 
+  ggplot(mapping = aes(x = Name_trimmed, y = 0)) + 
   geom_col(mapping = aes(fill = Industry), color = "transparent") +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 0)) +
   scale_fill_manual(limits = unique(company_plot$Industry), 
@@ -315,7 +315,7 @@ financial_plot = function(financials, variable, title = NULL, labels = waiver())
   variable = enquo(variable)
   
   financials %>%
-    ggplot(mapping = aes(x = Name, y = !!variable)) + 
+    ggplot(mapping = aes(x = Name_trimmed, y = !!variable)) + 
     geom_col(mapping = aes(fill = Industry), color = "black", width = 0.7) +
     scale_y_continuous(expand = c(0.05, 0), breaks = pretty_breaks(3), labels = labels) +
     scale_fill_manual(limits = unique(company_plot$Industry), 
@@ -342,7 +342,7 @@ n_industry = company_plot$Industry %>% unique %>% length
 
 ```{r, fig.width = 7, fig.height = (nrow(company_plot) + 2) * 3/4 + (ceiling(n_industry/3) + 1)/4, fig.cap = "Key financials of my watchlist"}
 legend_ratio = (nrow(company_plot) + 2) / (ceiling(n_industry/3) + 1)
-name_width = 1.2 * max(stringWidth(company_plot$Name) %>% convertUnit("inch") %>% as.numeric) / (stringWidth("Korea Shipbuilding &Offshore Engn") %>% convertUnit("inch") %>% as.numeric)
+name_width = 1.2 * max(stringWidth(company_plot$Name_trimmed) %>% convertUnit("inch") %>% as.numeric) / (stringWidth("Korea Shipbuilding &Offshore Engn") %>% convertUnit("inch") %>% as.numeric)
 plot_width = 4.2 - name_width
 
 ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))), 
@@ -364,12 +364,12 @@ company_plot %<>%
   left_join(exchange) %>%
   mutate(Marketcap_USD = Marketcap / Exchange) %>%
   arrange(desc(Marketcap_USD)) %>%
-  mutate(Name_trimmed = clean_name(Name) %>% str_replace_all(c("Taiwan Semiconductor" = "TSMC", 
-                                                               "Pacific Biosciences of California" = "PacBio",
-                                                               "Alibaba Group Holding - ADR" = "Alibaba",
-                                                               "Logitech International" = "Logitech",
-                                                               "Dell Technologies" = "Dell",
-                                                               "Amazon.com" = "Amazon")))
+  mutate(Name_trimmed = Name_trimmed %>% str_replace_all(c("Taiwan Semiconductor" = "TSMC", 
+                                                           "Pacific Biosciences of California" = "PacBio",
+                                                           "Alibaba Group Holding - ADR" = "Alibaba",
+                                                           "Logitech International" = "Logitech",
+                                                           "Dell Technologies" = "Dell",
+                                                           "Amazon.com" = "Amazon")))
 ```
 
 ```{r}
@@ -525,12 +525,10 @@ display_wikitable = function(wikitable, caption) {
                   full_width = F, position = "left")
 }
 
-marketcap = company_plot %>% select(Name, Marketcap_USD)
-
-marketcap %>% filter(Name == "Intellia Therapeutics") %>% pull(Marketcap_USD) %>% make_readable
+marketcap = company_plot %>% select(Name_trimmed, Marketcap_USD)
 ```
 
-### Intellia Therapeutics
+### Intellia Therapeutics (`r marketcap %>% filter(Name_trimmed == "Intellia Therapeutics") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
 
 [![](images/Intellia_Therapeutics.png){width=240px}](https://www.intelliatx.com/)
 
@@ -538,23 +536,23 @@ marketcap %>% filter(Name == "Intellia Therapeutics") %>% pull(Marketcap_USD) %>
 "Intellia_Therapeutics" %>% make_wikitable %>% display_wikitable("Intellia Therapeutics")
 ```
 
-### SI-Bone
+### SI-Bone (`r marketcap %>% filter(Name_trimmed == "SI-Bone") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
 
 [![](images/SI_Bone.png){width=240px}](https://si-bone.com/)
 
-### CymaBay Therapeutics
+### CymaBay Therapeutics (`r marketcap %>% filter(Name_trimmed == "CymaBay Therapeutics") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
 
 [![](images/CymaBay_Therapeutics.png){width=240px}](https://www.cymabay.com/)
 
-### Nano-X Imaging
+### Nano-X Imaging (`r marketcap %>% filter(Name_trimmed == "Nano-X Imaging") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
 
 [![](images/NanoX.svg){width=240px}](https://www.nanox.vision/)
 
-### GC Labcell
+### Green Cross Lab Cell (`r marketcap %>% filter(Name_trimmed == "Green Cross Lab Cell") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
 
 [![](images/GC_Labcell.png){width=240px}](https://www.gclabcell.com/)
 
-### Unity Technologies
+### Unity Software (`r marketcap %>% filter(Name_trimmed == "Unity Software") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
 
 [![](images/Unity.png){width=240px}](https://unity.com/)
 
@@ -566,6 +564,6 @@ wikitable$Val[wikitable$Var == "Subsidiaries"] %<>%
                     "(.+)delta<br>DNA" = "\\1<br>deltaDNA",
                     "deltaDNA(.+)" = "deltaDNA<br>\\1"))
 
-wikitable %>% display_wikitable("Unity Technologies")
+wikitable %>% display_wikitable("Unity Software")
 ```
 
