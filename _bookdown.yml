@@ -8,4 +8,4 @@ language:
   ui:
     chapter_name: "Chapter "
     appendix_name: "Appendix "
-rmd_files: ["index.Rmd", "author.Rmd", "buffett.Rmd", "town.Rmd", "business.Rmd", "price.Rmd", "sector.Rmd", "market-index.Rmd", "market.Rmd", "global-economy.Rmd", "simulation.Rmd", "resources.Rmd", "references.Rmd"]
+rmd_files: ["index.Rmd", "author.Rmd", "buffett.Rmd", "town.Rmd", "largest.Rmd", "watchlist.Rmd", "price.Rmd", "sector.Rmd", "market-index.Rmd", "market.Rmd", "global-economy.Rmd", "simulation.Rmd", "resources.Rmd", "references.Rmd"]

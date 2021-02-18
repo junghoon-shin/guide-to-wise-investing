@@ -1,22 +1,8 @@
 # (PART) Part II {-}
 
-# Business evaluation {#business}
+# My watchlist {#watchlist}
 
-## Largest companies^[Data are from https://companiesmarketcap.com/.]
-
-```{r, fig.cap = "Largest companies in the world by market value"}
-largest = read_html("https://companiesmarketcap.com/", which = 1, header = T, trim = T)
-
-largest %<>% 
-  select(-`Price (30 days)`) %>%
-  mutate(Ticker = str_extract(Name, "(?<=\\n).+$") %>% str_trim,
-         Name = str_extract(Name, "^.+(?=\\n)") %>% str_trim) %>%
-  relocate(Rank, Name, Ticker)
-
-my_datatable(largest, paging = T, pageLength = 10, scrollY = NULL, caption = NULL)
-```
-
-## My watchlist^[Data are automatically retrieved from [Google Finance](https://www.google.com/finance) and [Yahoo Finance](https://finance.yahoo.com/).] {#comprehensive}
+## Comprehensive financials^[Data are automatically retrieved from [Google Finance](https://www.google.com/finance) and [Yahoo Finance](https://finance.yahoo.com/).] {#comprehensive}
 
 ```{r}
 confident_return = 0.05

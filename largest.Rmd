@@ -1,0 +1,15 @@
+# Largest companies {#largest}
+
+(ref:largest) Largest companies in the world by market value^[Data are from https://companiesmarketcap.com/.]
+
+```{r, fig.cap = "(ref:largest)"}
+largest = read_html("https://companiesmarketcap.com/", which = 1, header = T, trim = T)
+
+largest %<>% 
+  select(-`Price (30 days)`) %>%
+  mutate(Ticker = str_extract(Name, "(?<=\\n).+$") %>% str_trim,
+         Name = str_extract(Name, "^.+(?=\\n)") %>% str_trim) %>%
+  relocate(Rank, Name, Ticker)
+
+my_datatable(largest, scrollY = NULL, caption = NULL)
+```
