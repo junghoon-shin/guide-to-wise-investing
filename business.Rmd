@@ -176,7 +176,8 @@ company %<>%
            Profit_margin,
            DER, ROA, ROIC, ROE, PBR, PSR, PER, `Industry PER`, 
            .before = `Price/Target`) %>%
-  relocate(Retention_ratio, .after = Payout_ratio)
+  relocate(Retention_ratio, .after = Payout_ratio) %>%
+  arrange(Name)
 
 company_plot = company
 
@@ -186,10 +187,13 @@ company %<>%
          `Revenue growth estimate (current year)` = Revenue_growth_estimate_current,
          `Revenue growth estimate (next year)` = Revenue_growth_estimate_next,
          `Earnings growth (past 5yrs)` = Earnings_growth_past_5yrs,
-         `Earnings growth estimate (next 5yrs)` = Earnings_growth_estimate_next_5yrs) %>%
-  arrange(Name)
+         `Earnings growth estimate (next 5yrs)` = Earnings_growth_estimate_next_5yrs)
 
 names(company) %<>% str_replace_all(., "_", " ")
+```
+
+```{r}
+company %>% write_sheet(ss = drive_get("Investment/Valuation"), sheet = "Valuation")
 ```
 
 ```{r}
