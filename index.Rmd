@@ -10,7 +10,7 @@ biblio-style: apalike
 link-citations: yes
 url: 'https\://junghoon-shin.github.io/'
 github-repo: "junghoon-shin/guide-for-wise-investing"
-cover-image: "images/cover1.jpg"
+cover-image: "images/mathieu-stern-1zO4O3Z0UJA-unsplash.jpg"
 apple-touch-icon: "images/bull.svg"
 apple-touch-icon-size: 120
 favicon: "images/bull.svg"
