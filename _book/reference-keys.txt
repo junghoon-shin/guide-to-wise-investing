@@ -88,10 +88,10 @@ investment-decision
 small-cap-companies
 intellia-therapeutics-4.4b
 si-bone-1b
-cymabay-therapeutics-368.2m
+cymabay-therapeutics-363.7m
 nano-x-imaging-2.6b
-green-cross-lab-cell-867.4m
-unity-software-32.9b
+green-cross-lab-cell-867.1m
+unity-software-32.8b
 price
 normalized-closing-price
 adjusted-closing-price
