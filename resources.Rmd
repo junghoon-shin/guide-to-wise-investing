@@ -1,4 +1,4 @@
-# Resources {-}
+# Resources {#resources .unnumbered}
 
 - [Google Finance](https://www.google.com/finance)
 - [Yahoo Finance](https://finance.yahoo.com/)

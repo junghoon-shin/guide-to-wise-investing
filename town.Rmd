@@ -7,7 +7,7 @@
 3. The business should have [management](#management) with integrity and talent.
 4. The business should be available for a fair price that gives a "margin of safety."
 
-## Five and a half Moats {#moat}
+## Five and a half moats {#moat}
 
 ```{r}
 tibble(Moat = c("Strong brand", 
@@ -20,7 +20,7 @@ tibble(Moat = c("Strong brand",
                           "![](images/CN_Railway.png){height=80px} ![](images/Norfolk_Southern.png){height=80px}",
                           "![](images/Pfizer.png){height=80px} ![](images/Roche.png){height=80px} ![](images/Janssen.png){height=80px}",
                           "![](images/Costco.png){height=80px}")) %>% 
-  kbl(escape = F, col.names = colnames(.), caption = "Five and a half Moats that determine the durable competitive advantage of a business with nice examples") %>%
+  kbl(escape = F, col.names = colnames(.), caption = "Five and a half moats that determine the durable competitive advantage of a business with nice examples") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
                 full_width = F, position = "left")
 ```

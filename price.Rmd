@@ -150,7 +150,7 @@ price_today = price_data %>%
 price_data %>% 
   ggplot(mapping = aes(x = date, y = adjusted)) +
   geom_line(color = line_color[1]) +
-  geom_hline(data = price_today, mapping = aes(yintercept = adjusted), size = rel(0.5), color = line_color[2]) +
+  geom_hline(data = price_today, mapping = aes(yintercept = adjusted), size = 0.25, color = line_color[2]) +
   scale_x_date(expand = c(0, 0)) +
   labs(x = "Date", y = "Adjusted closing price") +
   facet_grid(rows = vars(Name), scales = "free_y")
