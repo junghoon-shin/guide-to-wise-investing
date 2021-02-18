@@ -127,10 +127,18 @@ clean_name = function(name) {
     str_trim
 }
 
-get_relative_price = function(x) {
-  x = x[!is.na(x)]
-  x = sort(x)[-c(1, length(x))]
-  x %>% log %>% mean %>% exp
+convert_ticker = function(google) {
+  google %>% 
+    str_replace("^(.+):(.+)$", "\\2.\\1") %>% 
+    str_replace_all(c("\\.KRX" = ".KS",
+                      "\\.KOSDAQ" = ".KQ",
+                      "\\.NYSE" = "",
+                      "\\.NASDAQ" = "",
+                      "\\.EPA" = ".PA",
+                      "\\.HKG" = "\\.HK",
+                      "\\.SWX" = "\\.SW",
+                      "\\.TPE" = ".TW",
+                      "RO\\.SW" = "ROG\\.SW"))
 }
 ```
 
