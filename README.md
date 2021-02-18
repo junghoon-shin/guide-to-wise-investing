@@ -1,1 +1,1 @@
-Source codes and data for generating the investing guide available at https://junghoon-shin.github.io/.
+Source codes and data for generating the investment guide available at https://junghoon-shin.github.io/.
