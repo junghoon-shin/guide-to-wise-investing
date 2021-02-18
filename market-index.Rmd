@@ -15,7 +15,9 @@ ticker = tribble(
   "WilshireREIT", "^WILREIT",
   "Gold", "GC=F",
   "Copper", "HG=F",
-  "Oil", "CL=F")
+  "Oil", "CL=F",
+  "Treasury", "^TNX",
+  "AAA", "QLTA")
 
 index_2yr = tq_get(ticker$symbol, get = "stock.prices", from = twoyearsago)
 
@@ -63,11 +65,11 @@ index_plot(index_2yr, "NASDAQ", "NASDAQ")
 ```
 
 ```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "iShares EURO STOXX Select Dividend 30 UCITS ETF"}
-index_plot(index_2yr, "EUROSTOXX", "EURO STOXX 30")
+index_plot(index_2yr, "EUROSTOXX", "iShares EURO STOXX 30")
 ```
 
 ```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "iShares MSCI Emerging Markets ETF"}
-index_plot(index_2yr, "MSCIEM", "MSCI EM")
+index_plot(index_2yr, "MSCIEM", "iShares MSCI EM")
 ```
 
 ```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Wilshire US REIT Index"}
@@ -84,6 +86,15 @@ index_plot(index_2yr, "Copper", "Copper price")
 
 ```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Crude Oil Price"}
 index_plot(index_2yr, "Oil", "Crude oil price")
+```
+
+
+```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Treasury Yield 10 Years"}
+index_plot(index_2yr, "Treasury", "U.S. T-note yield")
+```
+
+```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "iShares Aaa - A Rated Corporate Bond ETF"}
+index_plot(index_2yr, "AAA", "iShares AAA")
 ```
 
 ## Index trend (>30 years)^[Data are from [Federal Reserve Bank of St. Louis](https://fred.stlouisfed.org/).]
