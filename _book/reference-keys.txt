@@ -86,12 +86,12 @@ comprehensive
 key-financials
 investment-decision
 small-cap-companies
-intellia-therapeutics-4.4b
-si-bone-1b
-cymabay-therapeutics-363.7m
+intellia-therapeutics-4.3b
+si-bone-991.2m
+cymabay-therapeutics-366.5m
 nano-x-imaging-2.6b
-green-cross-lab-cell-867.1m
-unity-software-32.8b
+green-cross-lab-cell-868.1m
+unity-software-32.4b
 price
 normalized-closing-price
 adjusted-closing-price
