@@ -139,9 +139,18 @@ normalized_price_trend(price_data, interesting_sectors[15])
 ## Adjusted closing price^[https://www.investopedia.com/terms/a/adjusted_closing_price.asp]
 
 ```{r, fig.width = 7, fig.height = 2.5 * length(unique(price_data$Name)), fig.cap = "Adjusted closing stock price over the last 2 years"}
+price_today = price_data %>%
+  filter(as_date(date) %in% (as_date(date) - 0:5)) %>% 
+  group_by(symbol) %>% 
+  arrange(desc(date)) %>% 
+  slice(1) %>% 
+  ungroup %>% 
+  select(Name, date, adjusted)
+
 price_data %>% 
   ggplot(mapping = aes(x = date, y = adjusted)) +
   geom_line(color = line_color[1]) +
+  geom_hline(data = price_today, mapping = aes(yintercept = adjusted), size = rel(0.5), color = line_color[2]) +
   scale_x_date(expand = c(0, 0)) +
   labs(x = "Date", y = "Adjusted closing price") +
   facet_grid(rows = vars(Name), scales = "free_y")

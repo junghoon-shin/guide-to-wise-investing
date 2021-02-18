@@ -52,6 +52,7 @@ p_load(bookdown,
        httr,
        kableExtra,
        knitr,
+       lubridate,
        magrittr,
        measurements,
        pander,
@@ -156,14 +157,14 @@ front = c(5, 6, 52:57)
 back = c(1, 4, 10, 12:15, 17:18, 22, 24, 26:47, 49)
 line_color = c(qual_col_vector[front], qual_col_vector[-c(front, back)], qual_col_vector[back])
 
-today = Sys.Date() %>% as.character %>% str_replace(" ", "")
-monthago = (Sys.Date() - 30) %>% as.character %>% str_replace(" ", "")
-yearago = (Sys.Date() - 365) %>% as.character %>% str_replace(" ", "")
-twoyearsago = (Sys.Date() - 365 * 2) %>% as.character %>% str_replace(" ", "")
-threeyearsago = (Sys.Date() - 365 * 3) %>% as.character %>% str_replace(" ", "")
-fiveyearsago = (Sys.Date() - 365 * 5) %>% as.character %>% str_replace(" ", "")
-twentyyearsago = (Sys.Date() - 365 * 20) %>% as.character %>% str_replace(" ", "")
-thirtyyearsago = (Sys.Date() - 365 * 30) %>% as.character %>% str_replace(" ", "")
+today = today() %>% as.character %>% str_replace(" ", "")
+monthago = (today() - 30) %>% as.character %>% str_replace(" ", "")
+yearago = (today() - 365) %>% as.character %>% str_replace(" ", "")
+twoyearsago = (today() - 365 * 2) %>% as.character %>% str_replace(" ", "")
+threeyearsago = (today() - 365 * 3) %>% as.character %>% str_replace(" ", "")
+fiveyearsago = (today() - 365 * 5) %>% as.character %>% str_replace(" ", "")
+twentyyearsago = (today() - 365 * 20) %>% as.character %>% str_replace(" ", "")
+thirtyyearsago = (today() - 365 * 30) %>% as.character %>% str_replace(" ", "")
 thisyear = today %>% str_extract("^[0-9]+") %>% as.numeric
 ```
 
@@ -181,7 +182,7 @@ From that moment on, I tried to read what the great investors wrote, collect see
 
 After those struggling days I started to work on this project. It was initially aimed to serve as my personal resource of automatically updated financial data which include only understandable and useful information that can aid me to make unbiased and premeditated investment decision. As the project went along, it slowly evolved into what I thought could also help others who were interested in investing but found existing sources of information [exhausting](https://www.sec.gov/ix?doc=/Archives/edgar/data/320193/000032019320000096/aapl-20200926.htm). This project is designed to help specifically those who seek a reliable source of investment information that contain only concise, tidy, and easy-to-get data.
 
-This is a non-profit, public-access, ongoing project still in its infant stage, and I am always open to suggestions from whoever hopes to make it better. Please feel free to [contact me](#author), or even better make a [pull request](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests) anytime anywhere. This project has been hugely inspired by [Warren Buffett](https://www.berkshirehathaway.com/letters/letters.html), @town2018, @graham2003, and @lee2020. All data presented here are automatically updated every hour. They were last updated at **`r paste({t = Sys.time(); attributes(t)$tzone = "Europe/London"; t}, "GMT")`**. Check them out daily and find out how easily investment can be incorporated into your life.\
+This is a non-profit, public-access, ongoing project still in its infant stage, and I am always open to suggestions from whoever hopes to make it better. Please feel free to [contact me](#author), or even better make a [pull request](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests) anytime anywhere. This project has been hugely inspired by [Warren Buffett](https://www.berkshirehathaway.com/letters/letters.html), @town2018, @graham2003, and @lee2020. All data presented here are automatically updated every hour. They were last updated at **`r paste(now("Europe/London"), "GMT")`**. Check them out daily and find out how easily investment can be incorporated into your life.\
 \
 
 ![](images/CC-BY-NC-SA-4.0.png){width=180px}

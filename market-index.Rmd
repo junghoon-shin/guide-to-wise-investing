@@ -101,26 +101,17 @@ ticker = tribble(
   "AAA", "DAAA",
   "USDKRW", "DEXKOUS")
 
-index_30yr = tq_get(ticker$symbol, get = "economic.data", from = as.Date(thirtyyearsago) - 30)
+index_30yr = tq_get(ticker$symbol, get = "economic.data", from = as_date(thirtyyearsago) - 30)
 
 index_30yr %<>% left_join(ticker) %>% select(-symbol)
 
 Shiller = read_html("https://www.multpl.com/shiller-pe/table/by-year", which = 1, header = T) %>% rename(Shiller = "\n\nValue\n\n\n\nValue\n")
 
-Shiller$Date %<>% 
-  str_match("([^ ,]+) ([^ ,]+), ([^ ,]+)") %>% 
-  .[, -1] %>% 
-  as_tibble %>% 
-  setNames(c("m", "d", "y")) %>% 
-  mutate(m = match(m, month.abb), date = str_c(y, m, d, sep = "-")) %>% 
-  pull(date) %>% 
-  as.Date
-
-Shiller$Shiller %<>% as.numeric
-
 Shiller %<>% 
   rename(date = Date, price = Shiller) %>%
-  mutate(name = "Shiller")
+  mutate(date = as_date(date, format = "%b %e, %Y"),
+         price = as.numeric(price),
+         name = "Shiller")
 
 USGDP = index_30yr %>% 
   filter(name == "USGDP") %>%
