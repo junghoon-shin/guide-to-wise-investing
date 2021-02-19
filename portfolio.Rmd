@@ -1,4 +1,4 @@
-# (PART) Practice {-}
+# (PART) Let's invest {-}
 
 # My portfolio
 
@@ -6,24 +6,34 @@
 portfolio = drive_get("Investment/Investment") %>% read_sheet(sheet = "Portfolio")
 
 portfolio %<>%
-  mutate(Class = factor(Class, levels = rev(c("Stock", "Bond", "REITs", "Commodity", "Gold"))),
-         Region = factor(Region, levels = c("USA", "Europe", "Korea", "Emerging", "Global")))
+  mutate(Class = factor(Class, levels = c("Stock", "REITs", "Bond", "Commodity", "Gold")),
+         Region = factor(Region, levels = c("Korea", "USA", "Europe", "Emerging", "Global")))
 ```
 
-```{r, fig.cap = "Current asset allocation"}
+```{r, fig.cap = "Asset allocation"}
 portfolio %>%
-  ggplot(mapping = aes(x = 1, y = `Market value (KRW)`)) +
-  geom_bar(stat = "summary", fun = sum, mapping = aes(fill = Class), position = "fill", color = "black") +
-  scale_y_continuous(labels = percent) +
-  scale_fill_manual(values = fill_color, guide = guide_legend(title = NULL)) +
-  coord_polar(theta = "y") +
+  ggplot(mapping = aes(x = 1, y = Weight)) +
+  geom_bar(stat = "summary", fun = sum, mapping = aes(fill = Class), color = "black") +
+  scale_y_continuous(breaks = pretty_breaks(), labels = function(x) {percent(rev(x))}) +
+  scale_fill_manual(values = fill_color, drop = F, guide = guide_legend(title = NULL)) +
+  coord_polar(theta = "y", direction = -1) +
   labs(x = NULL, y = NULL) +
   theme(panel.border = element_blank(), panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank())
 ```
 
-```{r}
+```{r, fig.height = 6.5, fig.cap = "Regional distribution of invested assets"}
 portfolio %>%
-  ggplot(mapping = aes(x = Class, y = `Market value (KRW)`, ))
+  group_by(Class) %>%
+  mutate(width = sqrt(sum(Weight))) %>%
+  ungroup %>%
+  ggplot(mapping = aes(x = 1 + width/2, y = Weight)) +
+  geom_bar(stat = "summary", fun = sum, position = "fill", mapping = aes(fill = Region, width = width), color = "black") +
+  scale_y_continuous(breaks = pretty_breaks(), labels = function(x) {percent(rev(x))}) +
+  scale_fill_manual(values = fill_color, drop = F, guide = guide_legend(title = NULL)) +
+  coord_polar(theta = "y", direction = -1) +
+  facet_wrap(vars(Class), nrow = 2) +
+  labs(x = NULL, y = NULL) +
+  theme(panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank())
 ```
 
 
