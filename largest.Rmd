@@ -2,7 +2,7 @@
 
 # Largest companies {#largest}
 
-(ref:largest) Largest companies in the world by market value^[Data are from https://companiesmarketcap.com/.]
+(ref:largest) The largest public companies in the world by market value^[Data are from https://companiesmarketcap.com/.]
 
 ```{r, fig.cap = "(ref:largest)"}
 largest = read_html("https://companiesmarketcap.com/", which = 1, header = T, trim = T)

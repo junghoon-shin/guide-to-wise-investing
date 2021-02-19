@@ -1,8 +1,8 @@
 # CEO analysis {#ceo}
 
-(ref:Poliakine) [Brief profile of Mr. Ran Poliakine](https://en.wikipedia.org/wiki/Ran_Poliakine)
+## Mr. Ran Poliakine (Nano-X Imaging)
 
-## Mr. Ran Poliakine
+(ref:Poliakine) [Brief profile of Mr. Ran Poliakine](https://en.wikipedia.org/wiki/Ran_Poliakine)
 
 ```{r}
 read_html("https://en.wikipedia.org/wiki/Ran_Poliakine", which = 1, header = T, trim = T) %>%
@@ -16,5 +16,9 @@ read_html("https://en.wikipedia.org/wiki/Ran_Poliakine", which = 1, header = T, 
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
                 full_width = F, position = "left")
 ```
+
+*Work in progress*
+
+## Serge Saxonov (10X Genomics)
 
 *Work in progress*

@@ -95,14 +95,15 @@ intellia-therapeutics-4.3b
 si-bone-991.2m
 cymabay-therapeutics-366.5m
 nano-x-imaging-2.6b
-green-cross-lab-cell-869.2m
+green-cross-lab-cell-870.7m
 unity-software-32.4b
 price
 normalized-closing-price
 adjusted-closing-price
 stock-price-correlation
 ceo
-mr.-ran-poliakine
+mr.-ran-poliakine-nano-x-imaging
+serge-saxonov-10x-genomics
 sector
 pe-ratio
 expected-growth-rate
