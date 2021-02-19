@@ -6,8 +6,8 @@
 portfolio = drive_get("Investment/Investment") %>% read_sheet(sheet = "Portfolio")
 
 portfolio %<>%
-  mutate(Class = factor(Class, levels = c("Stock", "REITs", "Bond", "Commodity", "Gold")),
-         Region = factor(Region, levels = c("Korea", "USA", "Europe", "Emerging", "Global")))
+  mutate(Class = factor(Class, levels = c("Stock", "REIT", "Bond", "Commodity", "Gold")),
+         Region = factor(Region %>% replace(. == "Emerging", "Emerging market"), levels = c("Korea", "USA", "Europe", "Emerging market", "Global")))
 ```
 
 ```{r, fig.cap = "Asset allocation"}
@@ -21,7 +21,7 @@ portfolio %>%
   theme(panel.border = element_blank(), panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank())
 ```
 
-```{r, fig.height = 6.5, fig.cap = "Regional distribution of invested assets"}
+```{r, fig.height = 6, fig.cap = "Regional distribution of invested assets"}
 portfolio %>%
   group_by(Class) %>%
   mutate(width = sqrt(sum(Weight))) %>%
@@ -36,4 +36,42 @@ portfolio %>%
   theme(panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank())
 ```
 
+```{r, fig.cap = "Sector distribution of stock investment"}
+portfolio_stock = portfolio %>% 
+  filter(Class == "Stock") %>%
+  select(Name, Region, Weight) %>%
+  mutate(Name = case_when(Name == "Hyundai Motor S2 Pref Shs" ~ "Hyundai Motor Co",
+                          T ~ Name)) %>%
+  left_join(company %>% select(Name, Industry)) %>% 
+  mutate(Industry = case_when(is.na(Industry) ~ "Index Fund",
+                              T ~ Industry) %>% factor %>% relevel("Index Fund"),
+         Weight = Weight / sum(Weight))
+
+portfolio_stock %>%
+  ggplot(mapping = aes(x = Region, y = Weight)) +
+  geom_bar(mapping = aes(fill = Industry), stat = "summary", fun = sum, color = "black", width = 0.7) +
+  scale_y_continuous(expand = c(0, 0, 0.05, 0), labels = percent) +
+  scale_fill_manual(values = fill_color, guide = guide_legend(title = "Sector")) +
+  labs(x = "Region", y = "Proportion")
+```
+
+```{r, fig.cap = "Bond composition"}
+portfolio_bond = portfolio %>% 
+  filter(Class == "Bond") %>%
+  select(Name, Region, Weight) %>%
+  mutate(Sector = case_when(Region == "USA" & str_detect(Name, "T-NOTE") & str_detect(Name, "10") ~ "U.S. 10-year treasury note",
+                            Name == "ARIRANG US Long-term Credit" ~ "U.S. long-term AAA-A corporate bond",
+                            Region == "Korea" & str_detect(Name, "10") ~ "South Korea 10-year government bond",
+                            T ~ "Others"),
+         Weight = Weight / sum(Weight))
+
+portfolio_bond %>%
+  ggplot(mapping = aes(x = 1, y = Weight)) +
+  geom_bar(mapping = aes(fill = Sector), stat = "summary", fun = sum, position = "fill", color = "black") +
+  scale_y_continuous(breaks = pretty_breaks(), labels = function(x) {percent(rev(x))}) +
+  scale_fill_manual(values = fill_color, guide = guide_legend(title = NULL)) +
+  coord_polar(theta = "y", direction = -1) +
+  labs(x = NULL, y = NULL) +
+  theme(panel.border = element_blank(), panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank())
+```
 

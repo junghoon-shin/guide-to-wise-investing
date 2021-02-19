@@ -66,6 +66,8 @@ fig:unnamed-chunk-96
 fig:unnamed-chunk-97
 fig:unnamed-chunk-98
 fig:unnamed-chunk-99
+fig:unnamed-chunk-100
+fig:unnamed-chunk-101
 buffett
 rule-no.-1
 value-investing
@@ -92,7 +94,7 @@ intellia-therapeutics-4.3b
 si-bone-991.2m
 cymabay-therapeutics-366.5m
 nano-x-imaging-2.6b
-green-cross-lab-cell-839.4m
+green-cross-lab-cell-847.9m
 unity-software-32.4b
 price
 normalized-closing-price
