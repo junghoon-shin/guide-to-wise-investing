@@ -1,0 +1,29 @@
+# (PART) Practice {-}
+
+# My portfolio
+
+```{r}
+portfolio = drive_get("Investment/Investment") %>% read_sheet(sheet = "Portfolio")
+
+portfolio %<>%
+  mutate(Class = factor(Class, levels = rev(c("Stock", "Bond", "REITs", "Commodity", "Gold"))),
+         Region = factor(Region, levels = c("USA", "Europe", "Korea", "Emerging", "Global")))
+```
+
+```{r, fig.cap = "Current asset allocation"}
+portfolio %>%
+  ggplot(mapping = aes(x = 1, y = `Market value (KRW)`)) +
+  geom_bar(stat = "summary", fun = sum, mapping = aes(fill = Class), position = "fill", color = "black") +
+  scale_y_continuous(labels = percent) +
+  scale_fill_manual(values = fill_color, guide = guide_legend(title = NULL)) +
+  coord_polar(theta = "y") +
+  labs(x = NULL, y = NULL) +
+  theme(panel.border = element_blank(), panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank())
+```
+
+```{r}
+portfolio %>%
+  ggplot(mapping = aes(x = Class, y = `Market value (KRW)`, ))
+```
+
+

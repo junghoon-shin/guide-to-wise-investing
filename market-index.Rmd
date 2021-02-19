@@ -44,56 +44,56 @@ index_plot = function(indexdata, .name, title) {
 }
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "South Korea/U.S. Foreign Exchange Rate"}
+```{r, fig.height = 8/2.5, fig.cap = "South Korea/U.S. Foreign Exchange Rate"}
 index_plot(index_2yr, "USDKRW", "USD/KRW")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "KOSPI Index"}
+```{r, fig.height = 8/2.5, fig.cap = "KOSPI Index"}
 index_plot(index_2yr, "KOSPI", "KOSPI")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "KOSDAQ Index"}
+```{r, fig.height = 8/2.5, fig.cap = "KOSDAQ Index"}
 index_plot(index_2yr, "KOSDAQ", "KOSDAQ")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "S&P 500 Index"}
+```{r, fig.height = 8/2.5, fig.cap = "S&P 500 Index"}
 index_plot(index_2yr, "S&P500", "S&P 500")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "NASDAQ Composite Index"}
+```{r, fig.height = 8/2.5, fig.cap = "NASDAQ Composite Index"}
 index_plot(index_2yr, "NASDAQ", "NASDAQ")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "iShares EURO STOXX Select Dividend 30 UCITS ETF"}
+```{r, fig.height = 8/2.5, fig.cap = "iShares EURO STOXX Select Dividend 30 UCITS ETF"}
 index_plot(index_2yr, "EUROSTOXX", "iShares EURO STOXX 30")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "iShares MSCI Emerging Markets ETF"}
+```{r, fig.height = 8/2.5, fig.cap = "iShares MSCI Emerging Markets ETF"}
 index_plot(index_2yr, "MSCIEM", "iShares MSCI EM")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Wilshire US REIT Index"}
+```{r, fig.height = 8/2.5, fig.cap = "Wilshire US REIT Index"}
 index_plot(index_2yr, "WilshireREIT", "Wilshire REIT")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Gold Price"}
+```{r, fig.height = 8/2.5, fig.cap = "Gold Price"}
 index_plot(index_2yr, "Gold", "Gold price")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Copper Price"}
+```{r, fig.height = 8/2.5, fig.cap = "Copper Price"}
 index_plot(index_2yr, "Copper", "Copper price")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Crude Oil Price"}
+```{r, fig.height = 8/2.5, fig.cap = "Crude Oil Price"}
 index_plot(index_2yr, "Oil", "Crude oil price")
 ```
 
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Treasury Yield 10 Years"}
+```{r, fig.height = 8/2.5, fig.cap = "Treasury Yield 10 Years"}
 index_plot(index_2yr, "Treasury", "U.S. T-note yield")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "iShares Aaa - A Rated Corporate Bond ETF"}
+```{r, fig.height = 8/2.5, fig.cap = "iShares Aaa - A Rated Corporate Bond ETF"}
 index_plot(index_2yr, "AAA", "iShares AAA")
 ```
 
@@ -159,39 +159,39 @@ index_plot_fed = function(feddata, .name, title) {
 }
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Wilshire 5000 Full Cap Price Index"}
+```{r, fig.height = 8/2.5, fig.cap = "Wilshire 5000 Full Cap Price Index"}
 index_plot_fed(index_30yr, "Wilshire5000", "Wilshire 5000")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Wilshire US REIT Total Market Index"}
+```{r, fig.height = 8/2.5, fig.cap = "Wilshire US REIT Total Market Index"}
 index_plot_fed(index_30yr, "WilshireREIT", "Wilshire REIT")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Gold Fixing Price 10:30 A.M. (London time) in London Bullion Market, based in U.S. Dollars"}
+```{r, fig.height = 8/2.5, fig.cap = "Gold Fixing Price 10:30 A.M. (London time) in London Bullion Market, based in U.S. Dollars"}
 index_plot_fed(index_30yr, "Gold", "Gold fixing price")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Global Price of Copper (U.S. Dollars per Metric Ton)"}
+```{r, fig.height = 8/2.5, fig.cap = "Global Price of Copper (U.S. Dollars per Metric Ton)"}
 index_plot_fed(index_30yr, "Copper", "Copper price")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Crude Oil Prices: West Texas Intermediate (WTI) - Cushing, Oklahoma"}
+```{r, fig.height = 8/2.5, fig.cap = "Crude Oil Prices: West Texas Intermediate (WTI) - Cushing, Oklahoma"}
 index_plot_fed(index_30yr, "WTI", "Crude oil price")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Long-Term Government Bond Yields: 10-year: Main (Including Benchmark) for the United States"}
+```{r, fig.height = 8/2.5, fig.cap = "Long-Term Government Bond Yields: 10-year: Main (Including Benchmark) for the United States"}
 index_plot_fed(index_30yr, "USBond", "Government bond yield")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Moody's Seasoned AAA Corporate Bond Yield"}
+```{r, fig.height = 8/2.5, fig.cap = "Moody's Seasoned AAA Corporate Bond Yield"}
 index_plot_fed(index_30yr, "AAA", "AAA corporate bond yield")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Wilshire 5000 Full Cap Price Index/Gross Domestic Product"}
+```{r, fig.height = 8/2.5, fig.cap = "Wilshire 5000 Full Cap Price Index/Gross Domestic Product"}
 index_plot_fed(Buffett, "Buffett", "Buffett indicator")
 ```
 
-```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = "Cyclically Adjusted P/E (CAPE) Ratio for S&P 500"}
+```{r, fig.height = 8/2.5, fig.cap = "Cyclically Adjusted P/E (CAPE) Ratio for S&P 500"}
 index_plot_fed(index_30yr, "Shiller", "Shiller P/E ratio")
 ```
 
@@ -279,7 +279,7 @@ h_height = convertHeight(h@ht_list_param$height, "inch") %>% as.numeric
 grid_size = heatmap_body_size/nrow(index_cor)
 ```
 
-```{r, fig.width = 7, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between the stock matket index, REIT index, gold price, copper price, crude oil price, bond yields, and USD/KRW exchange rate over the last 30 years (averaged over stratified 5-year intervals)"}
+```{r, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between the stock matket index, REIT index, gold price, copper price, crude oil price, bond yields, and USD/KRW exchange rate over the last 30 years (averaged over stratified 5-year intervals)"}
 Heatmap(index_cor, 
         name = "Pearson's r", 
         width = heatmap_body_size, height = heatmap_body_size,

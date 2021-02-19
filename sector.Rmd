@@ -1,3 +1,5 @@
+# (PART) Environment {-}
+
 # Sector evaluation^[Data are from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html) and [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/mgnroc.html). All data are based on U.S. companies.] {#sector}
 
 ## PE ratio
@@ -23,7 +25,7 @@ industry_per = industry %>%
 notNA_per = industry_per %>% group_by(`Industry Name`) %>% summarise(notNA = sum(!is.na(`PE ratio`))) %>% filter(notNA > 0) %>% nrow
 ```
 
-```{r, fig.width = 7, fig.height = (notNA_per + 3)/4, fig.cap = "Current, trailing, and forward PE ratio by industry sector (note the x-axis is in log scale)"}
+```{r, fig.height = (notNA_per + 3)/4, fig.cap = "Current, trailing, and forward PE ratio by industry sector (note the x-axis is in log scale)"}
 industry_per %>%
   ggplot(mapping = aes(x = `Industry Name`, y = `PE ratio`)) +
   geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
@@ -37,7 +39,7 @@ industry_per %>%
 
 ## Expected growth rate
 
-```{r, fig.width = 7, fig.height = (nrow(industry %>% filter(!is.na(`Expected growth - next 5 years`))) + 2)/4, fig.cap = "Expected growth rate for the next 5 years by industry sector"}
+```{r, fig.height = (nrow(industry %>% filter(!is.na(`Expected growth - next 5 years`))) + 2)/4, fig.cap = "Expected growth rate for the next 5 years by industry sector"}
 industry %>%
   arrange(`Expected growth - next 5 years`) %>%
   mutate(`Industry Name` = factor(`Industry Name`, levels = `Industry Name`)) %>%
@@ -52,7 +54,7 @@ industry %>%
 
 ## PEG ratio
 
-```{r, fig.width = 7, fig.height = (nrow(industry %>% filter(!is.na(`PEG Ratio`))) + 2)/4, fig.cap = "PEG ratio by industry sector"}
+```{r, fig.height = (nrow(industry %>% filter(!is.na(`PEG Ratio`))) + 2)/4, fig.cap = "PEG ratio by industry sector"}
 industry %>%
   filter(!is.na(`PEG Ratio`)) %>%
   arrange(`PEG Ratio`) %>%
@@ -79,7 +81,7 @@ industry2 %<>%
          across(c(`After-tax Operating Margin`, `Return on Capital`), ~str_replace(., "%", "") %>% as.numeric %>% divide_by(100)))
 ```
 
-```{r, fig.width = 7, fig.height = (nrow(industry2 %>% filter(!is.na(`Return on Capital`))) + 2)/4, fig.cap = "Return on invested capital by industry sector"}
+```{r, fig.height = (nrow(industry2 %>% filter(!is.na(`Return on Capital`))) + 2)/4, fig.cap = "Return on invested capital by industry sector"}
 industry2 %>%
   filter(!is.na(`Return on Capital`)) %>%
   arrange(`Return on Capital`) %>%
