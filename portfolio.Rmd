@@ -10,7 +10,7 @@ portfolio %<>%
          Region = factor(Region %>% replace(. == "Emerging", "Emerging market"), levels = c("Korea", "USA", "Europe", "Emerging market", "Global")))
 ```
 
-```{r, fig.cap = "Asset allocation"}
+```{r, fig.height = 3.5, fig.cap = "Asset allocation"}
 portfolio %>%
   ggplot(mapping = aes(x = 1, y = Weight)) +
   geom_bar(stat = "summary", fun = sum, position = "fill", mapping = aes(fill = Class), color = "black") +
@@ -55,7 +55,7 @@ portfolio_stock %>%
   labs(x = "Region", y = "Proportion")
 ```
 
-```{r, fig.cap = "Bond composition"}
+```{r, fig.height = 3.5, fig.cap = "Bond composition"}
 portfolio_bond = portfolio %>% 
   filter(Class == "Bond") %>%
   select(Name, Region, Weight) %>%
