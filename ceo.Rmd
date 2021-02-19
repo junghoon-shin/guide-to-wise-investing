@@ -1,0 +1,20 @@
+# CEO analysis {#ceo}
+
+(ref:Poliakine) [Brief profile of Mr. Ran Poliakine](https://en.wikipedia.org/wiki/Ran_Poliakine)
+
+## Mr. Ran Poliakine
+
+```{r}
+read_html("https://en.wikipedia.org/wiki/Ran_Poliakine", which = 1, header = T, trim = T) %>%
+  column_to_rownames("V1") %>%
+  t %>%
+  as_tibble %>%
+  mutate(across(Occupation, ~str_replace_all(., "([a-z])([A-Z])", "\\1<br>\\2"))) %>%
+  t %>%
+  as_tibble(rownames = "var") %>%
+  kbl(escape = F, col.names = NULL, caption = "(ref:Poliakine)") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = F, position = "left")
+```
+
+*Work in progress*

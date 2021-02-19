@@ -1,6 +1,6 @@
 # (PART) Let's invest {-}
 
-# My portfolio
+# My portfolio {#portfolio}
 
 ```{r}
 portfolio = drive_get("Investment/Investment") %>% read_sheet(sheet = "Portfolio")
@@ -52,7 +52,7 @@ portfolio_stock %>%
   geom_bar(mapping = aes(fill = Industry), stat = "summary", fun = sum, color = "black", width = 0.7) +
   scale_y_continuous(expand = c(0, 0, 0.05, 0), labels = percent) +
   scale_fill_manual(values = fill_color, guide = guide_legend(title = "Sector")) +
-  labs(x = "Region", y = "Proportion")
+  labs(x = "Market", y = "Proportion")
 ```
 
 ```{r, fig.height = 3.5, fig.cap = "Bond composition"}
