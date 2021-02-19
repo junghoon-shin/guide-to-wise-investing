@@ -13,7 +13,7 @@ portfolio %<>%
 ```{r, fig.cap = "Asset allocation"}
 portfolio %>%
   ggplot(mapping = aes(x = 1, y = Weight)) +
-  geom_bar(stat = "summary", fun = sum, mapping = aes(fill = Class), color = "black") +
+  geom_bar(stat = "summary", fun = sum, position = "fill", mapping = aes(fill = Class), color = "black") +
   scale_y_continuous(breaks = pretty_breaks(), labels = function(x) {percent(rev(x))}) +
   scale_fill_manual(values = fill_color, drop = F, guide = guide_legend(title = NULL)) +
   coord_polar(theta = "y", direction = -1) +
