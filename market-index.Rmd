@@ -10,15 +10,17 @@ ticker = tribble(
   "KOSDAQ", "^KQ11",
   "S&P500", "^GSPC",
   "NASDAQ", "^IXIC",
-  "EUROSTOXX30", "EXSG.F",
-  "MSCIEM", "EEM",
+  "MSCIEM", "MME=F",
+  "CSI300", "ASHR",
+  "EUROSTOXX50", "EXW1.DE",
+  "EUROSTOXX30", "EXSG.DE",
   "WilshireREIT", "^WILREIT",
   "Gold", "GC=F",
   "Copper", "HG=F",
   "Oil", "CL=F",
-  "Treasuryyield", "^TNX",
   "Treasuryfutures", "ZB=F",
-  "AAA", "QLTA")
+  "AAA", "QLTA",
+  "Treasuryyield", "^TNX")
 
 index_2yr = tq_get(ticker$symbol, get = "stock.prices", from = twoyearsago)
 
@@ -66,12 +68,20 @@ index_plot(index_2yr, "S&P500", "S&P 500")
 index_plot(index_2yr, "NASDAQ", "NASDAQ")
 ```
 
-```{r, fig.height = 8/2.5, fig.cap = "iShares EURO STOXX Select Dividend 30 UCITS ETF"}
-index_plot(index_2yr, "EUROSTOXX30", "iShares EURO STOXX 30")
+```{r, fig.height = 8/2.5, fig.cap = "MSCI Emerging Markets Index Fut"}
+index_plot(index_2yr, "MSCIEM", "MSCI Emerging Markets")
 ```
 
-```{r, fig.height = 8/2.5, fig.cap = "iShares MSCI Emerging Markets ETF"}
-index_plot(index_2yr, "MSCIEM", "iShares MSCI EM")
+```{r, fig.height = 8/2.5, fig.cap = "Xtrackers Harvest CSI 300 China A-Shares ETF"}
+index_plot(index_2yr, "CSI300", "Xtrackers Harvest CSI 300")
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "iShares EURO STOXX 50 UCITS ETF (DE)"}
+index_plot(index_2yr, "EUROSTOXX50", "iShares EURO STOXX 50")
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "iShares EURO STOXX Select Dividend 30 UCITS ETF (DE)"}
+index_plot(index_2yr, "EUROSTOXX30", "iShares EURO STOXX 30")
 ```
 
 ```{r, fig.height = 8/2.5, fig.cap = "Wilshire US REIT Index"}
@@ -94,12 +104,12 @@ index_plot(index_2yr, "Oil", "Crude oil price")
 index_plot(index_2yr, "Treasuryfutures", "U.S. T-note futures")
 ```
 
-```{r, fig.height = 8/2.5, fig.cap = "Treasury Yield 10 Years"}
-index_plot(index_2yr, "Treasuryyield", "U.S. T-note yield")
-```
-
 ```{r, fig.height = 8/2.5, fig.cap = "iShares Aaa - A Rated Corporate Bond ETF"}
 index_plot(index_2yr, "AAA", "iShares AAA")
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Treasury Yield 10 Years"}
+index_plot(index_2yr, "Treasuryyield", "U.S. T-note yield")
 ```
 
 ## Index trend (30 years)^[Data are from [Federal Reserve Bank of St. Louis](https://fred.stlouisfed.org/).]

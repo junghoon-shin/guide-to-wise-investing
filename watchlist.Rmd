@@ -4,7 +4,7 @@
 
 ```{r}
 confident_return = 0.05
-marr = 0.15 # minimum acceptable rate of return
+marr = 2^(1/4) # minimum acceptable rate of return
 per_no_growth = 7
 
 AAA_return = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "DAAA", "&cosd=", monthago, "&coed=", today,
