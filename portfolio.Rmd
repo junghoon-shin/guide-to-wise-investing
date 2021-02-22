@@ -11,13 +11,13 @@ allocation = drive_get("Investment/Investment") %>% read_sheet(sheet = "Asset al
 
 portfolio %<>%
   mutate(Class = factor(Class, levels = c("Stock", "REIT", "Bond", "Commodity", "Gold")),
-         Region = factor(Region %>% replace(. == "Emerging", "Emerging market"), levels = c("Korea", "USA", "Europe", "Emerging market", "Global")))
+         Region = factor(Region, levels = c("Korea", "USA", "Europe", "Emerging", "Global")))
 
 allocation %<>%
   mutate(`Target proportion` = round(`Target proportion`, 3)) %>%
   filter(!(`Current proportion` == 0 & `Target proportion` == 0)) %>%
   mutate(Class = factor(Class, levels = c("Stock", "REIT", "Bond", "Commodity", "Gold")),
-         Region = factor(Region %>% replace(. == "Emerging", "Emerging market"), levels = c("Korea", "USA", "Europe", "Emerging market", "Global")))
+         Region = factor(Region, levels = c("Korea", "USA", "Europe", "Emerging", "Global")))
 ```
 
 ```{r, fig.height = 3.5, fig.cap = "Asset allocation"}
@@ -31,7 +31,7 @@ portfolio %>%
   theme(panel.border = element_blank(), panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank())
 ```
 
-```{r, fig.height = 6, fig.cap = "Regional distribution of invested assets"}
+```{r, fig.height = 6.3, fig.cap = "Regional distribution of invested assets"}
 portfolio %>%
   group_by(Class) %>%
   mutate(width = sqrt(sum(Weight))) %>%
