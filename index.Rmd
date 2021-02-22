@@ -55,6 +55,7 @@ p_load(bookdown,
        lubridate,
        magrittr,
        measurements,
+       paleotree,
        pander,
        plotly,
        quantmod,
@@ -141,6 +142,36 @@ convert_ticker = function(google) {
                       "\\.TPE" = ".TW",
                       "RO\\.SW" = "ROG\\.SW"))
 }
+
+pairwise_cor = function(x, y = NULL) {
+  
+  if (is.null(y)) {
+    r = matrix(NA, nrow = ncol(x), ncol = ncol(x), dimnames = list(colnames(x), colnames(x)))
+    w = matrix(NA, nrow = ncol(x), ncol = ncol(x), dimnames = list(colnames(x), colnames(x)))
+    
+    for (var1 in  colnames(x)) {
+      for (var2 in colnames(x)) {
+        r[var1, var2] = cor(x[[var1]], x[[var2]], use = "pairwise.complete.obs")
+        w[var1, var2] = map2_lgl(!is.na(x[[var1]]), !is.na(x[[var2]]), ~all(.x, .y)) %>% sum
+      }
+    }
+  }
+  
+  else {
+    r = matrix(NA, nrow = ncol(x), ncol = ncol(y), dimnames = list(colnames(x), colnames(y)))
+    w = matrix(NA, nrow = ncol(x), ncol = ncol(y), dimnames = list(colnames(x), colnames(y)))
+    
+    for (var1 in  colnames(x)) {
+      for (var2 in colnames(y)) {
+        r[var1, var2] = cor(x[[var1]], y[[var2]], use = "pairwise.complete.obs")
+        w[var1, var2] = map2_lgl(!is.na(x[[var1]]), !is.na(y[[var2]]), ~all(.x, .y)) %>% sum
+      }
+    }
+  }
+  
+  return(list(r = r, w = w))
+}
+
 ```
 
 ```{r}
