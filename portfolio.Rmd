@@ -1,4 +1,4 @@
-# (PART) Let's invest {-}
+# (PART) Practice {-}
 
 # My portfolio {#portfolio}
 
