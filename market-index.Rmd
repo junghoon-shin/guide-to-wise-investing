@@ -16,7 +16,8 @@ ticker = tribble(
   "Gold", "GC=F",
   "Copper", "HG=F",
   "Oil", "CL=F",
-  "Treasury", "^TNX",
+  "Treasuryyield", "^TNX",
+  "Treasuryfutures", "ZB=F",
   "AAA", "QLTA")
 
 index_2yr = tq_get(ticker$symbol, get = "stock.prices", from = twoyearsago)
@@ -88,8 +89,12 @@ index_plot(index_2yr, "Copper", "Copper price")
 index_plot(index_2yr, "Oil", "Crude oil price")
 ```
 
+```{r, fig.height = 8/2.5, fig.cap = "U.S. Treasury Bond Futures"}
+index_plot(index_2yr, "Treasuryfutures", "U.S. T-note futures")
+```
+
 ```{r, fig.height = 8/2.5, fig.cap = "Treasury Yield 10 Years"}
-index_plot(index_2yr, "Treasury", "U.S. T-note yield")
+index_plot(index_2yr, "Treasuryyield", "U.S. T-note yield")
 ```
 
 ```{r, fig.height = 8/2.5, fig.cap = "iShares Aaa - A Rated Corporate Bond ETF"}
@@ -107,13 +112,29 @@ ticker = tribble(
   "Gold", "GOLDAMGBD228NLBM",
   "Copper", "PCOPPUSDM",
   "WTI", "DCOILWTICO",
-  "USBond", "IRLTLT01USM156N",
+  "USBondYield", "IRLTLT01USM156N",
   "AAA", "DAAA",
   "USDKRW", "DEXKOUS")
 
 index_30yr = tq_get(ticker$symbol, get = "economic.data", from = as_date(thirtyyearsago) - 30)
 
 index_30yr %<>% left_join(ticker) %>% select(-symbol)
+
+ticker = tribble(
+  ~name, ~symbol,
+  "KOSPI", "^KS11",
+  "KOSDAQ", "^KQ11",
+  "USBondFutures", "ZB=F"
+)
+
+index_30yr_yahoo = tq_get(ticker$symbol, get = "stock.prices", from = as_date(thirtyyearsago) - 30)
+
+index_30yr_yahoo %<>% 
+  left_join(ticker) %>%
+  rename(price = close) %>%
+  select(name, date, price)
+
+index_30yr %<>% bind_rows(index_30yr_yahoo)
 
 Shiller = read_html("https://www.multpl.com/shiller-pe/table/by-year", which = 1, header = T) %>% rename(Shiller = "\n\nValue\n\n\n\nValue\n")
 
@@ -146,7 +167,7 @@ Buffett = full_join(USGDP, Wilshire5000_monthly) %>%
          date = make_date(year = year, month = month, day = 1)) %>%
   select(-c(USGDP, Wilshire5000, year, month))
 
-index_30yr = bind_rows(index_30yr, Shiller, Buffett) %>% filter(!is.na(price))
+index_30yr %<>% bind_rows(Shiller, Buffett) %>% filter(!is.na(price))
 
 index_plot_fed = function(feddata, .name, title) {
   feddata %>% 
@@ -154,12 +175,21 @@ index_plot_fed = function(feddata, .name, title) {
     ggplot(mapping = aes(x = date, y = price)) + 
     geom_line(color = line_color[1]) +
     scale_x_date(expand = c(0, 0)) +
+    coord_cartesian(xlim = c(as_date(thirtyyearsago) - 30, today())) +
     labs(x = "Date", y = title)
 }
 ```
 
 ```{r, fig.height = 8/2.5, fig.cap = "Wilshire 5000 Full Cap Price Index"}
 index_plot_fed(index_30yr, "Wilshire5000", "Wilshire 5000")
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "KOSPI Index"}
+index_plot_fed(index_30yr, "KOSPI", "KOSPI")
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "KOSDAQ Index"}
+index_plot_fed(index_30yr, "KOSDAQ", "KOSDAQ")
 ```
 
 ```{r, fig.height = 8/2.5, fig.cap = "Wilshire US REIT Total Market Index"}
@@ -178,8 +208,12 @@ index_plot_fed(index_30yr, "Copper", "Copper price")
 index_plot_fed(index_30yr, "WTI", "Crude oil price")
 ```
 
+```{r, fig.height = 8/2.5, fig.cap = "U.S. Treasury Bond Futures"}
+index_plot_fed(index_30yr, "USBondFutures", "U.S. T-note futures")
+```
+
 ```{r, fig.height = 8/2.5, fig.cap = "Long-Term Government Bond Yields: 10-year: Main (Including Benchmark) for the United States"}
-index_plot_fed(index_30yr, "USBond", "Government bond yield")
+index_plot_fed(index_30yr, "USBondYield", "U.S. T-note yield")
 ```
 
 ```{r, fig.height = 8/2.5, fig.cap = "Moody's Seasoned AAA Corporate Bond Yield"}
@@ -196,9 +230,9 @@ index_plot_fed(index_30yr, "Shiller", "Shiller P/E ratio")
 
 ## Index correlation
 
-```{r, include = F}
-daily = c("Wilshire5000", "WilshireREIT", "Gold", "WTI", "AAA", "USDKRW")
-monthly = c("USBond", "Copper")
+```{r}
+daily = c("Wilshire5000", "KOSPI", "KOSDAQ", "WilshireREIT", "Gold", "WTI", "USBondFutures", "AAA", "USDKRW")
+monthly = c("USBondYield", "Copper")
 
 index_30yr_daily = index_30yr %>% 
   filter(name %in% daily) %>%
@@ -220,7 +254,7 @@ index_dailycor = index_30yr_daily %>%
   group_map(~cor(select(., -date), use = "pairwise.complete.obs"))
 
 index_dailycor %<>%
-  reduce(`+`) %>%
+  reduce(function(x, y) plus(x, y, T)) %>% 
   divide_by(length(index_dailycor))
 
 index_monthlycor = index_30yr_monthly %>%
@@ -229,7 +263,7 @@ index_monthlycor = index_30yr_monthly %>%
   group_map(~cor(select(., -date), use = "pairwise.complete.obs"))
 
 index_monthlycor %<>%
-  reduce(`+`) %>%
+  reduce(function(x, y) plus(x, y, T)) %>% 
   divide_by(length(index_monthlycor))
 
 index_crosscor = index_30yr_cross %>%
@@ -240,7 +274,7 @@ index_crosscor = index_30yr_cross %>%
                  use = "pairwise.complete.obs"))
 
 index_crosscor %<>% 
-  reduce(`+`) %>% 
+  reduce(function(x, y) plus(x, y, T)) %>% 
   divide_by(length(index_crosscor))
 
 index_cor = bind_rows(index_dailycor %>% as_tibble(rownames = "var1") %>% pivot_longer(cols = -var1, names_to = "var2", values_to = "r"),
@@ -253,21 +287,26 @@ index_cor = bind_rows(index_dailycor %>% as_tibble(rownames = "var1") %>% pivot_
 
 relabel = function(symbol) c(Wilshire5000 = "Wilshire 5000", 
                              WilshireREIT = "Wilshire US REIT", 
+                             KOSPI = "KOSPI",
                              Gold = "Gold fixing price", 
                              Copper = "Copper price",
-                             WTI = "Crude oil price", 
-                             USBond = "Government bond yield",
+                             WTI = "Crude oil price",
+                             USBondFutures = "U.S. T-note futures",
+                             USBondYield = "U.S. T-note yield",
                              AAA = "AAA corporate bond yield",
                              USDKRW = "USD/KRW exchange rate")[symbol]
 
 colnames(index_cor) %<>% relabel
 rownames(index_cor) %<>% relabel
+```
 
-heatmap_body_size = unit(3.5, "inch")
+```{r, include = F}
+heatmap_body_size = unit(4, "inch")
 
 h = Heatmap(index_cor, 
         name = "Pearson's r", 
         width = heatmap_body_size, height = heatmap_body_size, 
+        show_row_dend = F,
         row_names_gp = gpar(fontsize = 10),
         column_names_gp = gpar(fontsize = 10),
         heatmap_legend_param = list(legend_height = unit(1.5, "inch"))) %>%
