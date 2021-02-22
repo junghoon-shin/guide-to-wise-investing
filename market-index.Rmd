@@ -41,6 +41,7 @@ index_plot = function(indexdata, .name, title) {
     geom_ribbon(mapping = aes(ymin = low, ymax = high), fill = line_color[1], alpha = 0.3) +
     geom_line(color = line_color[1]) +
     scale_x_date(expand = c(0, 0)) +
+    coord_cartesian(xlim = c(as_date(twoyearsago), today())) +
     labs(x = "Date", y = title)
 }
 ```
@@ -101,7 +102,7 @@ index_plot(index_2yr, "Treasuryyield", "U.S. T-note yield")
 index_plot(index_2yr, "AAA", "iShares AAA")
 ```
 
-## Index trend (>30 years)^[Data are from [Federal Reserve Bank of St. Louis](https://fred.stlouisfed.org/).]
+## Index trend (30 years)^[Data are from [Federal Reserve Bank of St. Louis](https://fred.stlouisfed.org/).]
 
 ```{r}
 ticker = tribble(

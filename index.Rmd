@@ -144,7 +144,6 @@ convert_ticker = function(google) {
 }
 
 pairwise_cor = function(x, y = NULL) {
-  
   if (is.null(y)) {
     r = matrix(NA, nrow = ncol(x), ncol = ncol(x), dimnames = list(colnames(x), colnames(x)))
     w = matrix(NA, nrow = ncol(x), ncol = ncol(x), dimnames = list(colnames(x), colnames(x)))
@@ -171,7 +170,6 @@ pairwise_cor = function(x, y = NULL) {
   
   return(list(r = r, w = w))
 }
-
 ```
 
 ```{r}

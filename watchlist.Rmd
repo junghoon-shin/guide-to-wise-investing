@@ -4,7 +4,7 @@
 
 ```{r}
 confident_return = 0.05
-target_return = 0.2
+marr = 0.15 # minimum acceptable rate of return
 per_no_growth = 7
 
 AAA_return = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "DAAA", "&cosd=", monthago, "&coed=", today,
@@ -136,7 +136,7 @@ company %<>%
          Estimated_price_in_10yrs = EPS * (1 + Expected_EPS_growth_rate)^10 * Expected_PE_in_10yrs,
          Reinvested_dividend_in_10yrs = sum(EPS * Payout_ratio * (1 + Expected_dividend_growth_rate)^(1:10) * (1 + confident_return)^(10 - 1:10)),
          Expected_price_in_10yrs = Estimated_price_in_10yrs + Reinvested_dividend_in_10yrs,
-         DCF10 = Expected_price_in_10yrs / (1 + target_return)^10,
+         DCF10 = Expected_price_in_10yrs / (1 + marr)^10,
          Payback8 = sum(Free_cash_flow * (1 + Earnings_growth_estimate_next_5yrs)^(1:8)),
          Adjusted_Graham_formula = EPS * (per_no_growth + 100 * Earnings_growth_estimate_next_5yrs) * 4.4 / AAA_return,
          `Price/Target` = Price/Target,
