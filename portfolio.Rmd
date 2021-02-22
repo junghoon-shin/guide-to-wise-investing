@@ -99,7 +99,7 @@ allocation %<>%
          target_y = cumsum(`Target proportion`) - `Target proportion`/2)
 ```
 
-```{r}
+```{r, fig.width = 7, fig.height = 4.5, fig.cap = "Current and long-term target allocation of my assets"}
 f1 = allocation %>%
   ggplot(mapping = aes(x = 1, y = `Current proportion`)) +
   geom_col(mapping = aes(fill = category), position = "fill", color = "black") +

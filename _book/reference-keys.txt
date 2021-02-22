@@ -74,6 +74,7 @@ fig:unnamed-chunk-107
 fig:unnamed-chunk-108
 fig:unnamed-chunk-109
 fig:unnamed-chunk-110
+fig:unnamed-chunk-112
 fig:unnamed-chunk-113
 fig:unnamed-chunk-114
 buffett
@@ -102,7 +103,7 @@ intellia-therapeutics-4.7b
 si-bone-1b
 cymabay-therapeutics-372.7m
 nano-x-imaging-2.6b
-green-cross-lab-cell-838.8m
+green-cross-lab-cell-840.7m
 unity-software-33.2b
 price
 normalized-closing-price

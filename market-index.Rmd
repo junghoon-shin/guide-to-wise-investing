@@ -68,7 +68,7 @@ index_plot(index_2yr, "S&P500", "S&P 500")
 index_plot(index_2yr, "NASDAQ", "NASDAQ")
 ```
 
-```{r, fig.height = 8/2.5, fig.cap = "MSCI Emerging Markets Index Fut"}
+```{r, fig.height = 8/2.5, fig.cap = "MSCI Emerging Markets Index Futures"}
 index_plot(index_2yr, "MSCIEM", "MSCI Emerging Markets")
 ```
 
