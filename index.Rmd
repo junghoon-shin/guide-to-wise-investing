@@ -141,14 +141,6 @@ convert_ticker = function(google) {
                       "\\.TPE" = ".TW",
                       "RO\\.SW" = "ROG\\.SW"))
 }
-
-plus = function(x, y, na.rm = F) {
-  if (na.rm == T) {
-    x = replace_na(x, 0)
-    y = replace_na(y, 0)
-  }
-  x + y
-}
 ```
 
 ```{r}

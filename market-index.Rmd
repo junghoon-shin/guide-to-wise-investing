@@ -254,8 +254,7 @@ index_dailycor = index_30yr_daily %>%
   group_map(~cor(select(., -date), use = "pairwise.complete.obs"))
 
 index_dailycor %<>%
-  reduce(function(x, y) plus(x, y, T)) %>% 
-  divide_by(length(index_dailycor))
+  simplify2array %>% apply(1:2, function(x) mean(x, na.rm = T))
 
 index_monthlycor = index_30yr_monthly %>%
   mutate(interval = cut(date, 6)) %>%
@@ -263,8 +262,7 @@ index_monthlycor = index_30yr_monthly %>%
   group_map(~cor(select(., -date), use = "pairwise.complete.obs"))
 
 index_monthlycor %<>%
-  reduce(function(x, y) plus(x, y, T)) %>% 
-  divide_by(length(index_monthlycor))
+  simplify2array %>% apply(1:2, function(x) mean(x, na.rm = T))
 
 index_crosscor = index_30yr_cross %>%
   mutate(interval = cut(date, 6)) %>%
@@ -274,8 +272,7 @@ index_crosscor = index_30yr_cross %>%
                  use = "pairwise.complete.obs"))
 
 index_crosscor %<>% 
-  reduce(function(x, y) plus(x, y, T)) %>% 
-  divide_by(length(index_crosscor))
+  simplify2array %>% apply(1:2, function(x) mean(x, na.rm = T))
 
 index_cor = bind_rows(index_dailycor %>% as_tibble(rownames = "var1") %>% pivot_longer(cols = -var1, names_to = "var2", values_to = "r"),
                       index_monthlycor %>% as_tibble(rownames = "var1") %>% pivot_longer(cols = -var1, names_to = "var2", values_to = "r"),
@@ -288,6 +285,7 @@ index_cor = bind_rows(index_dailycor %>% as_tibble(rownames = "var1") %>% pivot_
 relabel = function(symbol) c(Wilshire5000 = "Wilshire 5000", 
                              WilshireREIT = "Wilshire US REIT", 
                              KOSPI = "KOSPI",
+                             KOSDAQ = "KOSDAQ",
                              Gold = "Gold fixing price", 
                              Copper = "Copper price",
                              WTI = "Crude oil price",
@@ -301,7 +299,7 @@ rownames(index_cor) %<>% relabel
 ```
 
 ```{r, include = F}
-heatmap_body_size = unit(4, "inch")
+heatmap_body_size = unit(4.3, "inch")
 
 h = Heatmap(index_cor, 
         name = "Pearson's r", 
@@ -318,14 +316,7 @@ grid_size = heatmap_body_size/nrow(index_cor)
 ```
 
 ```{r, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between the stock matket index, REIT index, gold price, copper price, crude oil price, bond yields, and USD/KRW exchange rate over the last 30 years (averaged over stratified 5-year intervals)"}
-Heatmap(index_cor, 
-        name = "Pearson's r", 
-        width = heatmap_body_size, height = heatmap_body_size,
-        row_names_gp = gpar(fontsize = 10, fontfamily = "Lato"),
-        column_names_gp = gpar(fontsize = 10, fontfamily = "Lato"),
-        heatmap_legend_param = list(legend_height = unit(1.5, "inch"),
-                                    title_gp = gpar(fontfamily = "Lato"),
-                                    labels_gp = gpar(fontfamily = "Lato")))
+h
 
 index_cor_clustered = index_cor[row_order(h), column_order(h)]
 
