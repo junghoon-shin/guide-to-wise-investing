@@ -67,8 +67,8 @@ fig:unnamed-chunk-97
 fig:unnamed-chunk-98
 fig:unnamed-chunk-99
 fig:unnamed-chunk-100
-fig:unnamed-chunk-101
 fig:unnamed-chunk-102
+fig:unnamed-chunk-103
 buffett
 rule-no.-1
 value-investing
@@ -95,7 +95,7 @@ intellia-therapeutics-4.7b
 si-bone-1b
 cymabay-therapeutics-372.7m
 nano-x-imaging-2.6b
-green-cross-lab-cell-877.9m
+green-cross-lab-cell-862.6m
 unity-software-33.2b
 price
 normalized-closing-price
@@ -125,6 +125,8 @@ gdp-growth
 inflation
 oecd-composite-leading-indicators
 portfolio
+invested-asset-composition
+current-and-target-asset-allocation
 simulation
 simulation-in-usd
 simulation-in-krw

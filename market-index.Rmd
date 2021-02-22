@@ -76,18 +76,17 @@ index_plot(index_2yr, "MSCIEM", "iShares MSCI EM")
 index_plot(index_2yr, "WilshireREIT", "Wilshire REIT")
 ```
 
-```{r, fig.height = 8/2.5, fig.cap = "Gold Price"}
+```{r, fig.height = 8/2.5, fig.cap = "Gold Apr 21"}
 index_plot(index_2yr, "Gold", "Gold price")
 ```
 
-```{r, fig.height = 8/2.5, fig.cap = "Copper Price"}
+```{r, fig.height = 8/2.5, fig.cap = "Copper Mar 21"}
 index_plot(index_2yr, "Copper", "Copper price")
 ```
 
-```{r, fig.height = 8/2.5, fig.cap = "Crude Oil Price"}
+```{r, fig.height = 8/2.5, fig.cap = "Crude Oil Mar 21"}
 index_plot(index_2yr, "Oil", "Crude oil price")
 ```
-
 
 ```{r, fig.height = 8/2.5, fig.cap = "Treasury Yield 10 Years"}
 index_plot(index_2yr, "Treasury", "U.S. T-note yield")

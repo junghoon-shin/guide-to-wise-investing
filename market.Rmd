@@ -174,7 +174,8 @@ All %<>%
   select(-`Ratio = Total Market Cap / GDP`) %>%
   left_join(Buffett %>% select(Country, `Total Market/GDP Ratio (%)`, `GDP ($Trillion)`)) %>%
   rename(`Total Market/GDP Ratio` = "Total Market/GDP Ratio (%)") %>%
-  mutate(Country = factor(Country, levels = rev(Country)),
+  arrange(`GDP ($Trillion)`) %>%
+  mutate(Country = factor(Country, levels = Country),
          `Total Market/GDP Ratio` = `Total Market/GDP Ratio`/100,
          Valuation = str_to_sentence(Valuation) %>% factor(levels = c("Significantly overvalued", 
                                                                       "Modestly overvalued",

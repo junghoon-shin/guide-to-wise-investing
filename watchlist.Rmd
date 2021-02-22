@@ -376,7 +376,7 @@ relation_plot = function(financials, x, y, xtrans = "identity", xlab = NULL, yla
   x = enquo(x)
   y = enquo(y)
   
-  b = financials %>% pull(!!y) %>% boxplot
+  b = financials %>% pull(!!y) %>% boxplot(range = 1)
   base_limits = b$stats[c(1, 5), ]
   
   financials %<>%
