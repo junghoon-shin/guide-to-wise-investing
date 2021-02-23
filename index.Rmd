@@ -18,14 +18,10 @@ description: "Investment data book containing up-to-date company financials, ind
 ---
 
 ```{r, include = F}
-# Automatically create a bib database for R packages
-
 knitr::write_bib(c(.packages(), "bookdown", "knitr", "rmarkdown"), "packages.bib")
 ```
 
 ```{r, include = F}
-# Initialize environment
-
 library(remotes)
 
 if (!"yfinance" %in% installed.packages()) {
@@ -77,8 +73,6 @@ theme_update(plot.title = element_text(hjust = 0.5, vjust = 0.5),
 ```
 
 ```{r}
-# Define functions
-
 read_html = function(url, which = integer(), header = T, trim = T) {
   readHTMLTable(rawToChar(GET(url)$content), which = which, header = header, trim = trim)
 }
@@ -170,11 +164,16 @@ pairwise_cor = function(x, y = NULL) {
   
   return(list(r = r, w = w))
 }
+
+weighted_mean = function(index_cor) {
+  r = simplify2array(index_cor$r)
+  w = simplify2array(index_cor$w)
+  t = simplify2array(index_cor$w) %>% apply(1:2, function(x) sum(x, na.rm = T))
+  apply(r * w, 1:2, function(x) sum(x, na.rm = T)) / t
+}
 ```
 
 ```{r}
-# Define variables
-
 qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
 qual_col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals))) %>% unique
 
@@ -189,11 +188,10 @@ line_color = c(qual_col_vector[front], qual_col_vector[-c(front, back)], qual_co
 today = today() %>% as.character %>% str_replace(" ", "")
 monthago = (today() - 30) %>% as.character %>% str_replace(" ", "")
 yearago = (today() - 365) %>% as.character %>% str_replace(" ", "")
-twoyearsago = (today() - 365 * 2) %>% as.character %>% str_replace(" ", "")
-threeyearsago = (today() - 365 * 3) %>% as.character %>% str_replace(" ", "")
-fiveyearsago = (today() - 365 * 5) %>% as.character %>% str_replace(" ", "")
-twentyyearsago = (today() - 365 * 20) %>% as.character %>% str_replace(" ", "")
-thirtyyearsago = (today() - 365 * 30) %>% as.character %>% str_replace(" ", "")
+twoyearsago = (today() - round(365.25 * 2)) %>% as.character %>% str_replace(" ", "")
+fiveyearsago = (today() - round(365.25 * 5)) %>% as.character %>% str_replace(" ", "")
+thirtyyearsago = (today() - round(365.25 * 30)) %>% as.character %>% str_replace(" ", "")
+fiftyyearsago = (today() - round(365.25 * 50)) %>% as.character %>% str_replace(" ", "")
 thisyear = today %>% str_extract("^[0-9]+") %>% as.numeric
 ```
 
