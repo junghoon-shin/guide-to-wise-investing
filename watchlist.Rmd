@@ -234,7 +234,7 @@ my_datatable(company_display, paging = T, pageLength = 5, scrollY = NULL, captio
 ```
 
 ```{r, fig.cap = "Income statement, balance sheet, and cash flow data over the last 4 years"}
-my_datatable(financials, paging = T, pageLength = 10, scrollY = NULL, caption = NULL)
+my_datatable(financials, paging = T, pageLength = 8, scrollY = NULL, caption = NULL)
 ```
 
 Adjusted Graham formula: as defined [here](https://www.oldschoolvalue.com/stock-valuation/benjamin-graham-formula/)\

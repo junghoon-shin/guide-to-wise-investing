@@ -3,7 +3,7 @@
 ## Market capitalization^[`r str_c('Data are from [World Bank](https://data.worldbank.org/indicator/CM.MKT.LCAP.CD?view=chart). Only years for which top 3 countries\' data are available since ', thisyear - 5, ' are shown.')`]
 
 ```{r}
-country_ranking = read_html("https://www.worldometers.info/gdp/gdp-by-country/", which = 1, header = T) %>% pull(Country)
+gdp_ranking = read_html("https://www.worldometers.info/gdp/gdp-by-country/", which = 1, header = T) %>% pull(Country)
 
 download.file("https://api.worldbank.org/v2/en/indicator/CM.MKT.LCAP.CD?downloadformat=csv", destfile = "marketcap.zip", mode = "wb")
 
@@ -13,13 +13,41 @@ unzip("marketcap.zip", files = marketcap_csv, overwrite = T, exdir = "marketcap"
 
 marketcap = read_csv(file.path("marketcap", marketcap_csv), skip = 4, col_names = T, trim_ws = T)
 
-marketcap %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russian Federation" = "Russia",
-                                                                         "Korea, Rep." = "South Korea",
-                                                                         "Korea, Dem. People's Rep." = "North Korea"))) %>% 
+rename_country1 = function(x) {
+  mapping = c("Czech Republic (Czechia)" = "Czech",
+              "Côte d'Ivoire" = "Cote d'Ivoire")
+  
+  ifelse(x %in% names(mapping), mapping[x], x)
+}
+
+rename_country2 = function(x) {
+  mapping = c("Russian Federation" = "Russia",
+              "Korea, Rep." = "South Korea",
+              "Korea, Dem. People's Rep." = "North Korea",
+              "Iran, Islamic Rep." = "Iran",
+              "Hong Kong SAR, China" = "Hong Kong",
+              "Egypt, Arab Rep\\." = "Egypt",
+              "Czech Republic" = "Czech",
+              "Slovak Republic" = "Slovakia",
+              "Macao SAR, China" = "Macao",
+              "Congo, Dem. Rep." = "DR Congo",
+              "Congo, Rep." = "Congo",
+              "Yemen, Rep." = "Yemen",
+              "Lao PDR" = "Laos",
+              "Bahamas, The" = "Bahamas",
+              "Brunei Darussalam" = "Brunei")
+  
+  ifelse(x %in% names(mapping), mapping[x], x)
+}
+
+gdp_ranking %<>% rename_country1
+
+marketcap %<>% 
+  mutate(`Country Name` = rename_country2(`Country Name`)) %>% 
   select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>%
   pivot_longer(-`Country Name`, names_to = "Year", values_to = "Marketcap") %>%
   mutate(Year = as.numeric(Year)) %>%
-  filter(Year >= (thisyear - 5) & `Country Name` %in% country_ranking)
+  filter(Year >= (thisyear - 5) & `Country Name` %in% gdp_ranking)
 
 notNA_year = marketcap %>% group_by(Year) %>% summarise(notNA = sum(!is.na(Marketcap))) %>% filter(notNA > 0) %>% pull(Year)
 
@@ -34,7 +62,7 @@ top_country = marketcap %>% arrange(desc(Marketcap), desc(Year), desc(`Country N
 notNA_year = marketcap %>% filter(`Country Name` %in% top_country & Marketcap > 0) %>% count(Year) %>% filter(n == length(top_country)) %>% pull(Year)
 
 major_country = marketcap %>% 
-  filter(Year %in% notNA_year & Proportion > 0) %>%
+  filter(Year %in% notNA_year & Marketcap > 0) %>%
   group_by(`Country Name`) %>% 
   summarise(min_Proportion = min(Proportion)) %>% 
   filter(min_Proportion >= 0.001) %>% 
@@ -43,14 +71,14 @@ major_country = marketcap %>%
 marketcap %<>%
   filter(`Country Name` %in% major_country & Year %in% notNA_year) %>%
   mutate(Proportion = ifelse(Proportion == 0, "No data", make_percent(Proportion, 100))) %>%
-  arrange(desc(Marketcap), desc(Year), desc(`Country Name`))
+  arrange(Marketcap, Year, `Country Name`)
 
-country_level = rev(unique(marketcap$`Country Name`))
+country_level = unique(marketcap$`Country Name`)
 
 marketcap %<>% mutate(`Country Name` = factor(`Country Name`, levels = country_level))
 ```
 
-```{r, fig.width = 7, fig.height = (nrow(marketcap)/length(notNA_year) + 2)/4, fig.cap = str_c("Market capitalization of listed domestic companies across ", length(country_level), " major countries (proportion of the global market capitalization shown on the right side of each column)")}
+```{r, fig.width = 7, fig.height = (nrow(marketcap)/length(notNA_year) + 2)/4, fig.cap = str_c("Market capitalization of listed domestic companies across ", length(country_level), " major countries (proportion of the global market capitalization shown on the right side of each bar)")}
 marketcap %>% 
   ggplot(mapping = aes(x = `Country Name`, y = Marketcap/1e12)) +
   geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
@@ -86,7 +114,7 @@ gdp %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russian Fede
   select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>% 
   pivot_longer(-`Country Name`, names_to = "Year", values_to = "GDP") %>%
   mutate(Year = as.numeric(Year)) %>%
-  filter(Year >= (thisyear - 5) & `Country Name` %in% country_ranking)
+  filter(Year >= (thisyear - 5) & `Country Name` %in% gdp_ranking)
 
 country_level_rev = rev(country_level)
 
@@ -277,19 +305,19 @@ Buffett = full_join(GDP, Wilshire5000) %>%
   filter(!is.na(price))
 ```
 
-```{r, fig.height = 8/2.5, fig.cap = "Wilshire 5000 Full Cap Price Index/Gross Domestic Product"}
+```{r, fig.height = 8/2.5, fig.cap = "Wilshire 5000 Full Cap Price Index/GDP"}
 index_plot(Buffett, "Buffett indicator", from = as_date(fiftyyearsago) - 30)
 ```
 
-(ref:shiller) [Cyclically Adjusted P/E (CAPE) Ratio for S&P 500](https://www.multpl.com/shiller-pe/)
+(ref:shiller) [Cyclically adjusted P/E (CAPE) ratio for S&P 500](https://www.multpl.com/shiller-pe/)
 
 ```{r, fig.height = 8/2.5, fig.cap = "(ref:shiller)"}
 index_plot(Shiller, "Shiller P/E ratio", from = as_date(fiftyyearsago) - 30)
 ```
 
-(ref:sp500per) [S&P 500 PE Ratio, based on trailing twelve month "as reported" earnings](https://www.multpl.com/s-p-500-pe-ratio)
+(ref:sp500per) [S&P 500 P/E ratio, based on trailing 12 months "as reported" earnings](https://www.multpl.com/s-p-500-pe-ratio)
 
-```{r, fig.height = 8/2.5, fig.cap = "(ref:sp500per)"}
+```{r, fig.height = 8/2.5, fig.cap = "(ref:sp500per)"}￣
 index_plot(SP500PER, "S&P 500 P/E ratio", from = as_date(fiftyyearsago) - 30)
 ```
 
