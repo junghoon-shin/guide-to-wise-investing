@@ -241,14 +241,16 @@ Shiller = read_html("https://www.multpl.com/shiller-pe/table/by-month", which = 
   rename(date = Date,
          price = "\n\nValue\n\n\n\nValue\n") %>%
   mutate(date = as_date(date, format = "%b %e, %Y"),
-         price = as.numeric(price)) %>%
+         price = str_replace(price, "\\n\\nestimate", "") %>% as.numeric) %>%
+  filter(date >= as_date(fiftyyearsago) - 30) %>%
   arrange(date)
 
 SP500PER = read_html("https://www.multpl.com/s-p-500-pe-ratio/table/by-month", which = 1, header = T) %>% 
   rename(date = Date,
          price = "\n\nValue\n\n\n\nValue\n") %>%
   mutate(date = as_date(date, format = "%b %e, %Y"),
-         price = as.numeric(price)) %>%
+         price = str_replace(price, "\\n\\nestimate", "") %>% as.numeric) %>%
+  filter(date >= as_date(fiftyyearsago) - 30) %>%
   arrange(date)
 
 GDP = tq_get("GDP", get = "economic.data", from = as_date(fiftyyearsago) - 30) %>% 
@@ -276,18 +278,18 @@ Buffett = full_join(GDP, Wilshire5000) %>%
 ```
 
 ```{r, fig.height = 8/2.5, fig.cap = "Wilshire 5000 Full Cap Price Index/Gross Domestic Product"}
-index_plot(Buffett, "Buffett indicator", as_date(fiftyyearsago) - 30)
+index_plot(Buffett, "Buffett indicator", from = as_date(fiftyyearsago) - 30)
 ```
 
 (ref:shiller) [Cyclically Adjusted P/E (CAPE) Ratio for S&P 500](https://www.multpl.com/shiller-pe/)
 
 ```{r, fig.height = 8/2.5, fig.cap = "(ref:shiller)"}
-index_plot(Shiller, "Shiller P/E ratio", as_date(fiftyyearsago) - 30)
+index_plot(Shiller, "Shiller P/E ratio", from = as_date(fiftyyearsago) - 30)
 ```
 
 (ref:sp500per) [S&P 500 PE Ratio, based on trailing twelve month "as reported" earnings](https://www.multpl.com/s-p-500-pe-ratio)
 
 ```{r, fig.height = 8/2.5, fig.cap = "(ref:sp500per)"}
-index_plot(SP500PER, "S&P 500 P/E ratio", as_date(fiftyyearsago) - 30)
+index_plot(SP500PER, "S&P 500 P/E ratio", from = as_date(fiftyyearsago) - 30)
 ```
 

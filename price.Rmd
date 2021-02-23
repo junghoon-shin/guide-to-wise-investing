@@ -9,10 +9,10 @@ price_data = tq_get(company$Yahoo, get = "stock.prices", from = twoyearsago)
 
 sufficient_data = price_data %>% count(symbol) %>% filter(n >= 30) %>% pull(symbol) %>% unique
 
-price_data %<>% 
-  mutate(Name = yahoo_to_name(symbol)) %>% 
+price_data %<>%
+  mutate(Name = yahoo_to_name(symbol)) %>%
   left_join(company %>% select(Name, Industry)) %>%
-  filter(symbol %in% sufficient_data)
+  filter(!is.na(adjusted) & symbol %in% sufficient_data)
 ```
 
 ```{r}
@@ -139,21 +139,19 @@ normalized_price_trend(price_data, interesting_sectors[15])
 ## Adjusted closing price^[https://www.investopedia.com/terms/a/adjusted_closing_price.asp]
 
 ```{r, fig.height = 2.5 * length(unique(price_data$Name)), fig.cap = "Adjusted closing stock price over the last 2 years"}
-price_today = price_data %>%
-  filter(as_date(date) %in% (as_date(date) - 0:5)) %>% 
-  group_by(symbol) %>% 
-  arrange(desc(date)) %>% 
-  slice(1) %>% 
-  ungroup %>% 
-  select(Name, date, adjusted)
-
-price_data %>% 
+g = price_data %>%
   ggplot(mapping = aes(x = date, y = adjusted)) +
   geom_line(color = line_color[1]) +
-  geom_hline(data = price_today, mapping = aes(yintercept = adjusted), size = 0.25, color = line_color[2]) +
+  geom_point(data = price_data %>% group_by(Name) %>% filter(date == max(date, na.rm = T)) %>% ungroup, color = line_color[2]) +
   scale_x_date(expand = c(0, 0)) +
+  scale_y_continuous(position = "right") +
   labs(x = "Date", y = "Adjusted closing price") +
-  facet_grid(rows = vars(Name), scales = "free_y")
+  facet_grid(rows = vars(Name), scales = "free_y", switch = "y")
+
+g = ggplot_gtable(ggplot_build(g))
+g$layout$clip[str_detect(g$layout$name, "panel")] = "off"
+
+ggdraw(g)
 ```
 
 ## Stock price correlation^[Industry sector classification is based on data from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html).]
