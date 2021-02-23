@@ -406,9 +406,9 @@ relation_plot = function(financials, x, y, xtrans = "identity", xlab = NULL, yla
     scale_size(trans = "log10", range = c(1, 6), guide = guide_legend(title = "Market\ncapitalization\n($Billion)")) +
     labs(x = xlab, y = ylab) +
     facet_grid_sc(rows = vars(group), 
-                  scales = list(y = list(High = scale_y_continuous(labels = ylabels, expand = c(0.2, 0)),
-                                         Main = scale_y_continuous(labels = ylabels, expand = c(0.04, 0)),
-                                         Low = scale_y_continuous(labels = ylabels, expand = c(0.2, 0)))),
+                  scales = list(y = list(High = scale_y_continuous(labels = ylabels, expand = c(0.15, 0)),
+                                         Main = scale_y_continuous(labels = ylabels, expand = c(0.03, 0)),
+                                         Low = scale_y_continuous(labels = ylabels, expand = c(0.15, 0)))),
                   labeller = labeller(group = c(High = "Upper outlier", Main = "Majority", Low = "Lower outlier")))
   
   process_textplot(g)
