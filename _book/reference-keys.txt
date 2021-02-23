@@ -104,7 +104,7 @@ intellia-therapeutics-4.3b
 si-bone-1b
 cymabay-therapeutics-354.8m
 nano-x-imaging-2.4b
-green-cross-lab-cell-812m
+green-cross-lab-cell-811.6m
 unity-software-31.6b
 price
 normalized-closing-price

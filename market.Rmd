@@ -59,9 +59,16 @@ names(stock_exchange) %<>% str_replace_all("\\n", "")
 stock_exchange %<>% select(-c(Open, Close)) %>% slice(-1)
 
 good = stock_exchange %>% filter(rowSums(is.na(.)) == 0)
+bad = stock_exchange %>% filter(rowSums(is.na(.)) > 0)
 
-good = stock_exchange %>% filter(!is.na(as.numeric(Year))) %>% select(-Rank)
-bad = stock_exchange %>% filter(is.na(as.numeric(Year)))
+tmp = bad %>% filter(`Stock exchange` != "Nasdaq Nordic Exchanges")
+
+
+
+```
+
+
+```{r}
 names(bad) = c(names(bad)[-1], "dummy")
 bad %<>% select(-dummy)
 
