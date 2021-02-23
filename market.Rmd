@@ -120,8 +120,8 @@ marketcap %<>% mutate(`Country Name` = factor(`Country Name`, levels = country_l
 marketcap %>% 
   ggplot(mapping = aes(x = `Country Name`, y = Marketcap/1e12)) +
   geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
-  geom_text(mapping = aes(y = Marketcap/1e12 + 1, label = Proportion), hjust = 0, size = 9 / .pt, family = "Lato") + 
-  scale_y_continuous(expand = c(0, 0, 0.35, 0)) +
+  geom_text(mapping = aes(y = Marketcap/1e12 + 1, label = Proportion), hjust = 0, size = 8 / .pt, family = "Lato") + 
+  scale_y_continuous(expand = c(0, 0, 0.3, 0)) +
   coord_flip() +
   labs(x = NULL, y = "Market capitalization ($Trillion)") +
   theme(axis.ticks.y = element_blank()) +
