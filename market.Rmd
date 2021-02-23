@@ -26,7 +26,7 @@ rename_country2 = function(x) {
               "Korea, Dem. People's Rep." = "North Korea",
               "Iran, Islamic Rep." = "Iran",
               "Hong Kong SAR, China" = "Hong Kong",
-              "Egypt, Arab Rep\\." = "Egypt",
+              "Egypt, Arab Rep." = "Egypt",
               "Czech Republic" = "Czech",
               "Slovak Republic" = "Slovakia",
               "Macao SAR, China" = "Macao",
@@ -68,7 +68,7 @@ bad %<>%
 stock_exchange = bind_rows(good, bad) %>%
   rename(`Country Name` = Region, Marketcap = `Market cap`) %>%
   mutate(across(c(Year, Marketcap), ~str_replace_all(., ",", "") %>% as.numeric),
-         `Country Name` = case_when(str_detect(`Country Name`, "United Kingdom") & str_detect(`Country Name`, "Italy") ~ "United Kingdom/Italy",
+         `Country Name` = case_when(str_detect(`Country Name`, "United Kingdom") ~ "United Kingdom",
                                     T ~ `Country Name`),
          Marketcap = Marketcap * 1e9) %>%
   group_by(`Country Name`, Year) %>%
@@ -81,13 +81,11 @@ marketcap %<>%
   full_join(stock_exchange %>% rename(Marketcap_wiki = Marketcap)) %>%
   mutate(Marketcap = case_when(is.na(Marketcap) ~ Marketcap_wiki,
                                T ~ Marketcap)) %>%
-  select(-Marketcap_wiki)
+  select(-Marketcap_wiki) %>% 
+  pivot_wider(id_cols = `Country Name`, names_from = Year, values_from = Marketcap) %>%
+  pivot_longer(cols = -`Country Name`, names_to = "Year", values_to = "Marketcap") %>%
+  mutate(Year = as.numeric(Year))
 
-marketcap %>% count(`Country Name`) %>% arrange(n)
-```
-
-
-```{r}
 notNA_year = marketcap %>% group_by(Year) %>% summarise(notNA = sum(!is.na(Marketcap))) %>% filter(notNA > 0) %>% pull(Year)
 
 marketcap %<>%
@@ -117,9 +115,6 @@ country_level = rev(unique(marketcap$`Country Name`))
 
 marketcap %<>% mutate(`Country Name` = factor(`Country Name`, levels = country_level))
 ```
-
-
-
 
 ```{r, fig.height = (nrow(marketcap)/length(notNA_year) + 2)/4, fig.cap = str_c("Market capitalization of listed domestic companies across ", length(country_level), " major markets (proportion of the global market capitalization shown on the right side of each bar)")}
 marketcap %>% 
@@ -151,15 +146,13 @@ unzip("gdp.zip", files = gdp_csv, overwrite = T, exdir = "gdp")
 
 gdp = read_csv(file.path("gdp", gdp_csv), skip = 4, col_names = T, trim_ws = T)
 
-gdp %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russian Federation" = "Russia",
-                                                                   "Korea, Rep." = "South Korea",
-                                                                   "Korea, Dem. People's Rep." = "North Korea"))) %>%
+gdp %<>% mutate(`Country Name` = rename_country2(`Country Name`)) %>%
   select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>% 
   pivot_longer(-`Country Name`, names_to = "Year", values_to = "GDP") %>%
   mutate(Year = as.numeric(Year)) %>%
   filter(Year >= (thisyear - 5) & `Country Name` %in% gdp_ranking)
 
-country_level_rev = rev(country_level)
+country_level_rev = rev(intersect(country_level, gdp$`Country Name`))
 
 combined = inner_join(gdp, marketcap) %>% filter(Marketcap > 0) %>% mutate(`Country Name` = factor(`Country Name`, levels = country_level_rev))
 
@@ -169,24 +162,24 @@ g = combined %>%
   geom_point(mapping = aes(color = `Country Name`), size = 3) +
   scale_x_continuous(trans = "log10") +
   scale_y_continuous(trans = "log10") +
-  scale_color_manual(values = c(line_color[1:10], rep("black", length(country_level_rev) - 10)), guide = F) +
+  scale_color_manual(values = c(line_color[1:12], rep("black", length(country_level_rev) - 12)), guide = F) +
   labs(x = "GDP ($Trillion)", y = "Market capitalization ($Trillion)") +
   facet_grid(rows = vars(Year), scales = "free")
 
 g2 = combined %>% 
-  filter(`Country Name` %in% country_level_rev[1:11]) %>%
+  filter(`Country Name` %in% country_level_rev[1:13]) %>%
   ggplot(mapping = aes(x = GDP, y = Marketcap)) +
   geom_point(mapping = aes(color = `Country Name`), size = 3) +
   scale_x_continuous(trans = "log10") +
   scale_y_continuous(trans = "log10") +
-  scale_color_manual(values = c(line_color[1:10], rep("black", 11)), labels = c(country_level_rev[1:10], "Other countries"), guide = guide_legend(title = NULL)) +
+  scale_color_manual(values = c(line_color[1:12], "black"), labels = c(country_level_rev[1:12], "Other countries"), guide = guide_legend(title = NULL)) +
   facet_grid(rows = vars(Year))
 
 g_legend = get_legend(g2)
 
 legend_padding = (theme_get()$legend.margin + theme_get()$legend.box.spacing)[4] %>% convertUnit("inch") %>% as.numeric
 legend_key_width = theme_get()$legend.key.size %>% convertUnit("inch") %>% as.numeric
-legend_label_width = c(country_level_rev[1:10], "Other countries") %>% stringWidth %>% convertUnit("inch") %>% max %>% as.numeric %>% multiply_by(0.8)
+legend_label_width = c(country_level_rev[1:12], "Other countries") %>% stringWidth %>% convertUnit("inch") %>% max %>% as.numeric %>% multiply_by(0.8)
 legend_width = sum(legend_label_width, legend_key_width, legend_padding)
 ```
 
@@ -201,7 +194,7 @@ combined %>%
   mutate(`Country Name` = replace(as.character(`Country Name`), `Country Name` == "United States", "USA")) %>%
   ggplot(mapping = aes(x = GDP/1e12, y = Marketcap/1e12)) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray") +
-  geom_text(mapping = aes(label = `Country Name`), hjust = 0.5, vjust = 0.5, size = 10/.pt, family = "Lato") +
+  geom_text(mapping = aes(label = `Country Name`), hjust = 0.5, vjust = 0.5, size = 9/.pt, family = "Lato") +
   scale_x_continuous(trans = "log10") +
   scale_y_continuous(trans = "log10") +
   labs(x = "GDP ($Trillion)", y = "Market capitalization ($Trillion)") +
