@@ -134,7 +134,7 @@
 <li class="chapter" data-level="4.4.2" data-path="watchlist.html"><a href="watchlist.html#si-bone-1b"><i class="fa fa-check"></i><b>4.4.2</b> SI-Bone (1B $)</a></li>
 <li class="chapter" data-level="4.4.3" data-path="watchlist.html"><a href="watchlist.html#cymabay-therapeutics-354.8m"><i class="fa fa-check"></i><b>4.4.3</b> CymaBay Therapeutics (354.8M $)</a></li>
 <li class="chapter" data-level="4.4.4" data-path="watchlist.html"><a href="watchlist.html#nano-x-imaging-2.4b"><i class="fa fa-check"></i><b>4.4.4</b> Nano-X Imaging (2.4B $)</a></li>
-<li class="chapter" data-level="4.4.5" data-path="watchlist.html"><a href="watchlist.html#green-cross-lab-cell-813.6m"><i class="fa fa-check"></i><b>4.4.5</b> Green Cross Lab Cell (813.6M $)</a></li>
+<li class="chapter" data-level="4.4.5" data-path="watchlist.html"><a href="watchlist.html#green-cross-lab-cell-812m"><i class="fa fa-check"></i><b>4.4.5</b> Green Cross Lab Cell (812M $)</a></li>
 <li class="chapter" data-level="4.4.6" data-path="watchlist.html"><a href="watchlist.html#unity-software-31.6b"><i class="fa fa-check"></i><b>4.4.6</b> Unity Software (31.6B $)</a></li>
 </ul></li>
 </ul></li>
@@ -208,8 +208,172 @@
 <h1><span class="header-section-number">Chapter 9</span> Market evaluation</h1>
 <div id="market-capitalization" class="section level2">
 <h2><span class="header-section-number">9.1</span> Market capitalization<a href="#fn12" class="footnoteRef" id="fnref12"><sup>12</sup></a></h2>
-<div class="figure"><span id="fig:unnamed-chunk-86"></span>
-<img src="guide-to-wise-investing_files/figure-html/unnamed-chunk-86-1.png" alt="Market capitalization of listed domestic companies across 40 major countries (proportion of the global market capitalization shown on the right side of each bar)" width="100%" height="100%" />
+<pre><code>##    Year                 Stock exchange                      MIC
+## 1  2019        New York Stock Exchange                     XNYS
+## 2  2019                         Nasdaq                     XNAS
+## 3  2019           Japan Exchange Group                     XJPX
+## 4  2019          London Stock Exchange                 XLONXMIL
+## 5  2019        Shanghai Stock Exchange                     XSHG
+## 6  2019       Hong Kong Stock Exchange                     XHKG
+## 7  2019                       Euronext XAMSXBRUXMSMXLISXOSLXPAR
+## 8  2019         Toronto Stock Exchange                     XTSE
+## 9  2019        Shenzhen Stock Exchange                     XSHE
+## 10 2019          Bombay Stock Exchange                     XBOM
+## 11 2019        National Stock Exchange                     XNSE
+## 12 2019                 Deutsche Börse                     XFRA
+## 13 2019             SIX Swiss Exchange                     XSWX
+## 14 2019                 Korea Exchange                     XKOS
+## 15 2019        Nasdaq Nordic Exchanges                    1,372
+## 16 2019 Australian Securities Exchange                     XASX
+## 17 2019          Taiwan Stock Exchange                     XTAI
+## 18 2019                             B3                     BVMF
+## 19 2019                            JSE                     XJSE
+## 20 2019    Bolsas y Mercados Españoles                     BMEX
+## 21 2018             Singapore Exchange                     XSES
+## 22 2018                Moscow Exchange                     XMOS
+## 23 2018     Stock Exchange of Thailand                     XBKK
+## 24 2020         Mexican Stock Exchange                     XMEX
+## 25 2018       Indonesia Stock Exchange                     XIDX
+## 26 2019      Copenhagen Stock Exchange                     XCSE
+## 27 2019       Stockholm Stock Exchange                     XSTO
+## 28 2019        Helsinki Stock Exchange                     XHEL
+## 29 2019         Tallinn Stock Exchange                     XTAL
+## 30 2019            Riga Stock Exchange                     XRIS
+## 31 2019         Vilnius Stock Exchange                     XLIT
+## 32 2019         Iceland Stock Exchange                     XICE
+## 33 2019    Armenia Securities Exchange                     XARM
+##                   Region                           Market place Market cap
+## 1          United States                          New York City     22,923
+## 2          United States                          New York City     10,857
+## 3                  Japan                             TokyoOsaka      5,679
+## 4   United Kingdom Italy                            LondonMilan      4,590
+## 5                  China                               Shanghai      4,026
+## 6              Hong Kong                              Hong Kong      3,936
+## 7         European Union AmsterdamBrusselsDublinLisbonOsloParis      3,927
+## 8                 Canada                                Toronto      3,256
+## 9                  China                               Shenzhen      2,504
+## 10                 India                                 Mumbai      2,056
+## 11                 India                                 Mumbai      2,030
+## 12               Germany                              Frankfurt      1,864
+## 13           Switzerland                                 Zurich      1,523
+## 14           South Korea                             SeoulBusan      1,463
+## 15                    72                                              &lt;NA&gt;
+## 16             Australia                                 Sydney      1,328
+## 17                Taiwan                                 Taipei        966
+## 18                Brazil                              São Paulo        938
+## 19          South Africa                           Johannesburg        894
+## 20                 Spain                                 Madrid        764
+## 21             Singapore                              Singapore        787
+## 22                Russia                                 Moscow        619
+## 23              Thailand                                Bangkok        549
+## 24                Mexico                            Mexico City        530
+## 25             Indonesia                                Jakarta        521
+## 26               Denmark                             Copenhagen  CET//CEST
+## 27                Sweden                              Stockholm   CET/CEST
+## 28               Finland                               Helsinki   EET/EEST
+## 29               Estonia                                Tallinn   EET/EEST
+## 30                Latvia                                   Riga   EET/EEST
+## 31             Lithuania                                Vilnius   EET/EEST
+## 32               Iceland                                Iceland        GMT
+## 33               Armenia                                Yerevan        AMT
+##    Monthly trade volume        Time zone    Δ     DST       Lunch
+## 1                 1,452          EST/EDT    −5 Mar–Nov          No
+## 2                 1,262          EST/EDT    −5 Mar–Nov          No
+## 3                   481              JST    +9         11:30–12:30
+## 4                   219          GMT/BST    +0 Mar–Oct          No
+## 5                   536              CST    +8         11:30–13:00
+## 6                   182              HKT    +8         12:00–13:00
+## 7                   174         CET/CEST    +1 Mar–Oct          No
+## 8                    97          EST/EDT    −5 Mar–Nov          No
+## 9                   763              CST    +8         11:30–13:00
+## 10                  210              IST +5.30                  No
+## 11                  196              IST +5.30                  No
+## 12                  140         CET/CEST    +1 Mar–Oct          No
+## 13                   77         CET/CEST    +1 Mar–Oct          No
+## 14                  277              KST    +9                  No
+## 15                 &lt;NA&gt;             &lt;NA&gt;  &lt;NA&gt;    &lt;NA&gt;        &lt;NA&gt;
+## 16                             AEST/AEDT   +10 Oct–Apr          No
+## 17                   75     NST (Taiwan)    +8                  No
+## 18                   62         BRT/BRST    −3 Oct–Feb          No
+## 19                   29             SAST    +2                  No
+## 20                   36         CET/CEST    +1 Mar–Oct          No
+## 21                                   SGT    +8         12:00-13:00
+## 22                                   MSK    +3                    
+## 23                                   ICT    +7         12:30-14:00
+## 24                      CST/CDT (DST MX)    –6 Apr–Oct          No
+## 25                                   WIB    +7         12:00–13:30
+## 26                   +1          Mar–Oct 09:00   17:00          No
+## 27                   +1          Mar–Oct 09:00   17:30          No
+## 28                   +2          Mar–Oct 10:00   18:30          No
+## 29                   +2          Mar–Oct 10:00   16:00          No
+## 30                   +2          Mar–Oct 10:00   16:00          No
+## 31                   +2          Mar–Oct 10:00   16:00          No
+## 32                   +0                  09:30   15:30          No
+## 33                   +4                  10:00   15:00          No</code></pre>
+<pre><code>## # A tibble: 30 x 3
+## # Groups:   Country Name [30]
+##    `Country Name`        Year Marketcap
+##    &lt;chr&gt;                &lt;dbl&gt;     &lt;dbl&gt;
+##  1 United States         2019     10857
+##  2 China                 2019      6530
+##  3 Japan                 2019      5679
+##  4 United Kingdom Italy  2019      4590
+##  5 India                 2019      4086
+##  6 Hong Kong             2019      3936
+##  7 European Union        2019      3927
+##  8 Canada                2019      3256
+##  9 Germany               2019      1864
+## 10 Switzerland           2019      1523
+## # … with 20 more rows</code></pre>
+<pre><code>## [1] &quot;United Kingdom Italy&quot; &quot;European Union&quot;       &quot;Taiwan&quot;              
+## [4] &quot;72&quot;</code></pre>
+<pre><code>## # A tibble: 905 x 3
+##    `Country Name`  Year Marketcap
+##    &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;
+##  1 United States   2017   3.21e13
+##  2 United States   2018   3.04e13
+##  3 United States   2016   2.74e13
+##  4 China           2017   8.71e12
+##  5 China           2019   8.52e12
+##  6 China           2016   7.32e12
+##  7 China           2018   6.32e12
+##  8 Japan           2017   6.22e12
+##  9 Japan           2019   6.19e12
+## 10 Japan           2018   5.30e12
+## # … with 895 more rows</code></pre>
+<pre><code>## # A tibble: 30 x 3
+## # Groups:   Country Name [30]
+##    `Country Name`        Year Marketcap
+##    &lt;chr&gt;                &lt;dbl&gt;     &lt;dbl&gt;
+##  1 United States         2019     10857
+##  2 China                 2019      6530
+##  3 Japan                 2019      5679
+##  4 United Kingdom Italy  2019      4590
+##  5 India                 2019      4086
+##  6 Hong Kong             2019      3936
+##  7 European Union        2019      3927
+##  8 Canada                2019      3256
+##  9 Germany               2019      1864
+## 10 Switzerland           2019      1523
+## # … with 20 more rows</code></pre>
+<pre><code>## character(0)</code></pre>
+<pre><code>## [1] &quot;Egypt&quot;                    &quot;State of Palestine&quot;      
+## [3] &quot;Kyrgyzstan&quot;               &quot;Saint Lucia&quot;             
+## [5] &quot;Gambia&quot;                   &quot;Saint Kitts &amp; Nevis&quot;     
+## [7] &quot;St. Vincent &amp; Grenadines&quot; &quot;Sao Tome &amp; Principe&quot;     
+## [9] &quot;Micronesia&quot;</code></pre>
+<pre><code>## [1] &quot;United Kingdom&quot; &quot;United Kingdom&quot; &quot;United Kingdom&quot; &quot;United Kingdom&quot;
+## [5] &quot;United Kingdom&quot;</code></pre>
+<pre><code>## # A tibble: 5 x 3
+##   `Country Name`  Year Marketcap
+##   &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;
+## 1 United Kingdom  2016        NA
+## 2 United Kingdom  2017        NA
+## 3 United Kingdom  2018        NA
+## 4 United Kingdom  2019        NA
+## 5 United Kingdom  2020        NA</code></pre>
+<div class="figure"><span id="fig:unnamed-chunk-89"></span>
+<img src="guide-to-wise-investing_files/figure-html/unnamed-chunk-89-1.png" alt="Market capitalization of listed domestic companies across 40 major countries (proportion of the global market capitalization shown on the right side of each bar)" width="100%" height="100%" />
 <p class="caption">
 Figure 9.1: Market capitalization of listed domestic companies across 40 major countries (proportion of the global market capitalization shown on the right side of each bar)
 </p>
@@ -224,8 +388,8 @@ Figure 9.2: Market capitalization relative to GDP across 38 major countries
 </p>
 </div>
 
-<div class="figure"><span id="fig:unnamed-chunk-88"></span>
-<img src="guide-to-wise-investing_files/figure-html/unnamed-chunk-88-1.png" alt="Same data as in Figure 9.2" width="100%" height="100%" />
+<div class="figure"><span id="fig:unnamed-chunk-91"></span>
+<img src="guide-to-wise-investing_files/figure-html/unnamed-chunk-91-1.png" alt="Same data as in Figure 9.2" width="100%" height="100%" />
 <p class="caption">
 Figure 9.3: Same data as in Figure <a href="market.html#fig:buffett">9.2</a>
 </p>
@@ -233,9 +397,9 @@ Figure 9.3: Same data as in Figure <a href="market.html#fig:buffett">9.2</a>
 </div>
 <div id="gdp-and-buffett-indicator" class="section level2">
 <h2><span class="header-section-number">9.3</span> GDP and Buffett indicator<a href="#fn13" class="footnoteRef" id="fnref13"><sup>13</sup></a></h2>
-<div class="figure"><span id="fig:unnamed-chunk-90"></span>
-<div id="htmlwidget-6efcf9b43c6b331dd57f" style="width:100%;height:auto;" class="datatables html-widget"></div>
-<script type="application/json" data-for="htmlwidget-6efcf9b43c6b331dd57f">{"x":{"filter":"none","extensions":["FixedColumns","ColReorder","KeyTable"],"data":[["USA","China","Japan","Germany","UK","France","India","Italy","Canada","Korea","Australia","Spain","Russia","Brazil","Indonesia","Mexico","Netherlands","Switzerland","Turkey","Sweden","Belgium","Hong Kong","Singapore"],[21.48,15.91,5.37,4.32,3.18,3.01,2.63,2.18,1.89,1.76,1.6,1.56,1.55,1.4,1.24,1.23,1.01,0.8,0.64,0.62,0.57,0.39,0.38],[192.4,68.58,199.38,46.73,98.78,90.24,89.41,15.24,128.15,95.9,113.57,56.42,51.64,57.79,31.76,26.02,113.22,296.68,24.85,177.44,77.8,1141.04,180.22],[32.7,0.23,54.38,12.14,47,52.5,39.97,9.36,76.29,33.39,86.56,46.35,14.35,25.72,17.34,11.17,46.95,77.48,14.93,27.53,46.04,571.84,153.89],[192.4,153.32,361,57.84,201,183.03,158.2,43.28,185.04,126.1,220.28,228.84,115.34,106.49,145.05,44.78,230.21,397.77,128.72,192.09,148.83,2363.31,835.28],[51,31,37,31,49,31,24,21,31,24,29,28,24,24,31,30,29,31,29,31,30,31,34],["SPY","MCHI","EWJ","EWG","EWU","EWQ","INDA","EWI","EWC","EWY","EWA","EWP","ERUS","EWZ","EIDO","EWW","EWN","EWL","TUR","EWD","EWK","EWH","EWS"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Country<\/th>\n      <th>GDP ($Trillion)<\/th>\n      <th>Total Market/GDP Ratio (%)<\/th>\n      <th>Historical Min. (%)<\/th>\n      <th>Historical Max. (%) <\/th>\n      <th>Years of Data<\/th>\n      <th>Country ETF<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"lfrtip","paging":true,"pageLength":10,"searching":true,"ordering":true,"scrollX":true,"fixedColumns":{"leftColumns":1},"colReorder":{"realtime":false},"keys":true,"autoWidth":true,"initComplete":"function(settings, json) {\n$(this.api().table().header()).css({'font-size': '14px'});\n}","columnDefs":[{"className":"dt-right","targets":[1,2,3,4,5]}],"order":[],"orderClasses":false,"rowCallback":"function(row, data) {\nvar value=data[0]; $(this.api().cell(row, 0).node()).css({'font-size':'14px'});\nvar value=data[1]; $(this.api().cell(row, 1).node()).css({'font-size':'14px'});\nvar value=data[2]; $(this.api().cell(row, 2).node()).css({'font-size':'14px'});\nvar value=data[3]; $(this.api().cell(row, 3).node()).css({'font-size':'14px'});\nvar value=data[4]; $(this.api().cell(row, 4).node()).css({'font-size':'14px'});\nvar value=data[5]; $(this.api().cell(row, 5).node()).css({'font-size':'14px'});\nvar value=data[6]; $(this.api().cell(row, 6).node()).css({'font-size':'14px'});\n}"}},"evals":["options.initComplete","options.rowCallback"],"jsHooks":[]}</script>
+<div class="figure"><span id="fig:unnamed-chunk-93"></span>
+<div id="htmlwidget-c0a70138bb98b2b72372" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-c0a70138bb98b2b72372">{"x":{"filter":"none","extensions":["FixedColumns","ColReorder","KeyTable"],"data":[["USA","China","Japan","Germany","UK","France","India","Italy","Canada","Korea","Australia","Spain","Russia","Brazil","Mexico","Indonesia","Netherlands","Switzerland","Turkey","Sweden","Belgium","Hong Kong","Singapore"],[21.48,15.91,5.38,4.32,3.18,3.01,2.63,2.18,1.89,1.76,1.6,1.56,1.55,1.41,1.24,1.24,1.01,0.8,0.64,0.62,0.57,0.39,0.39],[192.4,68.58,199.38,46.73,98.78,90.24,89.41,15.24,128.15,95.9,113.57,56.42,51.64,57.79,26.02,31.76,113.22,296.68,24.85,177.44,77.8,1141.04,180.22],[32.7,0.23,54.38,12.14,47,52.5,39.97,9.36,76.29,33.39,86.56,46.35,14.35,25.72,11.17,17.34,46.95,77.48,14.93,27.53,46.04,571.84,153.89],[192.4,153.32,361,57.84,201,183.03,158.2,43.28,185.04,126.1,220.28,228.84,115.34,106.49,44.78,145.05,230.21,397.77,128.72,192.09,148.83,2363.31,835.28],[51,31,37,31,49,31,24,21,31,24,29,28,24,24,30,31,29,31,29,31,30,31,34],["SPY","MCHI","EWJ","EWG","EWU","EWQ","INDA","EWI","EWC","EWY","EWA","EWP","ERUS","EWZ","EWW","EIDO","EWN","EWL","TUR","EWD","EWK","EWH","EWS"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Country<\/th>\n      <th>GDP ($Trillion)<\/th>\n      <th>Total Market/GDP Ratio (%)<\/th>\n      <th>Historical Min. (%)<\/th>\n      <th>Historical Max. (%) <\/th>\n      <th>Years of Data<\/th>\n      <th>Country ETF<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"lfrtip","paging":true,"pageLength":10,"searching":true,"ordering":true,"scrollX":true,"fixedColumns":{"leftColumns":1},"colReorder":{"realtime":false},"keys":true,"autoWidth":true,"initComplete":"function(settings, json) {\n$(this.api().table().header()).css({'font-size': '14px'});\n}","columnDefs":[{"className":"dt-right","targets":[1,2,3,4,5]}],"order":[],"orderClasses":false,"rowCallback":"function(row, data) {\nvar value=data[0]; $(this.api().cell(row, 0).node()).css({'font-size':'14px'});\nvar value=data[1]; $(this.api().cell(row, 1).node()).css({'font-size':'14px'});\nvar value=data[2]; $(this.api().cell(row, 2).node()).css({'font-size':'14px'});\nvar value=data[3]; $(this.api().cell(row, 3).node()).css({'font-size':'14px'});\nvar value=data[4]; $(this.api().cell(row, 4).node()).css({'font-size':'14px'});\nvar value=data[5]; $(this.api().cell(row, 5).node()).css({'font-size':'14px'});\nvar value=data[6]; $(this.api().cell(row, 6).node()).css({'font-size':'14px'});\n}"}},"evals":["options.initComplete","options.rowCallback"],"jsHooks":[]}</script>
 <p class="caption">
 Figure 9.4: GDP and Buffett indicator across 23 major countries
 </p>
@@ -243,8 +407,8 @@ Figure 9.4: GDP and Buffett indicator across 23 major countries
 </div>
 <div id="market-valuation" class="section level2">
 <h2><span class="header-section-number">9.4</span> Market valuation<a href="#fn14" class="footnoteRef" id="fnref14"><sup>14</sup></a></h2>
-<div class="figure"><span id="fig:unnamed-chunk-92"></span>
-<img src="guide-to-wise-investing_files/figure-html/unnamed-chunk-92-1.png" alt="Market valuation for 13 major countries" width="100%" height="100%" />
+<div class="figure"><span id="fig:unnamed-chunk-95"></span>
+<img src="guide-to-wise-investing_files/figure-html/unnamed-chunk-95-1.png" alt="Market valuation for 13 major countries" width="100%" height="100%" />
 <p class="caption">
 Figure 9.5: Market valuation for 13 major countries
 </p>
@@ -252,8 +416,8 @@ Figure 9.5: Market valuation for 13 major countries
 </div>
 <div id="projected-annual-return" class="section level2">
 <h2><span class="header-section-number">9.5</span> Projected annual return</h2>
-<div class="figure"><span id="fig:unnamed-chunk-94"></span>
-<img src="guide-to-wise-investing_files/figure-html/unnamed-chunk-94-1.png" alt="Projected future annual returns of the world's 18 largest stock markets, calculated using (1) future business growth estimates, (2) dividends, and (3) change in market valuation" width="100%" height="100%" />
+<div class="figure"><span id="fig:unnamed-chunk-97"></span>
+<img src="guide-to-wise-investing_files/figure-html/unnamed-chunk-97-1.png" alt="Projected future annual returns of the world's 18 largest stock markets, calculated using (1) future business growth estimates, (2) dividends, and (3) change in market valuation" width="100%" height="100%" />
 <p class="caption">
 Figure 9.6: Projected future annual returns of the world's 18 largest stock markets, calculated using (1) future business growth estimates, (2) dividends, and (3) change in market valuation
 </p>
@@ -261,22 +425,22 @@ Figure 9.6: Projected future annual returns of the world's 18 largest stock mark
 </div>
 <div id="u.s.-stock-market-valuation" class="section level2">
 <h2><span class="header-section-number">9.6</span> U.S. stock market valuation</h2>
-<div class="figure"><span id="fig:unnamed-chunk-96"></span>
-<img src="guide-to-wise-investing_files/figure-html/unnamed-chunk-96-1.png" alt="Wilshire 5000 Full Cap Price Index/GDP" width="100%" height="100%" />
+<div class="figure"><span id="fig:unnamed-chunk-99"></span>
+<img src="guide-to-wise-investing_files/figure-html/unnamed-chunk-99-1.png" alt="Wilshire 5000 Full Cap Price Index/GDP" width="100%" height="100%" />
 <p class="caption">
 Figure 9.7: Wilshire 5000 Full Cap Price Index/GDP
 </p>
 </div>
 
-<div class="figure"><span id="fig:unnamed-chunk-97"></span>
-<img src="guide-to-wise-investing_files/figure-html/unnamed-chunk-97-1.png" alt="Cyclically adjusted P/E (CAPE) ratio for S&amp;P 500" width="100%" height="100%" />
+<div class="figure"><span id="fig:unnamed-chunk-100"></span>
+<img src="guide-to-wise-investing_files/figure-html/unnamed-chunk-100-1.png" alt="Cyclically adjusted P/E (CAPE) ratio for S&amp;P 500" width="100%" height="100%" />
 <p class="caption">
 Figure 9.8: <a href="https://www.multpl.com/shiller-pe/">Cyclically adjusted P/E (CAPE) ratio for S&amp;P 500</a>
 </p>
 </div>
 
-<div class="figure"><span id="fig:unnamed-chunk-98"></span>
-<img src="guide-to-wise-investing_files/figure-html/unnamed-chunk-98-1.png" alt="S&amp;P 500 P/E ratio, based on trailing 12 months &quot;as reported&quot; earnings" width="100%" height="100%" />
+<div class="figure"><span id="fig:unnamed-chunk-101"></span>
+<img src="guide-to-wise-investing_files/figure-html/unnamed-chunk-101-1.png" alt="S&amp;P 500 P/E ratio, based on trailing 12 months &quot;as reported&quot; earnings" width="100%" height="100%" />
 <p class="caption">
 Figure 9.9: <a href="https://www.multpl.com/s-p-500-pe-ratio">S&amp;P 500 P/E ratio, based on trailing 12 months &quot;as reported&quot; earnings</a>
 </p>
