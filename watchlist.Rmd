@@ -393,7 +393,7 @@ relation_plot = function(financials, x, y, xtrans = "identity", xlab = NULL, yla
            xpos = rescale(!!x, to = c(0, panelwidth)),
            leftbound = xpos - realwidth/2,
            rightbound = xpos + realwidth/2) %>%
-    summarise(leftmargin = -min(leftbound), rightmargin = max(rightbound - panelwidth)) %>%
+    summarise(leftmargin = -min(leftbound), rightmargin = max(rightbound) - panelwidth) %>%
     mutate(left = leftmargin / (panelwidth - leftmargin - rightmargin),
            right = rightmargin / (panelwidth - leftmargin - rightmargin))
   
