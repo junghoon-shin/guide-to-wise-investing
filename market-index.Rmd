@@ -239,7 +239,9 @@ index_plot_fed(index_30yr, "AAA", "AAA corporate bond yield")
 index_plot_fed(Buffett, "Buffett", "Buffett indicator")
 ```
 
-```{r, fig.height = 8/2.5, fig.cap = "Cyclically Adjusted P/E (CAPE) Ratio for S&P 500"}
+(ref:shiller) [Cyclically Adjusted P/E (CAPE) Ratio for S&P 500](https://www.multpl.com/shiller-pe/table/by-year)
+
+```{r, fig.height = 8/2.5, fig.cap = "(ref:shiller)"}
 index_plot_fed(index_30yr, "Shiller", "Shiller P/E ratio")
 ```
 
