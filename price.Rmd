@@ -208,8 +208,10 @@ column_annotation = HeatmapAnnotation(df = company_annotation,
                                                                                      title_gp = gpar(fontsize = 8, fontface = "bold"),
                                                                                      labels_gp = gpar(fontsize = 7))))
 
+labwidth = stringWidth(rownames(price_cor)) %>% convertUnit("inch") %>% max %>% divide_by(2) %>% as.numeric
+
 h = price_cor %>% Heatmap(name = "Pearson's r",
-                        width = unit(5.25, "inch"), height = unit(0.11 * nrow(price_cor), "inch"),
+                        width = unit(7 - labwidth - 0.3, "inch"), height = unit(0.11 * nrow(price_cor), "inch"),
                         show_column_names = F, show_column_dend = T,
                         show_row_names = T, show_row_dend = F,
                         row_names_gp = gpar(fontsize = 6),

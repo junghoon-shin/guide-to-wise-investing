@@ -281,7 +281,9 @@ company_plot %<>%
           !is.na(`Sales-to-price`), `Sales-to-price`, 
           !is.na(`Book-to-price`), `Book-to-price`) %>%
   mutate(Name_trimmed = factor(Name_trimmed, levels = Name_trimmed))
+```
 
+```{r}
 f1 = company_plot %>%
   ggplot(mapping = aes(x = Name_trimmed, y = 0)) + 
   geom_col(mapping = aes(fill = Industry), color = "transparent") +
@@ -328,13 +330,20 @@ f9 = financial_plot(company_plot, Quarterly_earnings_growth, "Earnings growth (y
 f10 = financial_plot(company_plot, Quarterly_revenue_growth, "Revenue growth (yoy)", percent)
 
 n_industry = company_plot$Industry %>% unique %>% length
+
+legend_ratio = (nrow(company_plot) + 2) / (ceiling(n_industry/3) + 1)
+
+name_width = stringWidth(company_plot$Name_trimmed) %>% 
+  convertUnit("inch") %>% 
+  as.numeric %>% 
+  multiply_by(as.numeric(theme_get()$axis.text$size * theme_get()$text$size) / 12) %>% 
+  max %>%
+  add(0.1)
+
+plot_width = 7 - name_width
 ```
 
 ```{r, fig.height = (nrow(company_plot) + 2) * 3/4 + (ceiling(n_industry/3) + 1)/4, fig.cap = "Key financials of my watchlist"}
-legend_ratio = (nrow(company_plot) + 2) / (ceiling(n_industry/3) + 1)
-name_width = 1.2 * max(stringWidth(company_plot$Name_trimmed) %>% convertUnit("inch") %>% as.numeric) / (stringWidth("Korea Shipbuilding &Offshore Engn") %>% convertUnit("inch") %>% as.numeric)
-plot_width = 4.2 - name_width
-
 ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))), 
           ggarrange(f1 + guides(fill = F), f5, f6, f7, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))),
           ggarrange(f1 + guides(fill = F), f8, f9, f10, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))),
