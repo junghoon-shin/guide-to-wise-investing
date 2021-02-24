@@ -69,14 +69,18 @@ stock_exchange = bind_rows(good, bad) %>%
   rename(`Country Name` = Region, Marketcap = `Market cap`) %>%
   mutate(across(c(Year, Marketcap), ~str_replace_all(., ",", "") %>% as.numeric),
          `Country Name` = case_when(str_detect(`Country Name`, "United Kingdom") ~ "United Kingdom",
+                                    `Country Name` == "European Union" ~ "Euronext",
                                     T ~ `Country Name`),
          Marketcap = Marketcap * 1e9) %>%
   group_by(`Country Name`, Year) %>%
   summarize(Marketcap = sum(Marketcap, na.rm = T)) %>%
   arrange(desc(Marketcap), desc(Year))
 
-stock_exchange %<>% filter(!`Country Name` %in% c("European Union"))
 
+```
+
+
+```{r}
 marketcap %<>% 
   full_join(stock_exchange %>% rename(Marketcap_wiki = Marketcap)) %>%
   mutate(Marketcap = case_when(is.na(Marketcap) ~ Marketcap_wiki,
@@ -121,7 +125,7 @@ marketcap %>%
   ggplot(mapping = aes(x = `Country Name`, y = Marketcap/1e12)) +
   geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
   geom_text(mapping = aes(y = Marketcap/1e12 + 1, label = Proportion), hjust = 0, size = 8 / .pt, family = "Lato") + 
-  scale_y_continuous(expand = c(0, 0, 0.25, 0)) +
+  scale_y_continuous(expand = c(0, 0, 0.23, 0)) +
   coord_flip() +
   labs(x = NULL, y = "Market capitalization ($trillion)") +
   theme(axis.ticks.y = element_blank()) +
