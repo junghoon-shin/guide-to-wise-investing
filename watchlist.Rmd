@@ -82,9 +82,19 @@ financials %<>%
   rename(Yahoo = ticker) %>%
   mutate(date = as_date(date))
 
-tmp = financials %>%
+netIncomeGrowth = financials %>%
+  arrange(date) %>%
   group_by(Yahoo) %>%
-  group_modify(~arrange(., desc(date)) %>% slice(1)) %>%
+  summarize(netIncomeGrowth = (netIncome[length(netIncome)] / netIncome[1]) ^ (1/length(netIncome)) - 1,
+            firstnetIncome = netIncome[1],
+            lastnetIncome = netIncome[length(netIncome)]) %>%
+  filter(firstnetIncome > 0 & lastnetIncome > 0) %>%
+  select(Yahoo, netIncomeGrowth)
+
+ROIC = financials %>%
+  arrange(desc(date)) %>%
+  group_by(Yahoo) %>%
+  slice(1) %>%
   ungroup %>%
   mutate(NOPAT = ebit - incomeTaxExpense,
          IC = totalStockholderEquity + longTermDebt + shortLongTermDebt - cash,
@@ -92,7 +102,7 @@ tmp = financials %>%
          Free_cash_flow = totalCashFromOperatingActivities + capitalExpenditures) %>%
   select(Yahoo, NOPAT, IC, ROIC, Free_cash_flow)
 
-yahoo_data %<>% left_join(tmp)
+yahoo_data %<>% left_join(netIncomeGrowth) %>% left_join(ROIC)
 
 company %<>% 
   left_join(yahoo_data) %>% 
@@ -105,8 +115,8 @@ company %<>%
                 ~as.numeric(str_replace(., ",", "")))) %>%
   mutate(across(c(DER, 
                   Average_dividend_yield_5yrs), 
-                ~as.numeric(.)/100)) %>%
-  mutate(across(c(Profit_margin, 
+                ~as.numeric(.)/100),
+         across(c(Profit_margin, 
                   ROA,
                   ROE,
                   Quarterly_revenue_growth, 
@@ -118,12 +128,14 @@ company %<>%
                   Revenue_growth_estimate_next, 
                   Earnings_growth_past_5yrs, 
                   Earnings_growth_estimate_next_5yrs), 
-                ~as.numeric(str_replace(., "%", ""))/100)) %>%
-  mutate(across(c(Marketcap, Operating_cash_flow, Levered_free_cash_flow),
+                ~as.numeric(str_replace_all(., c("%" = "", "," = "")))/100),
+         Earnings_growth_estimate_next_5yrs = case_when(is.na(Earnings_growth_estimate_next_5yrs) ~ netIncomeGrowth, T ~ Earnings_growth_estimate_next_5yrs),
+         across(c(Marketcap, Operating_cash_flow, Levered_free_cash_flow),
                 ~case_when(str_detect(., "[Kk]$") ~ str_replace(., "[Kk]", "") %>% as.numeric %>% multiply_by(1e3),
                            str_detect(., "M$") ~ str_replace(., "M", "") %>% as.numeric %>% multiply_by(1e6),
                            str_detect(., "B$") ~ str_replace(., "B", "") %>% as.numeric %>% multiply_by(1e9),
                            str_detect(., "T$") ~ str_replace(., "T", "") %>% as.numeric %>% multiply_by(1e12)))) %>% 
+  select(-netIncomeGrowth) %>%
   rowwise %>%
   mutate(PSR = Price / Revenue_per_share,
          PBR = Price / BVPS,
@@ -135,7 +147,7 @@ company %<>%
          Expected_PE_in_10yrs = `Industry PER`,
          Estimated_price_in_10yrs = EPS * (1 + Expected_EPS_growth_rate)^10 * Expected_PE_in_10yrs,
          Reinvested_dividend_in_10yrs = sum(EPS * Payout_ratio * (1 + Expected_dividend_growth_rate)^(1:10) * (1 + confident_return)^(10 - 1:10)),
-         Expected_price_in_10yrs = Estimated_price_in_10yrs + Reinvested_dividend_in_10yrs,
+         Expected_price_in_10yrs = ifelse(!is.na(Estimated_price_in_10yrs), sum(Estimated_price_in_10yrs, Reinvested_dividend_in_10yrs, na.rm = T), NA),
          DCF10 = Expected_price_in_10yrs / (1 + marr)^10,
          Payback8 = sum(Free_cash_flow * (1 + Earnings_growth_estimate_next_5yrs)^(1:8)),
          Adjusted_Graham_formula = EPS * (per_no_growth + 100 * Earnings_growth_estimate_next_5yrs) * 4.4 / AAA_return,
@@ -158,7 +170,7 @@ company %<>%
   relocate(Revenue_growth_estimate_current, Revenue_growth_estimate_next, Earnings_growth_estimate_next_5yrs,
            Operating_cash_flow, Levered_free_cash_flow, Free_cash_flow,
            Profit_margin,
-           DER, ROA, ROIC, ROE, PBR, PSR, PER, `Industry PER`, 
+           DER, ROA, ROIC, ROE, PBR, PSR, PER, `Industry PER`,
            .before = `Price/Target`) %>%
   relocate(Retention_ratio, .after = Payout_ratio) %>%
   arrange(Name)
