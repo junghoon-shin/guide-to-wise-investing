@@ -222,9 +222,11 @@ country_mapping = c(China = "CHN", Japan = "JPN", Germany = "DEU", India = "IND"
 
 plan(multisession)
 
-Others = country_mapping %>% future_imap_dfr(~read_html(str_c("https://www.gurufocus.com/global-market-valuation.php?country=", .x), 
-                                                            which = 3, header = T) %>% 
-                                               mutate(Country = .y))
+Others = country_mapping %>% 
+  future_imap_dfr(~{
+    tbl_list = read_html(str_c("https://www.gurufocus.com/global-market-valuation.php?country=", .x), header = T)
+    tbl_list[[which(map_lgl(tbl_list, ~{"Valuation" %in% names(.)}))]] %>% mutate(Country = .y)
+  })
 
 plan("default")
 

@@ -17,7 +17,7 @@ price_data %<>%
 
 ```{r}
 get_legend_nrow = function(close, industry) {
-  max(round((close %>% filter(Industry == industry) %>% pull(Name) %>% unique %>% length)/3), 1)
+  ceiling((close %>% filter(Industry == industry) %>% pull(Name) %>% unique %>% length)/4)
 }
 
 get_legend_nrow = Vectorize(get_legend_nrow, "industry")
@@ -37,7 +37,7 @@ normalized_price_trend = function(price, industry) {
     ungroup
 
   ncompany = length(unique(price_subset$Name))
-  legend_nrow = max(round(ncompany/3), 1)
+  legend_nrow = ceiling(ncompany/4)
   
   g = price_subset %>%
     ggplot(mapping = aes(x = date, y = normalized)) +
