@@ -403,7 +403,7 @@ relation_plot = function(financials, x, y, xtrans = "identity", xlab = NULL, yla
     annotation_custom(linesGrob(gp = gpar(lty = "dashed")), xmin = 0, xmax = 0) +
     geom_text(mapping = aes(label = Name_trimmed, size = Marketcap_USD/1e9), hjust = 0.5, vjust = 0.5, family = "Lato") +
     scale_x_continuous(trans = xtrans, expand = c(padding$left, 0, padding$right, 0), labels = xlabels) +
-    scale_size(trans = "log10", range = c(1, 6), guide = guide_legend(title = "Market\ncapitalization\n($Billion)")) +
+    scale_size(trans = "log10", range = c(1, 6), guide = guide_legend(title = "Market cap\n($billion)")) +
     labs(x = xlab, y = ylab) +
     facet_grid_sc(rows = vars(group), 
                   scales = list(y = list(High = scale_y_continuous(labels = ylabels, expand = c(0.15, 0)),

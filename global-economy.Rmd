@@ -26,6 +26,7 @@ g = gdp %>%
   scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
   scale_y_continuous(trans = "log10") +
   scale_color_manual(values = line_color[1:length(unique(gdp$Country))], guide = guide_legend(title = NULL)) +
+  labs(x = "Year", y = "GDP ($trillion)") +
   theme(legend.key = element_rect(fill = "transparent"))
 
 ggplotly(g) %>% layout(xaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
