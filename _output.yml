@@ -8,7 +8,6 @@ bookdown::gitbook:
     in_header: in_header.html
   config:
     toc:
-      collapse: section
       before: |
         <li><a href="./">Guide to Wise Investing</a></li>
       after: |
