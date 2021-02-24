@@ -139,10 +139,23 @@ normalized_price_trend(price_data, interesting_sectors[15])
 ## Adjusted closing price^[https://www.investopedia.com/terms/a/adjusted_closing_price.asp]
 
 ```{r, fig.height = 2.5 * length(unique(price_data$Name)), fig.cap = "Adjusted closing stock price over the last 2 years"}
+price_data %<>%
+  left_join(company_plot %>% select(Name, Marketcap_USD)) %>%
+  mutate(Marketcap_USD = str_c(round(Marketcap_USD/1e9, 1), " ($billion)"))
+
 g = price_data %>%
   ggplot(mapping = aes(x = date, y = adjusted)) +
   geom_line(color = line_color[1]) +
   geom_point(data = price_data %>% group_by(Name) %>% filter(date == max(date, na.rm = T)) %>% ungroup, color = line_color[2]) +
+  geom_text(data = price_data %>% 
+              group_by(Name) %>% 
+              summarise(Marketcap_USD = unique(Marketcap_USD),
+                        midprice = median(range(adjusted, na.rm = T)),
+                        firstprice = adjusted[date == min(date, na.rm = T)],
+                        vjust = ifelse(firstprice < midprice, 1, 0),
+                        adjusted = ifelse(firstprice < midprice, max(adjusted, na.rm = T), min(adjusted, na.rm = T))) %>%
+              ungroup,
+            mapping = aes(label = str_c("Market cap: ", Marketcap_USD), vjust = vjust), x = min(price_data$date, na.rm = T) + 10, hjust = 0) +
   scale_x_date(expand = c(0, 0)) +
   scale_y_continuous(position = "right") +
   labs(x = "Date", y = "Adjusted closing price") +
