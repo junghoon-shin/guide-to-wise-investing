@@ -6,6 +6,8 @@
 - [World Bank](https://www.worldbank.org/)
 - [OECD](https://www.oecd.org/)
 - [Gurufocus](https://www.gurufocus.com/new_index/)
+- [Worldometer](https://www.worldometers.info/)
+- [multpl.com](https://www.multpl.com/s-p-500-pe-ratio)
 - [Investopedia](https://www.investopedia.com/)
 - [Wikipedia](https://en.wikipedia.org/wiki/Main_Page)
 - [Company ranking by market cap](https://companiesmarketcap.com/)
