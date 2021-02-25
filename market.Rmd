@@ -76,11 +76,6 @@ stock_exchange = bind_rows(good, bad) %>%
   summarize(Marketcap = sum(Marketcap, na.rm = T)) %>%
   arrange(desc(Marketcap), desc(Year))
 
-
-```
-
-
-```{r}
 marketcap %<>% 
   full_join(stock_exchange %>% rename(Marketcap_wiki = Marketcap)) %>%
   mutate(Marketcap = case_when(is.na(Marketcap) ~ Marketcap_wiki,
@@ -120,7 +115,7 @@ country_level = rev(unique(marketcap$`Country Name`))
 marketcap %<>% mutate(`Country Name` = factor(`Country Name`, levels = country_level))
 ```
 
-```{r, fig.height = (nrow(marketcap)/length(notNA_year) + 2)/4, fig.cap = str_c("Market capitalization of listed domestic companies across ", length(country_level), " major markets (proportions of the global market capitalization are shown on the right side of each bar)")}
+```{r, fig.height = (nrow(marketcap)/length(notNA_year) + 2)/4, fig.cap = str_c("Market capitalization of listed domestic companies across ", length(country_level), " major markets (approximate proportions of the global market capitalization are shown on the right side of each bar)")}
 marketcap %>% 
   ggplot(mapping = aes(x = `Country Name`, y = Marketcap/1e12)) +
   geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
@@ -222,7 +217,18 @@ my_datatable(Buffett, paging = T, pageLength = 10, scrollY = NULL, caption = NUL
 USA = read_html("https://www.gurufocus.com/stock-market-valuations.php", which = 3, header = T) %>% 
   mutate(Country = "USA")
 
-country_mapping = c(China = "CHN", Japan = "JPN", Germany = "DEU", India = "IND", UK = "GBR", France = "FRA", Italy = "ITA", Canada = "CAN", Korea = "KOR", Australia = "AUS", Spain = "ESP", Russia = "RUS")
+country_mapping = c(China = "CHN", 
+                    Japan = "JPN", 
+                    Germany = "DEU", 
+                    India = "IND", 
+                    UK = "GBR", 
+                    France = "FRA", 
+                    Italy = "ITA", 
+                    Canada = "CAN", 
+                    Korea = "KOR", 
+                    Australia = "AUS", 
+                    Spain = "ESP", 
+                    Russia = "RUS")
 
 plan(multisession)
 

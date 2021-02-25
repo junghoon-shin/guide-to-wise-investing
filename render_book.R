@@ -1,11 +1,22 @@
 #!/usr/bin/Rscript
 
 library(bookdown)
-library(funr)
 library(tidyverse)
 
-project_directory = sys.script() %>% str_extract("^.+(?=/render_book)")
+getCurrentFileLocation = function()
+{
+  this_file = commandArgs() %>% 
+    tibble::enframe(name = NULL) %>%
+    tidyr::separate(col = value, into = c("key", "value"), sep = "=", fill = "right") %>%
+    dplyr::filter(key == "--file") %>%
+    dplyr::pull(value)
+  if (length(this_file) == 0)
+  {
+    this_file <- rstudioapi::getSourceEditorContext()$path
+  }
+  return(dirname(this_file))
+}
 
-setwd(project_directory)
+setwd(getCurrentFileLocation())
 
 render_book("index.Rmd")
