@@ -110,12 +110,12 @@ make_readable = function(x) case_when(abs(x) >= 1e12 ~ str_c(round(x/1e12, 1) %>
                                       T ~ round(x, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim)
 
 clean_name = function(name) {
-  name %>% str_replace_all(c("-* ADR([, ]*|$)" = "",
-                             "Common Stock([, ]*|$)" = "",
-                             "Inc\\.*([, ]*|$)" = "",
-                             "Ltd\\.*([, ]*|$)" = "",
-                             "Mfg\\.*([, ]*|$)" = "",
-                             "(& )*Co(rporation|rp|\\.)*([, ]*|$)" = "",
+  name %>% str_replace_all(c("-* ADR([, ]+|$)" = "",
+                             "Common Stock([, ]+|$)" = "",
+                             "(Inc|INC)([., ]+|$)" = "",
+                             "(Ltd|LTD)([., ]+|$)" = "",
+                             "Mfg([., ]+|$)" = "",
+                             "(& )*Co(rporation|rp)*([., ]+|$)" = "",
                              "Holding([, ]*|$)" = "",
                              " (SA|AG|NV)([, ]*|$)" = "",
                              ",\\s*$" = "",

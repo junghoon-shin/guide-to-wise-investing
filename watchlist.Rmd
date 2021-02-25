@@ -368,7 +368,8 @@ company_plot %<>%
                                                            "Alibaba Group Holding - ADR" = "Alibaba",
                                                            "Logitech International" = "Logitech",
                                                            "Dell Technologies" = "Dell",
-                                                           "Amazon.com" = "Amazon")))
+                                                           "Amazon.com" = "Amazon",
+                                                           "TA")))
 ```
 
 ```{r}
