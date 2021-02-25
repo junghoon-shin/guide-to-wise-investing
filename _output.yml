@@ -17,7 +17,6 @@ bookdown::gitbook:
       theme: white
       family: sans
     download: null
-    info: yes
     sharing:
       facebook: yes
       twitter: yes
