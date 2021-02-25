@@ -140,3 +140,4 @@ current-and-target-asset-allocation
 simulation
 simulation-in-usd
 simulation-in-krw
+green-cross-lab-cell-843.8m
