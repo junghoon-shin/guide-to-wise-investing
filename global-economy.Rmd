@@ -110,17 +110,17 @@ ggplotly(g) %>% layout(xaxis = list(title = list(font = list(size = 16)), tickfo
 ## OECD Composite Leading Indicators
 
 ```{r}
-USA = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "USALORSGPNOSTSAM", "&cosd=", fiveyearsago, "&coed=", today,
-                              "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", fiveyearsago), col_names = T)
+USA = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "USALORSGPNOSTSAM", "&cosd=", fiveyearsago, "&coed=", today(),
+                              "&fq=Monthly&vintage_date=", today(), "&revision_date=", today(), "&nd=", fiveyearsago), col_names = T)
 
-China = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "CHNLORSGPNOSTSAM", "&cosd=", fiveyearsago, "&coed=", today,
-                              "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", fiveyearsago), col_names = T)
+China = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "CHNLORSGPNOSTSAM", "&cosd=", fiveyearsago, "&coed=", today(),
+                              "&fq=Monthly&vintage_date=", today(), "&revision_date=", today(), "&nd=", fiveyearsago), col_names = T)
 
-Euro = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "EA19LORSGPNOSTSAM", "&cosd=", fiveyearsago, "&coed=", today,
-                              "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", fiveyearsago), col_names = T)
+Euro = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "EA19LORSGPNOSTSAM", "&cosd=", fiveyearsago, "&coed=", today(),
+                              "&fq=Monthly&vintage_date=", today(), "&revision_date=", today(), "&nd=", fiveyearsago), col_names = T)
 
-Korea = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "KORLOLITONOSTSAM", "&cosd=", fiveyearsago, "&coed=", today,
-                              "&fq=Monthly&vintage_date=", today, "&revision_date=", today, "&nd=", fiveyearsago), col_names = T)
+Korea = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "KORLOLITONOSTSAM", "&cosd=", fiveyearsago, "&coed=", today(),
+                              "&fq=Monthly&vintage_date=", today(), "&revision_date=", today(), "&nd=", fiveyearsago), col_names = T)
 
 relabelCLI = function(symbol) c(USALORSGPNOSTSAM = "USA", 
                                 CHNLORSGPNOSTSAM = "China", 

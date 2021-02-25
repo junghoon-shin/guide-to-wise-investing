@@ -12,10 +12,10 @@ bookdown::gitbook:
         <li><a href="./">Guide to Wise Investing</a></li>
       after: |
         <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
-    search: yes
     fontsettings:
       theme: white
       family: sans
+    edit: https://github.com/junghoon-shin/guide-to-wise-investing/edit/master/%s
     download: null
     sharing:
       facebook: yes

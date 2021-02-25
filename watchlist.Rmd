@@ -7,8 +7,8 @@ confident_return = 0.05
 marr = 0.2 # minimum acceptable rate of return
 per_no_growth = 7
 
-AAA_return = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "DAAA", "&cosd=", monthago, "&coed=", today,
-                            "&fq=Daily&fam=avg&vintage_date=", today, "&revision_date=", today, "&nd=", monthago), col_names = T) %>% 
+AAA_return = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "DAAA", "&cosd=", monthago, "&coed=", today(),
+                            "&fq=Daily&fam=avg&vintage_date=", today(), "&revision_date=", today(), "&nd=", monthago), col_names = T) %>% 
   mutate(DAAA = as.numeric(DAAA)) %>%
   filter(!is.na(DAAA)) %>%
   pull(DAAA) %>%
