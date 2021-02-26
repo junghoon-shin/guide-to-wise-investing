@@ -286,12 +286,16 @@ ggarrange(f1, f2, nrow = 1, legend = "right", common.legend = T)
 ```{r}
 Project = read_html("https://www.gurufocus.com/global-market-valuation.php", which = 1, header = T) %>% 
   rename(Country = "") %>% 
-  rename(`Projected Annual Return` = "Projected Annual Return (%)") %>%
+  rename(`Projected Annual Return` = "Projected Annual Return (%)")
+
+emerging = Project$Country[(which(Project$Country == "Emerging Market:") + 1):nrow(Project)]
+
+Project %<>%
   filter(Country != "Emerging Market:") %>%
   mutate(Country = factor(Country, levels = rev(Country)),
          `Projected Annual Return` = str_replace(`Projected Annual Return`, "%", "") %>% as.numeric %>% divide_by(100))
 
-cutoff = max(which(Project$Country %>% rev %>% as.character %in% c("Turkey", "Indonesia", "Mexico", "Russia", "India", "China", "Brazil"))) + 0.5
+cutoff = max(which(Project$Country %>% rev %>% as.character %in% emerging)) + 0.5
 ```
 
 ```{r, fig.height = (nrow(Project) + 2)/4, fig.cap = "Projected future annual returns of the world's 18 largest stock markets, calculated using (1) future business growth estimates, (2) dividends, and (3) change in market valuation"}
