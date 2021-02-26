@@ -119,7 +119,7 @@ marketcap %<>% mutate(`Country Name` = factor(`Country Name`, levels = country_l
 marketcap %>% 
   ggplot(mapping = aes(x = `Country Name`, y = Marketcap/1e12)) +
   geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
-  geom_text(mapping = aes(y = Marketcap/1e12 + 1, label = Proportion), hjust = 0, size = 8 / .pt, family = "Lato") + 
+  geom_text(mapping = aes(y = Marketcap/1e12 + 1, label = Proportion), hjust = 0, size = 8 / .pt) + 
   scale_y_continuous(expand = c(0, 0, 0.23, 0)) +
   coord_flip() +
   labs(x = NULL, y = "Market capitalization ($trillion)") +
@@ -193,7 +193,7 @@ combined %>%
   mutate(`Country Name` = replace(as.character(`Country Name`), `Country Name` == "United States", "USA")) %>%
   ggplot(mapping = aes(x = GDP/1e12, y = Marketcap/1e12)) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray") +
-  geom_text(mapping = aes(label = `Country Name`), hjust = 0.5, vjust = 0.5, size = 9/.pt, family = "Lato") +
+  geom_text(mapping = aes(label = `Country Name`), hjust = 0.5, vjust = 0.5, size = 9/.pt) +
   scale_x_continuous(trans = "log10") +
   scale_y_continuous(trans = "log10") +
   labs(x = "GDP ($trillion)", y = "Market capitalization ($trillion)") +

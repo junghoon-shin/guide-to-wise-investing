@@ -369,7 +369,6 @@ company_plot %<>%
                                   Name == "Logitech International" ~ "Logitech",
                                   Name == "Dell Technologies" ~ "Dell",
                                   Name == "Amazon.com" ~ "Amazon",
-                                  Name == "TAKE-TWO INTERACTIVE SOFTWARE" ~ "Take-Two Interactive",
                                   T ~ Name))
 ```
 
@@ -427,7 +426,7 @@ relation_plot = function(financials, x, y, xtrans = "identity", xlab = NULL, yla
     ggplot(mapping = aes(!!x, !!y)) +
     annotation_custom(linesGrob(gp = gpar(lty = "dashed")), ymin = 0, ymax = 0) +
     annotation_custom(linesGrob(gp = gpar(lty = "dashed")), xmin = 0, xmax = 0) +
-    geom_text(mapping = aes(label = Name_trimmed, size = Marketcap_USD/1e9), hjust = 0.5, vjust = 0.5, family = "Lato") +
+    geom_text(mapping = aes(label = Name_trimmed, size = Marketcap_USD/1e9), hjust = 0.5, vjust = 0.5) +
     scale_x_continuous(trans = xtrans, expand = c(0, 0), labels = xlabels) +
     scale_size(trans = "log10", range = c(1, 6), guide = guide_legend(title = "Market cap\n($billion)")) +
     coord_cartesian(xlim = c(padding$leftlim, padding$rightlim)) +

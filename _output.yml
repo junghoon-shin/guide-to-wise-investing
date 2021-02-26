@@ -5,7 +5,7 @@ bookdown::gitbook:
   css: style.css
   includes:
     in_header: in_header.html
-  split_by: "chapter+number""
+  split_by: "chapter+number"
   split_bib: yes
   config:
     toc:

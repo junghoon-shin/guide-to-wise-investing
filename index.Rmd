@@ -64,12 +64,14 @@ p_load(bookdown,
        XML,
        yfinance)
 
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, out.width = "100%", out.height = "100%", fig.width = 7)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, out.width = "100%", out.height = "100%", fig.width = 7, fig.height = 5)
 
 theme_set(theme_bw(base_family = "Lato"))
 
 theme_update(plot.title = element_text(hjust = 0.5, vjust = 0.5),
              plot.margin = unit(c(5.5, 11, 5.5, 5.5), "points"))
+
+update_geom_defaults(geom = "text", new = list(family = "Lato"))
 ```
 
 ```{r}
@@ -110,17 +112,21 @@ make_readable = function(x) case_when(abs(x) >= 1e12 ~ str_c(round(x/1e12, 1) %>
                                       T ~ round(x, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim)
 
 clean_name = function(name) {
-  name %>% str_replace_all(c("-* ADR([, ]+|$)" = "",
-                             "Common Stock([, ]+|$)" = "",
-                             "(Inc|INC)([., ]+|$)" = "",
-                             "(Ltd|LTD)([., ]+|$)" = "",
-                             "Mfg([., ]+|$)" = "",
-                             "(& )*Co(rporation|rp)*([., ]+|$)" = "",
-                             "Holding([, ]*|$)" = "",
-                             " (SA|AG|NV)([, ]*|$)" = "",
-                             ",\\s*$" = "",
-                             "\\s+" = " ")) %>% 
+  name %<>% 
+    str_replace_all(c("-* ADR([, ]+|$)" = "",
+                      "Common Stock([, ]+|$)" = "",
+                      "(Inc|INC)([., ]+|$)" = "",
+                      "(Ltd|LTD)([., ]+|$)" = "",
+                      "Mfg([., ]+|$)" = "",
+                      "(& )*Co(rporation|rp)*([., ]+|$)" = "",
+                      "Holding([, ]*|$)" = "",
+                      " (SA|AG|NV)([, ]*|$)" = "",
+                      ",\\s*$" = "",
+                      "\\s+" = " ")) %>% 
     str_trim
+  
+  case_when(name == "TAKE-TWO INTERACTIVE SOFTWARE" ~ "Take-Two Interactive",
+            T ~ name)
 }
 
 convert_ticker = function(google) {
