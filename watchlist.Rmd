@@ -253,7 +253,7 @@ my_datatable(financials, paging = T, pageLength = 8, scrollY = NULL, caption = N
 (ref:roe) ROE $\times$ retention ratio
 
 ```{r}
-tribble(~Concept, ~Meaning,
+glossary = tribble(~Concept, ~Meaning,
         "Adjusted Graham formula", "As defined [here](https://www.oldschoolvalue.com/stock-valuation/benjamin-graham-formula/)",
         "BVPS", "Book value per share",
         "DCF10", "Discounted cash flow in 10 years as defined [here](https://www.investopedia.com/terms/d/dcf.asp)",
@@ -271,8 +271,10 @@ tribble(~Concept, ~Meaning,
         "ROA", "Return on asset",
         "ROIC", "Return on invested capital",
         "ROE", "Return on equity",
-        "Sustainable growth rate", "ROE $\\times$ retention ratio") %>%
-  kbl(escape = F, col.names = NULL, caption = "Glossary") %>%
+        "Sustainable growth rate", "ROE $\\times$ retention ratio") 
+
+glossary %>%
+  kbl(escape = F, col.names = names(.), caption = "Glossary") %>%
     kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
                   full_width = F, position = "left")
 ```
