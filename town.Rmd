@@ -11,15 +11,15 @@
 
 ```{r}
 tibble(Moat = c("Strong brand", 
-                       "Painful switching<br>(Network effect)", 
-                       "Toll bridge<br>(Monopoly)", 
-                       "Secret<br>(Patent)", 
-                       "Price"),
-              Example = c("![](images/Coca_Cola.png){height=80px} ![](images/Starbucks.png){height=80px} ![](images/Hermes.png){height=80px}",
-                          "![](images/Apple.png){height=80px} ![](images/Facebook.png){height=80px} ![](images/Kakao.png){height=80px} ![](images/Twitter.png){height=80px} ![](images/TikTok.png){height=80px}",
-                          "![](images/CN_Railway.png){height=80px} ![](images/Norfolk_Southern.png){height=80px}",
-                          "![](images/Pfizer.png){height=80px} ![](images/Roche.png){height=80px} ![](images/Janssen.png){height=80px}",
-                          "![](images/Costco.png){height=80px} ![](images/Amazon.png){height=80px}")) %>% 
+                "Painful switching<br>(Network effect)", 
+                "Toll bridge<br>(Monopoly)", 
+                "Secret<br>(Patent)", 
+                "Price"),
+       Example = c("![](images/Coca_Cola.png){height=80px} ![](images/Starbucks.png){height=80px} ![](images/Hermes.png){height=80px}",
+                   "![](images/Apple.png){height=80px} ![](images/Facebook.png){height=80px} ![](images/Kakao.png){height=80px} ![](images/Twitter.png){height=80px} ![](images/TikTok.png){height=80px}",
+                   "![](images/CN_Railway.png){height=80px} ![](images/Norfolk_Southern.png){height=80px}",
+                   "![](images/Pfizer.png){height=80px} ![](images/Roche.png){height=80px} ![](images/Janssen.png){height=80px}",
+                   "![](images/Costco.png){height=80px} ![](images/Amazon.png){height=80px}")) %>% 
   kbl(escape = F, col.names = colnames(.), caption = "Five and a half moats that determine the durable competitive advantage of a business with nice examples") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
                 full_width = F, position = "left")

@@ -155,7 +155,7 @@ g = price_data %>%
                         vjust = ifelse(firstprice < midprice, 1, 0),
                         adjusted = ifelse(firstprice < midprice, max(adjusted, na.rm = T), min(adjusted, na.rm = T))) %>%
               ungroup,
-            mapping = aes(label = str_c("Market cap: ", Marketcap_USD), vjust = vjust), x = min(price_data$date, na.rm = T) + 10, hjust = 0, size = 10/.pt) +
+            mapping = aes(label = str_c("Market cap: ", Marketcap_USD), vjust = vjust), x = min(price_data$date, na.rm = T) + 10, hjust = 0, size = 10 / .pt) +
   scale_x_date(expand = c(0, 0)) +
   scale_y_continuous(position = "right") +
   labs(x = "Date", y = "Adjusted closing price") +
