@@ -74,7 +74,12 @@ yahoo_data = future_map_dfr(company$Yahoo, ~{
   return(out)
 })
 
-financials = future_map_dfr(company$Yahoo, get_financials)
+financials = future_map_dfr(company$Yahoo, get_financials) %>%
+  group_by(ticker, date) %>%
+  summarize(across(everything(), ~{
+    if(sum(!is.na(.)) > 0) unique(.[!is.na(.)])
+    else NA
+  }))
 
 plan("default")
 
@@ -107,8 +112,8 @@ yahoo_data %<>% left_join(netIncomeGrowth) %>% left_join(ROIC)
 company %<>% 
   left_join(yahoo_data) %>% 
   replace(. == "N/A", NA) %>%
-  mutate(Name = clean_name(Name),
-         across(c(Beta, 
+  mutate(Name = clean_name(Name)) %>%
+  mutate(across(c(Beta, 
                   Target, 
                   Revenue_per_share,
                   Diluted_EPS, 
@@ -523,8 +528,8 @@ make_wikitable = function(name) {
   wikitable %<>% bind_cols(matrix(NA, nrow = 1, ncol = length(missing)) %>% set_colnames(missing) %>% as_tibble)
   
   wikitable %>%
-    mutate(`Traded as` = str_replace_all(`Traded as`, "(.)(NYSE|NASDAQ|Russell)", "\\1<br>\\2"),
-           across(c(`Key people`, Services), ~str_replace_all(., "\\)([A-Z])", ")<br>\\1")),
+    mutate(`Traded as` = str_replace_all(`Traded as`, "(.)(NYSE|NASDAQ|Russell)", "\\1<br>\\2")) %>%
+    mutate(across(c(`Key people`, Services), ~str_replace_all(., "\\)([A-Z])", ")<br>\\1")),
            across(c(Industry, Founders, Services, Subsidiaries), ~str_replace_all(., "([a-z])([A-Z])", "\\1<br>\\2"))) %>%
     t %>% 
     set_colnames("Val") %>%

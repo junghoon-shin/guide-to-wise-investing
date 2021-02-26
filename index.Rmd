@@ -115,12 +115,12 @@ clean_name = function(name) {
   name %<>% 
     str_replace_all(c("-* ADR([, ]+|$)" = "",
                       "Common Stock([, ]+|$)" = "",
-                      "(Inc|INC)([., ]+|$)" = "",
-                      "(Ltd|LTD)([., ]+|$)" = "",
-                      "Mfg([., ]+|$)" = "",
-                      "(& )*Co(rporation|rp)*([., ]+|$)" = "",
+                      " (Inc|INC)([., ]+|$)" = "",
+                      " Ltd([., ]+|$)" = "",
+                      " Mfg([., ]+|$)" = "",
+                      "&* Co(rporation|rp)*([., ]+|$)" = "",
                       "Holding([, ]*|$)" = "",
-                      " (SA|AG|NV)([, ]*|$)" = "",
+                      " (SA|AG|NV|SE)([, ]*|$)" = "",
                       ",\\s*$" = "",
                       "\\s+" = " ")) %>% 
     str_trim

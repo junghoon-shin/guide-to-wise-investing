@@ -3,8 +3,7 @@
 library(bookdown)
 library(tidyverse)
 
-getCurrentFileLocation = function()
-{
+getCurrentFileLocation = function() {
   this_file = commandArgs() %>% 
     tibble::enframe(name = NULL) %>%
     tidyr::separate(col = value, into = c("key", "value"), sep = "=", fill = "right") %>%
