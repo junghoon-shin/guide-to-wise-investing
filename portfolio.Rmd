@@ -10,7 +10,8 @@ portfolio = drive_get("Investment/Investment") %>% read_sheet(sheet = "Portfolio
 allocation = drive_get("Investment/Investment") %>% read_sheet(sheet = "Asset allocation")
 
 portfolio %<>%
-  mutate(Class = factor(Class, levels = c("Stock", "REIT", "Bond", "Commodity", "Gold")),
+  mutate(Name = clean_name(Name),
+         Class = factor(Class, levels = c("Stock", "REIT", "Bond", "Commodity", "Gold")),
          Region = factor(Region, levels = c("Korea", "USA", "Europe", "Emerging", "Global")))
 
 allocation %<>%
@@ -50,7 +51,7 @@ portfolio %>%
 portfolio_stock = portfolio %>% 
   filter(Class == "Stock") %>%
   select(Name, Region, Weight) %>%
-  mutate(Name = case_when(Name == "Hyundai Motor S2 Pref Shs" ~ "Hyundai Motor Co",
+  mutate(Name = case_when(Name == "Hyundai Motor S2 Pref Shs" ~ "Hyundai Motor",
                           T ~ Name)) %>%
   left_join(company %>% select(Name, Industry)) %>% 
   mutate(Industry = case_when(is.na(Industry) ~ "Index Fund",
