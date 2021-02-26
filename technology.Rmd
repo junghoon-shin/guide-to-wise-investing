@@ -1,4 +1,4 @@
-# Technology market share trend^[Data are from [StatCounter](https://gs.statcounter.com/.)] {#technology}
+# Technology market share trend^[Data are from [StatCounter](https://gs.statcounter.com/).] {#technology}
 
 ```{r}
 fromyear = thisyear - 5

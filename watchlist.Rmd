@@ -107,13 +107,14 @@ yahoo_data %<>% left_join(netIncomeGrowth) %>% left_join(ROIC)
 company %<>% 
   left_join(yahoo_data) %>% 
   replace(. == "N/A", NA) %>%
-  mutate(across(c(Beta, 
+  mutate(Name = clean_name(Name),
+         across(c(Beta, 
                   Target, 
                   Revenue_per_share,
                   Diluted_EPS, 
                   BVPS), 
-                ~as.numeric(str_replace(., ",", "")))) %>%
-  mutate(across(c(DER, 
+                ~as.numeric(str_replace(., ",", ""))),
+         across(c(DER, 
                   Average_dividend_yield_5yrs), 
                 ~as.numeric(.)/100),
          across(c(Profit_margin, 
@@ -274,18 +275,17 @@ Sustainable growth rate: ROE $\times$ retention ratio
 company_plot %<>% 
   mutate(`Earnings-to-price` = 1/PER,
          `Sales-to-price` = 1/PSR,
-         `Book-to-price` = 1/PBR,
-         Name_trimmed = clean_name(Name)) %>%
+         `Book-to-price` = 1/PBR) %>%
   arrange(desc(Industry), 
           !is.na(`Earnings-to-price`), `Earnings-to-price`, 
           !is.na(`Sales-to-price`), `Sales-to-price`, 
           !is.na(`Book-to-price`), `Book-to-price`) %>%
-  mutate(Name_trimmed = factor(Name_trimmed, levels = Name_trimmed))
+  mutate(Name = factor(Name, levels = Name))
 ```
 
 ```{r}
 f1 = company_plot %>%
-  ggplot(mapping = aes(x = Name_trimmed, y = 0)) + 
+  ggplot(mapping = aes(x = Name, y = 0)) + 
   geom_col(mapping = aes(fill = Industry), color = "transparent") +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 0)) +
   scale_fill_manual(limits = unique(company_plot$Industry), 
@@ -307,7 +307,7 @@ financial_plot = function(financials, variable, title = NULL, labels = waiver())
   variable = enquo(variable)
   
   financials %>%
-    ggplot(mapping = aes(x = Name_trimmed, y = !!variable)) + 
+    ggplot(mapping = aes(x = Name, y = !!variable)) + 
     geom_col(mapping = aes(fill = Industry), color = "black", width = 0.7) +
     scale_y_continuous(expand = c(0.05, 0), breaks = pretty_breaks(3), labels = labels) +
     scale_fill_manual(limits = unique(company_plot$Industry), 
@@ -333,7 +333,7 @@ n_industry = company_plot$Industry %>% unique %>% length
 
 legend_ratio = (nrow(company_plot) + 2) / (ceiling(n_industry/3) + 1)
 
-name_width = stringWidth(company_plot$Name_trimmed) %>% 
+name_width = stringWidth(company_plot$Name) %>% 
   convertUnit("inch") %>% 
   as.numeric %>% 
   multiply_by(as.numeric(theme_get()$axis.text$size * theme_get()$text$size) / 12) %>% 
@@ -361,15 +361,16 @@ exchange = getQuote(str_c("USD", company_plot$Currency, "=X"), src = "yahoo") %>
 
 company_plot %<>% 
   left_join(exchange) %>%
-  mutate(Marketcap_USD = Marketcap / Exchange) %>%
+  mutate(Name = as.character(Name), 
+         Marketcap_USD = Marketcap / Exchange) %>%
   arrange(desc(Marketcap_USD)) %>%
-  mutate(Name_trimmed = Name_trimmed %>% str_replace_all(c("Taiwan Semiconductor" = "TSMC", 
-                                                           "Pacific Biosciences of California" = "PacBio",
-                                                           "Alibaba Group Holding - ADR" = "Alibaba",
-                                                           "Logitech International" = "Logitech",
-                                                           "Dell Technologies" = "Dell",
-                                                           "Amazon.com" = "Amazon",
-                                                           "TA")))
+  mutate(Name_trimmed = case_when(Name == "Taiwan Semiconductor" ~ "TSMC",
+                                  Name == "Pacific Biosciences of California" ~ "PacBio",
+                                  Name == "Logitech International" ~ "Logitech",
+                                  Name == "Dell Technologies" ~ "Dell",
+                                  Name == "Amazon.com" ~ "Amazon",
+                                  Name == "TAKE-TWO INTERACTIVE SOFTWARE" ~ "Take-Two Interactive",
+                                  T ~ Name))
 ```
 
 ```{r}
