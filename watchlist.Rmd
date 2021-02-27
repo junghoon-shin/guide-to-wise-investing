@@ -513,7 +513,7 @@ company_decision %>%
 
 ## Small-cap companies
 
-These are a list of small-cap companies that interest me but need more research. Brief profile of each company is shown when available at [Wikipedia](https://en.wikipedia.org/wiki/Main_Page). For comprehensive financial data, see Section \@ref(comprehensive).
+These are a list of small-cap companies that interest me but need more research. Brief profile of each company is shown when available at [Wikipedia](https://en.wikipedia.org/wiki/Main_Page). Note that these profiles may be significantly outdated for some companies. For up-to-date comprehensive financial data, see Section \@ref(comprehensive).
 
 ```{r}
 make_wikitable = function(name, which = 1) {
@@ -524,12 +524,13 @@ make_wikitable = function(name, which = 1) {
     t %>% 
     as_tibble
   
-  missing = setdiff(c("Traded as", "Key people", "Products", "Services", "Industry", "Founders", "Services", "Subsidiaries"), names(wikitable))
+  missing = setdiff(c("Traded as", "Key people", "Products", "Services", "Industry", "Founders", "Subsidiaries"), names(wikitable))
   wikitable %<>% bind_cols(matrix(NA, nrow = 1, ncol = length(missing)) %>% set_colnames(missing) %>% as_tibble)
   
   wikitable %>%
     mutate(`Traded as` = str_replace_all(`Traded as`, "(.)(NYSE|NASDAQ|Russell)", "\\1<br>\\2")) %>%
-    mutate(across(c(`Key people`, Services), ~str_replace_all(., "\\)([A-Z])", ")<br>\\1")),
+    mutate(across(c(`Key people`, Services), ~str_replace_all(., c("\\)([A-Z])" = ")<br>\\1",
+                                                                   "\\s*\\n\\s*" = "<br>"))),
            across(c(Industry, Founders, Products, Services, Subsidiaries), ~str_replace_all(., c("([a-z])([A-Z])" = "\\1<br>\\2",
                                                                                        ", " = "<br>",
                                                                                        ",* and " = "<br>")))) %>%
@@ -588,7 +589,7 @@ wikitable$Val[wikitable$Var == "Subsidiaries"] %<>%
 wikitable %>% display_wikitable("Unity Software")
 ```
 
-### Parrot(`r marketcap %>% filter(Name_trimmed == "Parrot") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+### Parrot (`r marketcap %>% filter(Name_trimmed == "Parrot") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
 
 [![](images/Parrot.png){width=240px}](https://www.parrot.com/en)
 
@@ -598,6 +599,26 @@ wikitable = "Parrot_SA" %>% make_wikitable(7)
 wikitable$Val[wikitable$Var == "Subsidiaries"] %<>% 
   str_replace_all(c("sense<br>Fly" = "senseFly"))
 
-wikitable %>% display_wikitable("Unity Software")
+wikitable %>% display_wikitable("Parrot")
+```
+
+### Ambarella (`r marketcap %>% filter(Name_trimmed == "Ambarella") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+[![](images/Ambarella.png){width=240px}](https://www.ambarella.com/)
+
+```{r}
+wikitable = "Ambarella_Inc." %>% make_wikitable(2)
+
+wikitable %>% display_wikitable("Ambarella")
+```
+
+### AeroVironment (`r marketcap %>% filter(Name_trimmed == "Aerovironment") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+[![](images/Aerovironment.png){width=240px}](https://www.avinc.com/)
+
+```{r}
+wikitable = "AeroVironment" %>% make_wikitable(1)
+
+wikitable %>% display_wikitable("AeroVironment")
 ```
 
