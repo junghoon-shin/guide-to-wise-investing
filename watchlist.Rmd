@@ -516,21 +516,23 @@ company_decision %>%
 These are a list of small-cap companies that interest me but need more research. Brief profile of each company is shown when available at [Wikipedia](https://en.wikipedia.org/wiki/Main_Page). For comprehensive financial data, see Section \@ref(comprehensive).
 
 ```{r}
-make_wikitable = function(name) {
-  wikitable = read_html(str_c("https://en.wikipedia.org/wiki/", name), which = 1, header = T, trim = T) %>% 
+make_wikitable = function(name, which = 1) {
+  wikitable = read_html(str_c("https://en.wikipedia.org/wiki/", name), which = which, header = T, trim = T) %>% 
     mutate(V2 = str_replace_all(V2, c("([A-Za-z])\\(" = "\\1 (",
                                       "\\[[0-9]+\\](?=(\\s+|$))" = ""))) %>%
     column_to_rownames("V1") %>% 
     t %>% 
     as_tibble
   
-  missing = setdiff(c("Traded as", "Key people", "Services", "Industry", "Founders", "Services", "Subsidiaries"), names(wikitable))
+  missing = setdiff(c("Traded as", "Key people", "Products", "Services", "Industry", "Founders", "Services", "Subsidiaries"), names(wikitable))
   wikitable %<>% bind_cols(matrix(NA, nrow = 1, ncol = length(missing)) %>% set_colnames(missing) %>% as_tibble)
   
   wikitable %>%
     mutate(`Traded as` = str_replace_all(`Traded as`, "(.)(NYSE|NASDAQ|Russell)", "\\1<br>\\2")) %>%
     mutate(across(c(`Key people`, Services), ~str_replace_all(., "\\)([A-Z])", ")<br>\\1")),
-           across(c(Industry, Founders, Services, Subsidiaries), ~str_replace_all(., "([a-z])([A-Z])", "\\1<br>\\2"))) %>%
+           across(c(Industry, Founders, Products, Services, Subsidiaries), ~str_replace_all(., c("([a-z])([A-Z])" = "\\1<br>\\2",
+                                                                                       ", " = "<br>",
+                                                                                       ",* and " = "<br>")))) %>%
     t %>% 
     set_colnames("Val") %>%
     as_tibble(.name_repair = "minimal", rownames = "Var") %>%
@@ -552,7 +554,7 @@ marketcap = company_plot %>% select(Name_trimmed, Marketcap_USD)
 [![](images/Intellia_Therapeutics.png){width=240px}](https://www.intelliatx.com/)
 
 ```{r}
-"Intellia_Therapeutics" %>% make_wikitable %>% display_wikitable("Intellia Therapeutics")
+"Intellia_Therapeutics" %>% make_wikitable(1) %>% display_wikitable("Intellia Therapeutics")
 ```
 
 ### SI-Bone (`r marketcap %>% filter(Name_trimmed == "SI-Bone") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
@@ -576,12 +578,23 @@ marketcap = company_plot %>% select(Name_trimmed, Marketcap_USD)
 [![](images/Unity.png){width=240px}](https://unity.com/)
 
 ```{r}
-wikitable = "Unity_Technologies" %>% make_wikitable
+wikitable = "Unity_Technologies" %>% make_wikitable(1)
 
 wikitable$Val[wikitable$Var == "Subsidiaries"] %<>% 
   str_replace_all(c("Chilli<br>Connect" = "ChilliConnect",
                     "(.+)delta<br>DNA" = "\\1<br>deltaDNA",
                     "deltaDNA(.+)" = "deltaDNA<br>\\1"))
+
+wikitable %>% display_wikitable("Unity Software")
+```
+
+### Parrot(`r marketcap %>% filter(Name_trimmed == "Parrot") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+```{r}
+wikitable = "Parrot_SA" %>% make_wikitable(7)
+
+wikitable$Val[wikitable$Var == "Subsidiaries"] %<>% 
+  str_replace_all(c("sense<br>Fly" = "senseFly"))
 
 wikitable %>% display_wikitable("Unity Software")
 ```

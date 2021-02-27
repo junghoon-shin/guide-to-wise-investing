@@ -214,37 +214,44 @@ my_datatable(Buffett, paging = T, pageLength = 10, scrollY = NULL, caption = NUL
 ## Market valuation^[Source data and details can be found at [Gurufocus.com](https://www.gurufocus.com/global-market-valuation.php).]
 
 ```{r}
-USA = read_html("https://www.gurufocus.com/stock-market-valuations.php", which = 3, header = T) %>% 
-  mutate(Country = "USA")
+USA = read_html("https://www.gurufocus.com/stock-market-valuations.php", header = T)
+USA %<>% map(~{names(.) = str_trim(names(.)); mutate(., Country = "USA")})
 
-country_mapping = c(China = "CHN", 
-                    Japan = "JPN", 
-                    Germany = "DEU", 
-                    India = "IND", 
-                    UK = "GBR", 
-                    France = "FRA", 
+country_mapping = c(China = "CHN",
+                    Japan = "JPN",
+                    Germany = "DEU",
+                    India = "IND",
+                    UK = "GBR",
+                    France = "FRA",
                     Italy = "ITA", 
                     Canada = "CAN", 
                     Korea = "KOR", 
-                    Australia = "AUS", 
-                    Spain = "ESP", 
-                    Russia = "RUS")
+                    Australia = "AUS",
+                    Spain = "ESP",
+                    Russia = "RUS",
+                    Brazil = "BRA",
+                    Indonesia = "IDN")
+
+USA = read_html("https://www.gurufocus.com/stock-market-valuations.php", header = T) %>%
+  map(~{names(.) = str_trim(names(.)); mutate(., Country = "USA")})
 
 plan(multisession)
 
-Others = country_mapping %>% 
-  future_imap_dfr(~{
-    tbl_list = read_html(str_c("https://www.gurufocus.com/global-market-valuation.php?country=", .x), header = T)
-    tbl_list[[which(map_lgl(tbl_list, ~{"Valuation" %in% names(.)}))]] %>% mutate(Country = .y)
+Others = country_mapping %>%
+  future_imap(~{
+    tbl_list = read_html(str_c("https://www.gurufocus.com/global-market-valuation.php?country=", .x), which = -1, header = T)
+    country = .y
+    tbl_list %>% map(~{names(.) = str_trim(names(.)); mutate(., Country = country)})
   })
 
 plan("default")
 
-All = bind_rows(USA, Others)
-
-names(All) %<>% str_trim
+All = list.prepend(Others, USA = USA)
 
 All %<>% 
+  map_dfr(~{
+    .[[which(map_lgl(., ~all(c("Ratio = Total Market Cap / GDP", "Valuation") %in% names(.))))]]
+  }) %>%
   filter(`Ratio = Total Market Cap / GDP` %>% str_detect("Where are we today")) %>%
   mutate(Valuation = str_extract(Valuation, "(Significantly|Modestly|Fair) (Overvalued|Undervalued|valued)")) %>%
   select(-`Ratio = Total Market Cap / GDP`) %>%
