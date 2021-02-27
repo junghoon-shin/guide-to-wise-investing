@@ -528,7 +528,7 @@ make_wikitable = function(name, which = 1) {
   wikitable %<>% bind_cols(matrix(NA, nrow = 1, ncol = length(missing)) %>% set_colnames(missing) %>% as_tibble)
   
   wikitable %>%
-    mutate(`Traded as` = str_replace_all(`Traded as`, "(.)(NYSE|NASDAQ|Russell)", "\\1<br>\\2")) %>%
+    mutate(`Traded as` = str_replace_all(`Traded as`, "(.)(NYSE|NASDAQ|S&P|Russell)", "\\1<br>\\2")) %>%
     mutate(across(c(`Key people`, Services), ~str_replace_all(., c("\\)([A-Z])" = ")<br>\\1",
                                                                    "\\s*\\n\\s*" = "<br>"))),
            across(c(Industry, Founders, Products, Services, Subsidiaries), ~str_replace_all(., c("([a-z])([A-Z])" = "\\1<br>\\2",
@@ -612,7 +612,7 @@ wikitable = "Ambarella_Inc." %>% make_wikitable(2)
 wikitable %>% display_wikitable("Ambarella")
 ```
 
-### AeroVironment (`r marketcap %>% filter(Name_trimmed == "Aerovironment") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+### AeroVironment (`r marketcap %>% filter(Name_trimmed == "AeroVironment") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
 
 [![](images/Aerovironment.png){width=240px}](https://www.avinc.com/)
 
