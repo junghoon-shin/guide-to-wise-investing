@@ -590,6 +590,8 @@ wikitable %>% display_wikitable("Unity Software")
 
 ### Parrot(`r marketcap %>% filter(Name_trimmed == "Parrot") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
 
+[![](images/Parrot.png){width=240px}](https://www.parrot.com/en)
+
 ```{r}
 wikitable = "Parrot_SA" %>% make_wikitable(7)
 
