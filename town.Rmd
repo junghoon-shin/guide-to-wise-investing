@@ -29,8 +29,8 @@ tibble(Moat = c("Strong brand",
 
 1. Sales (a.k.a. revenue, top line)
 2. Net income (a.k.a. net profit, bottom line)
-3. Book value (a.k.a. equity) + dividends (if any)
-4. Operating cash flow
+3. Operating cash flow
+4. Book value (a.k.a. equity) + dividends (if any)
 
 ## Management numbers {#management}
 
@@ -42,4 +42,4 @@ tibble(Moat = c("Strong brand",
 
 1. Ten cap (10-year owner earnings)
 2. Payback time (8-year payback)
-3. Margin of safety
+3. Margin of safety (10-year discounted cash flow)

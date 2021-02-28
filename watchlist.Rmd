@@ -490,54 +490,59 @@ ggarrange(f1, f2, f3, f4, f5, f6, f7, nrow = 7, ncol = 1, align = "v")
 
 ## Big four numbers
 
+The trends of big 4 numbers of the last 3 to 4 years are shown below. All numbers are normalized to 100 (if positive) or -100 (if negative) as of the first year with available data.
+
 ```{r}
 financials_plot = financials %>% 
-  left_join(company %>% select(Name, Industry)) %>%
-  group_by(Name) %>%
-  mutate(across(c(`Total revenue`, `Net income`, `Total cash from operating activities`, `Total stockholder equity`),
-                ~. / .[Date == min(Date)] * 100)) %>%
+  select(Name, Date, `Total revenue`, `Net income`, `Total cash from operating activities`, `Total stockholder equity`) %>%
+  pivot_longer(cols = c(`Total revenue`, `Net income`, `Total cash from operating activities`, `Total stockholder equity`), 
+               names_to = "Variable",
+               values_to = "Value") %>%
+  filter(!is.na(Value)) %>%
+  group_by(Name, Variable) %>%
+  mutate(Value = Value / Value[Date == min(Date)] * sign(Value[Date == min(Date)]) * 100) %>%
   ungroup
 
-get_padding = function(.data, .variable, panelwidth) {
-  .data %>%
-    filter(!is.na({{.variable}})) %>%
-    count(Name) %>% 
-    filter(n == 4) %>% 
-    pull(Name) %>%
-    stringWidth %>% 
-    convertUnit("inch") %>% 
-    max %>%
-    as.numeric %>%
-    divide_by(12/10) %>%
-    divide_by(panelwidth - .)
-}
-
 big_four_plot = function(.data, .variable, panelwidth) {
-  .variable = enquo(.variable)
+  .data %<>% filter(Variable == .variable)
+  
+  get_padding = function(.data, .variable, panelwidth) {
+    .data %>%
+      count(Name) %>% 
+      filter(n == 4) %>% 
+      pull(Name) %>%
+      stringWidth %>% 
+      convertUnit("inch") %>% 
+      max %>%
+      as.numeric %>%
+      divide_by(12/10) %>%
+      divide_by(panelwidth - .)
+  }
   
   .data %>%
-    ggplot(mapping = aes(x = Date, y = !!.variable)) +
+    ggplot(mapping = aes(x = Date, y = Value)) +
     geom_line(mapping = aes(group = Name), color = "gray") +
     geom_text(data = .data %>% group_by(Name) %>% filter(Date == max(Date)),
               mapping = aes(x = Date + 10, label = Name), hjust = 0, size = 10/.pt) +
-    scale_x_date(expand = c(0, 0, get_padding(.data, !!.variable, panelwidth), 0))
+    scale_x_date(expand = c(0, 0, get_padding(.data, .variable, panelwidth), 0)) +
+    labs(y = .variable)
 }
 ```
 
-```{r, fig.cap = "Total revenue"}
-big_four_plot(financials_plot, `Total revenue`, 6.5)
+```{r, fig.height = 7, fig.cap = "Total revenue"}
+big_four_plot(financials_plot, "Net income", 6.4)
 ```
 
-```{r, fig.cap = "Net income"}
-big_four_plot(financials_plot, `Net income`, 6.5)
+```{r, fig.height = 7, fig.cap = "Net income"}
+big_four_plot(financials_plot, "Net income", 6.4)
 ```
 
-```{r, fig.cap = "Operating cash flow"}
-big_four_plot(financials_plot, `Total cash from operating activities`, 6.5)
+```{r, fig.height = 7, fig.cap = "Operating cash flow"}
+big_four_plot(financials_plot, "Total cash from operating activities", 6.4)
 ```
 
-```{r, fig.cap = "Shareholder's equity"}
-big_four_plot(financials_plot, `Total stockholder equity`, 6.5)
+```{r, fig.height = 7, fig.cap = "Shareholder's equity"}
+big_four_plot(financials_plot, "Total stockholder equity", 6.4)
 ```
 
 ## Investment decision^[The decision is made by analyzing only numerical data, which do not represent the value of a business as a whole. For example, the value of an early-stage company with zero or negative earnings cannot be determined based on numbers, but rather should be assessed based on its mission, technology, management, and culture, as well as the state of the industry overall.]

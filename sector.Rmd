@@ -1,5 +1,3 @@
-# (PART) Environment {-}
-
 # Sector evaluation^[Data are from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html) and [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/mgnroc.html). All data are based on U.S. companies.] {#sector}
 
 ## PE ratio
