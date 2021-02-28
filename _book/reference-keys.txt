@@ -130,7 +130,7 @@ cymabay-therapeutics-330.7m
 nano-x-imaging-2.1b
 green-cross-lab-cell-843.3m
 unity-software-29.4b
-parrot-214.9m
+parrot-215m
 ambarella-4b
 aerovironment-2.7b
 price
