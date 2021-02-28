@@ -28,7 +28,7 @@ industry_per %>%
   ggplot(mapping = aes(x = `Industry Name`, y = `PE ratio`)) +
   geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
   geom_text(mapping = aes(y = `PE ratio` + diff(range(`PE ratio`, na.rm = T))/35, label = round(`PE ratio`)), hjust = 0, size = 8 / .pt) +
-  scale_y_continuous(expand = c(0, 0, 0.23, 0)) +
+  scale_y_continuous(expand = c(0, 0, 0.25, 0)) +
   coord_flip() +
   labs(x = NULL, y = "PE ratio") +
   facet_grid(cols = vars(Variable)) +
