@@ -133,7 +133,7 @@ green-cross-lab-cell-843.3m
 unity-software-29.4b
 parrot-215.2m
 ambarella-4b
-aerovironment-na
+aerovironment-2.7b
 price
 normalized-closing-price
 adjusted-closing-price
