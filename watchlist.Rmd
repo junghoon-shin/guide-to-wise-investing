@@ -79,13 +79,12 @@ financials = future_map_dfr(company$Yahoo, get_financials) %>%
   summarize(across(everything(), ~{
     if(sum(!is.na(.)) > 0) unique(.[!is.na(.)])
     else NA
-  }))
-
-plan("default")
-
-financials %<>% 
+  })) %>%
+  ungroup %>%
   rename(Yahoo = ticker) %>%
   mutate(date = as_date(date))
+
+plan("default")
 
 netIncomeGrowth = financials %>%
   arrange(date) %>%
@@ -93,6 +92,7 @@ netIncomeGrowth = financials %>%
   summarize(netIncomeGrowth = (netIncome[length(netIncome)] / netIncome[1]) ^ (1/length(netIncome)) - 1,
             firstnetIncome = netIncome[1],
             lastnetIncome = netIncome[length(netIncome)]) %>%
+  ungroup %>%
   filter(firstnetIncome > 0 & lastnetIncome > 0) %>%
   select(Yahoo, netIncomeGrowth)
 
@@ -231,7 +231,6 @@ company_display = company %>%
 
 financials %<>% 
   left_join(company %>% select(Yahoo, Name, Currency)) %>%
-  relocate(Name, Currency) %>%
   select(-Yahoo)
 
 names(financials) %<>% 
@@ -241,10 +240,13 @@ names(financials) %<>%
   str_to_sentence
 
 financials %<>% 
-  rename(EBIT = Ebit) %>% 
-  mutate(across(-c(Name, Currency, Date), make_readable)) %>%
-  mutate(across(-Date, ~replace(., . == "NA", NA))) %>%
-  arrange(Name, Date)
+  rename(EBIT = Ebit) %>%
+  arrange(Name, Date) %>%
+  relocate(Name, Currency)
+
+financials_display = financials %>% 
+  mutate(across(-c(Name, Currency, Date), make_readable),
+         across(-Date, ~replace(., . == "NA", NA)))
 ```
 
 ```{r, fig.cap = "Summarized statistics of my watchlist"}
@@ -252,7 +254,7 @@ my_datatable(company_display, paging = T, pageLength = 5, scrollY = NULL, captio
 ```
 
 ```{r, fig.cap = "Income statement, balance sheet, and cash flow data over the last 4 years"}
-my_datatable(financials, paging = T, pageLength = 8, scrollY = NULL, caption = NULL)
+my_datatable(financials_display, paging = T, pageLength = 8, scrollY = NULL, caption = NULL)
 ```
 
 (ref:roe) ROE $\times$ retention ratio
@@ -484,6 +486,58 @@ f7 = relation_plot(company_plot, -DER, ROIC, xlab = "Debt/Equity (reverse axis)"
 
 ```{r, fig.width = 7, fig.height = 60, fig.cap = "Scatterplot of key statistics"}
 ggarrange(f1, f2, f3, f4, f5, f6, f7, nrow = 7, ncol = 1, align = "v")
+```
+
+## Big four numbers
+
+```{r}
+financials_plot = financials %>% 
+  left_join(company %>% select(Name, Industry)) %>%
+  group_by(Name) %>%
+  mutate(across(c(`Total revenue`, `Net income`, `Total cash from operating activities`, `Total stockholder equity`),
+                ~. / .[Date == min(Date)] * 100)) %>%
+  ungroup
+
+get_padding = function(.data, .variable, panelwidth) {
+  .data %>%
+    filter(!is.na({{.variable}})) %>%
+    count(Name) %>% 
+    filter(n == 4) %>% 
+    pull(Name) %>%
+    stringWidth %>% 
+    convertUnit("inch") %>% 
+    max %>%
+    as.numeric %>%
+    divide_by(12/10) %>%
+    divide_by(panelwidth - .)
+}
+
+big_four_plot = function(.data, .variable, panelwidth) {
+  .variable = enquo(.variable)
+  
+  .data %>%
+    ggplot(mapping = aes(x = Date, y = !!.variable)) +
+    geom_line(mapping = aes(group = Name), color = "gray") +
+    geom_text(data = .data %>% group_by(Name) %>% filter(Date == max(Date)),
+              mapping = aes(x = Date + 10, label = Name), hjust = 0, size = 10/.pt) +
+    scale_x_date(expand = c(0, 0, get_padding(.data, !!.variable, panelwidth), 0))
+}
+```
+
+```{r, fig.cap = "Total revenue"}
+big_four_plot(financials_plot, `Total revenue`, 6.5)
+```
+
+```{r, fig.cap = "Net income"}
+big_four_plot(financials_plot, `Net income`, 6.5)
+```
+
+```{r, fig.cap = "Operating cash flow"}
+big_four_plot(financials_plot, `Total cash from operating activities`, 6.5)
+```
+
+```{r, fig.cap = "Shareholder's equity"}
+big_four_plot(financials_plot, `Total stockholder equity`, 6.5)
 ```
 
 ## Investment decision^[The decision is made by analyzing only numerical data, which do not represent the value of a business as a whole. For example, the value of an early-stage company with zero or negative earnings cannot be determined based on numbers, but rather should be assessed based on its mission, technology, management, and culture, as well as the state of the industry overall.]
