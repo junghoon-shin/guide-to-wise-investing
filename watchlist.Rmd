@@ -404,10 +404,10 @@ process_textplot = function(g) {
     ggrob$grobs[[20]][[1]][[1]]$grobs[[i]]$label = "A"
   }
   
-  ggdraw(ggrob)
+  as_ggplot(ggrob)
 }
 
-relation_plot = function(financials, x, y, xtrans = "identity", xlab = NULL, ylab = NULL, xlabels = waiver(), ylabels = waiver()) {
+relation_plot = function(financials, x, y, xlab = NULL, ylab = NULL, xlabels = waiver(), ylabels = waiver()) {
   
   if (is.null(xlab)) xlab = enquo(x)
   if (is.null(ylab)) ylab = enquo(y)
@@ -418,14 +418,14 @@ relation_plot = function(financials, x, y, xtrans = "identity", xlab = NULL, yla
   b = financials %>% pull(!!y) %>% boxplot(range = 1)
   base_limits = b$stats[c(1, 5), ]
   
-  financials_filtered = financials %>%
+  financials %<>%
     filter(!is.na(!!x) & !is.na(!!y) & !is.na(Marketcap_USD)) %>%
-    mutate(group = case_when(!!y > base_limits[1] & !!y < base_limits[2] ~ "Main",
-                             !!y <= base_limits[1] ~ "Low",
-                             !!y >= base_limits[2] ~ "High") %>% 
+    mutate(group = case_when(!!y >= base_limits[1] & !!y <= base_limits[2] ~ "Main",
+                             !!y < base_limits[1] ~ "Low",
+                             !!y > base_limits[2] ~ "High") %>% 
              factor(levels = c("High", "Main", "Low")))
   
-  padding = financials_filtered %>% 
+  padding = financials %>% 
     mutate(fontsize = rescale(log10(Marketcap_USD/1e9), to = c(1, 6)),
            basewidth = stringWidth(Name_trimmed) %>% convertUnit("inch") %>% as.numeric,
            realwidth = basewidth * fontsize / (8 / .pt),
@@ -439,12 +439,12 @@ relation_plot = function(financials, x, y, xtrans = "identity", xlab = NULL, yla
     transmute(leftlim = minx - leftmargin,
               rightlim = maxx + rightmargin)
   
-  g = financials_filtered %>%
+  g = financials %>%
     ggplot(mapping = aes(!!x, !!y)) +
     annotation_custom(linesGrob(gp = gpar(lty = "dashed")), ymin = 0, ymax = 0) +
     annotation_custom(linesGrob(gp = gpar(lty = "dashed")), xmin = 0, xmax = 0) +
     geom_text(mapping = aes(label = Name_trimmed, size = Marketcap_USD/1e9), hjust = 0.5, vjust = 0.5) +
-    scale_x_continuous(trans = xtrans, expand = c(0, 0), labels = xlabels) +
+    scale_x_continuous(expand = c(0, 0), labels = xlabels) +
     scale_size(trans = "log10", range = c(1, 6), guide = guide_legend(title = "Market cap\n($billion)")) +
     coord_cartesian(xlim = c(padding$leftlim, padding$rightlim)) +
     labs(x = xlab, y = ylab) +
@@ -499,50 +499,112 @@ financials_plot = financials %>%
                names_to = "Variable",
                values_to = "Value") %>%
   filter(!is.na(Value)) %>%
-  group_by(Name, Variable) %>%
+  group_by(Variable, Name) %>%
+  filter(!(Value == 0 & Date == min(Date))) %>%
   mutate(Value = Value / Value[Date == min(Date)] * sign(Value[Date == min(Date)]) * 100) %>%
   ungroup
 
-big_four_plot = function(.data, .variable, panelwidth) {
+big_four_plot = function(.data, .variable, panelwidth, textsize) {
   .data %<>% filter(Variable == .variable)
   
-  get_padding = function(.data, .variable, panelwidth) {
-    .data %>%
-      count(Name) %>% 
-      filter(n == 4) %>% 
-      pull(Name) %>%
-      stringWidth %>% 
-      convertUnit("inch") %>% 
-      max %>%
-      as.numeric %>%
-      divide_by(12/10) %>%
-      divide_by(panelwidth - .)
+  get_expansion = function(.data, panelwidth, textsize) {
+    
+    .data %<>% 
+      mutate(name_width = stringWidth(Name) %>% convertUnit("inch") %>% as.numeric %>% multiply_by(textsize/12)) %>%
+      group_by(Name) %>%
+      mutate(date_modified = case_when(Date == max(Date) ~ Date + 10, 
+                                       T ~ Date)) %>%
+      ungroup
+    
+    for (expansion in 1:20/20) {
+      xmax = .data %>% 
+        mutate(date_position = rescale(date_modified, c(0, panelwidth / (1 + expansion)))) %>%
+        group_by(Name) %>%
+        slice(which.max(date_position)) %>%
+        ungroup %>%
+        mutate(text_position = date_position + name_width) %>%
+        pull(text_position) %>%
+        max
+      
+      if (xmax <= panelwidth) {
+        return(expansion)
+        break
+      }
+    }
   }
+
+  x_expansion = get_expansion(.data, panelwidth, textsize)
   
-  .data %>%
+  xlabels = make_date(unique(year(seq(min(.data$Date), as_date(max(as.numeric(.data$Date)) * (1 + x_expansion)), by = 1)))[-1], 1, 1)
+  xbreaks = as.numeric(xlabels)
+  xlabels = year(xlabels)
+  
+  b = .data %>% 
+    group_by(Name) %>% 
+    slice(which.max(case_when(Value >= 0 ~ abs(Value - 100),
+                              Value < 0 ~ abs(Value + 100)))) %>% 
+    ungroup %>% 
+    pull(Value) %>% 
+    boxplot
+  
+  base_limits = b$stats[c(1, 5), ]
+  
+  high = .data %>% filter(Value > base_limits[2]) %>% pull(Name) %>% unique
+  low = .data %>% filter(Value < base_limits[1]) %>% pull(Name) %>% unique %>% setdiff(high)
+  
+  .data %<>% 
+    mutate(Date = as.numeric(Date),
+           group = case_when(Name %in% high ~ "High",
+                             Name %in% low ~ "Low",
+                             T ~ "Main") %>%
+             factor(levels = c("High", "Main", "Low")))
+  
+  g = .data %>%
     ggplot(mapping = aes(x = Date, y = Value)) +
     geom_line(mapping = aes(group = Name), color = "gray") +
     geom_text(data = .data %>% group_by(Name) %>% filter(Date == max(Date)),
-              mapping = aes(x = Date + 10, label = Name), hjust = 0, size = 10/.pt) +
-    scale_x_date(expand = c(0, 0, get_padding(.data, .variable, panelwidth), 0)) +
-    labs(y = .variable)
+              mapping = aes(x = Date + 10, label = Name), hjust = 0, size = textsize/.pt) +
+    scale_x_continuous(expand = c(0, 0, x_expansion, 0), breaks = xbreaks, labels = xlabels) +
+    labs(y = .variable) +
+    facet_grid_sc(rows = vars(group),
+                  scales = list(x = "fixed",
+                                y = list(High = scale_y_continuous(expand = c(0.1, 0)),
+                                         Main = scale_y_continuous(expand = c(0.02, 0)),
+                                         Low = scale_y_continuous(expand = c(0.1, 0)))),
+                  labeller = labeller(group = c(High = "Upper outlier", Main = "Majority", Low = "Lower outlier")))
+  
+  gt = ggplot_gtable(ggplot_build(g))
+    
+  gt$heights[gt$layout$t[gt$layout$name == "panel-1-1"]] = gt$heights[gt$layout$t[gt$layout$name == "panel-1-1"]] * 0.2
+  gt$heights[gt$layout$t[gt$layout$name == "panel-3-1"]] = gt$heights[gt$layout$t[gt$layout$name == "panel-3-1"]] * 0.2
+    
+  as_ggplot(gt)
 }
 ```
 
-```{r, fig.height = 7, fig.cap = "Total revenue"}
-big_four_plot(financials_plot, "Total revenue", 6.4)
+```{r, include = F}
+panelwidth = 6.3
+
+f1 = big_four_plot(financials_plot, "Total revenue", panelwidth, 10)
+f2 = big_four_plot(financials_plot, "Net income", panelwidth, 10)
+f3 = big_four_plot(financials_plot, "Total cash from operating activities", panelwidth, 10)
+f4 = big_four_plot(financials_plot, "Total stockholder equity", panelwidth, 10)
 ```
 
-```{r, fig.height = 7, fig.cap = "Net income"}
-big_four_plot(financials_plot, "Net income", 6.4)
+```{r, fig.height = 9, fig.cap = "Total revenue"}
+f1
 ```
 
-```{r, fig.height = 7, fig.cap = "Operating cash flow"}
-big_four_plot(financials_plot, "Total cash from operating activities", 6.4)
+```{r, fig.height = 9, fig.cap = "Net income"}
+f2
 ```
 
-```{r, fig.height = 7, fig.cap = "Shareholder's equity"}
-big_four_plot(financials_plot, "Total stockholder equity", 6.4)
+```{r, fig.height = 9, fig.cap = "Operating cash flow"}
+f3
+```
+
+```{r, fig.height = 9, fig.cap = "Shareholder's equity"}
+f4
 ```
 
 ## Investment decision^[The decision is made by analyzing only numerical data, which do not represent the value of a business as a whole. For example, the value of an early-stage company with zero or negative earnings cannot be determined based on numbers, but rather should be assessed based on its mission, technology, management, and culture, as well as the state of the industry overall.]
