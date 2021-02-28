@@ -390,7 +390,66 @@ company_plot %<>%
 ```
 
 ```{r}
-process_textplot = function(g) {
+relation_plot = function(.data, x, y, xlab = NULL, ylab = NULL, xlabels = waiver(), ylabels = waiver(), panelwidth) {
+  
+  if (is.null(xlab)) xlab = enquo(x)
+  if (is.null(ylab)) ylab = enquo(y)
+  
+  x = enquo(x)
+  y = enquo(y)
+  
+  b = .data %>% pull(!!y) %>% boxplot(range = 1)
+  base_limits = b$stats[c(1, 5), ]
+  
+  .data %<>%
+    filter(!is.na(!!x) & !is.na(!!y) & !is.na(Marketcap_USD)) %>%
+    mutate(group = case_when(!!y >= base_limits[1] & !!y <= base_limits[2] ~ "Main",
+                             !!y < base_limits[1] ~ "Low",
+                             !!y > base_limits[2] ~ "High") %>% 
+             factor(levels = c("High", "Main", "Low")))
+  
+  .data %<>% mutate(fontsize = rescale(log10(Marketcap_USD/1e9), c(1, 6)),
+                    name_width = stringWidth(Name_trimmed) %>% convertUnit("inch") %>% as.numeric %>% multiply_by(fontsize * .pt / 12))
+  
+  get_expansion = function(.data, panelwidth) {
+    for (left_expansion in 1:20/20) {
+      for (right_expansion in 1:20/20) {
+        
+        .data %<>% 
+          mutate(data_position = rescale(!!x, to = c(panelwidth * left_expansion / (1 + left_expansion + right_expansion), 
+                                                     panelwidth * (1 + left_expansion) / (1 + left_expansion + right_expansion))),
+                 left_position = data_position - name_width / 2,
+                 right_position = data_position + name_width / 2)
+        
+        leftmost = min(.data$left_position)
+        rightmost = max(.data$right_position)
+        
+        if (leftmost >= 0) {
+          if (rightmost <= panelwidth) {
+            return(c(left_expansion, right_expansion))
+            break
+          }
+        }
+      }
+    }
+  }
+  
+  x_expansion = get_expansion(.data, panelwidth)
+  
+  g = .data %>%
+    ggplot(mapping = aes(!!x, !!y)) +
+    annotation_custom(linesGrob(gp = gpar(lty = "dashed")), ymin = 0, ymax = 0) +
+    annotation_custom(linesGrob(gp = gpar(lty = "dashed")), xmin = 0, xmax = 0) +
+    geom_text(mapping = aes(label = Name_trimmed, size = Marketcap_USD/1e9), hjust = 0.5, vjust = 0.5) +
+    scale_x_continuous(expand = c(x_expansion[1], 0, x_expansion[2], 0), labels = xlabels) +
+    scale_size(trans = "log10", range = c(1, 6), guide = guide_legend(title = "Market cap\n($billion)")) +
+    labs(x = xlab, y = ylab) +
+    facet_grid_sc(rows = vars(group), 
+                  scales = list(y = list(High = scale_y_continuous(labels = ylabels, expand = c(0.15, 0)),
+                                         Main = scale_y_continuous(labels = ylabels, expand = c(0.03, 0)),
+                                         Low = scale_y_continuous(labels = ylabels, expand = c(0.15, 0)))),
+                  labeller = labeller(group = c(High = "Upper outlier", Main = "Majority", Low = "Lower outlier")))
+  
   gt = ggplot_gtable(ggplot_build(g))
   
   gt$heights[gt$layout$t[gt$layout$name == "panel-1-1"]] = gt$heights[gt$layout$t[gt$layout$name == "panel-1-1"]] * 0.2
@@ -406,85 +465,39 @@ process_textplot = function(g) {
   
   as_ggplot(ggrob)
 }
-
-relation_plot = function(financials, x, y, xlab = NULL, ylab = NULL, xlabels = waiver(), ylabels = waiver()) {
-  
-  if (is.null(xlab)) xlab = enquo(x)
-  if (is.null(ylab)) ylab = enquo(y)
-  
-  x = enquo(x)
-  y = enquo(y)
-  
-  b = financials %>% pull(!!y) %>% boxplot(range = 1)
-  base_limits = b$stats[c(1, 5), ]
-  
-  financials %<>%
-    filter(!is.na(!!x) & !is.na(!!y) & !is.na(Marketcap_USD)) %>%
-    mutate(group = case_when(!!y >= base_limits[1] & !!y <= base_limits[2] ~ "Main",
-                             !!y < base_limits[1] ~ "Low",
-                             !!y > base_limits[2] ~ "High") %>% 
-             factor(levels = c("High", "Main", "Low")))
-  
-  padding = financials %>% 
-    mutate(fontsize = rescale(log10(Marketcap_USD/1e9), to = c(1, 6)),
-           basewidth = stringWidth(Name_trimmed) %>% convertUnit("inch") %>% as.numeric,
-           realwidth = basewidth * fontsize / (8 / .pt),
-           xpos = rescale(!!x, to = c(0, panelwidth)),
-           leftbound = xpos - realwidth/2,
-           rightbound = xpos + realwidth/2) %>%
-    summarise(leftmargin = -min(leftbound) * diff(range(!!x)) / (2 * panelwidth + min(leftbound) - max(rightbound)), 
-              rightmargin = (max(rightbound) - panelwidth)  * diff(range(!!x)) / (2 * panelwidth + min(leftbound) - max(rightbound)),
-              minx = min(!!x),
-              maxx = max(!!x)) %>%
-    transmute(leftlim = minx - leftmargin,
-              rightlim = maxx + rightmargin)
-  
-  g = financials %>%
-    ggplot(mapping = aes(!!x, !!y)) +
-    annotation_custom(linesGrob(gp = gpar(lty = "dashed")), ymin = 0, ymax = 0) +
-    annotation_custom(linesGrob(gp = gpar(lty = "dashed")), xmin = 0, xmax = 0) +
-    geom_text(mapping = aes(label = Name_trimmed, size = Marketcap_USD/1e9), hjust = 0.5, vjust = 0.5) +
-    scale_x_continuous(expand = c(0, 0), labels = xlabels) +
-    scale_size(trans = "log10", range = c(1, 6), guide = guide_legend(title = "Market cap\n($billion)")) +
-    coord_cartesian(xlim = c(padding$leftlim, padding$rightlim)) +
-    labs(x = xlab, y = ylab) +
-    facet_grid_sc(rows = vars(group), 
-                  scales = list(y = list(High = scale_y_continuous(labels = ylabels, expand = c(0.15, 0)),
-                                         Main = scale_y_continuous(labels = ylabels, expand = c(0.03, 0)),
-                                         Low = scale_y_continuous(labels = ylabels, expand = c(0.15, 0)))),
-                  labeller = labeller(group = c(High = "Upper outlier", Main = "Majority", Low = "Lower outlier")))
-  
-  process_textplot(g)
-}
 ```
 
 ```{r, include = F}
-panelwidth = 4.9
+panelwidth = 4.8
 
 f1 = relation_plot(company_plot, `Earnings-to-price`, Earnings_growth_past_5yrs, 
               xlab = "Earnings/Price", ylab = "Earnings growth per annum (past 5 years)", 
-              ylabels = percent)
+              ylabels = percent,
+              panelwidth = panelwidth)
 
 f2 = relation_plot(company_plot, `Earnings-to-price`, Earnings_growth_estimate_next_5yrs, 
               xlab = "Earnings/Price", ylab = "Earnings growth per annum (next 5 years)",
-              ylabels = percent)
+              ylabels = percent,
+              panelwidth = panelwidth)
 
 f3 = relation_plot(company_plot, `Sales-to-price`, Revenue_growth_estimate_current, 
               xlab = "Sales/Price", ylab = "Revenue growth estimate (current year)",
-              ylabels = percent)
+              ylabels = percent,
+              panelwidth = panelwidth)
 
 f4 = relation_plot(company_plot, `Sales-to-price`, Revenue_growth_estimate_next, 
               xlab = "Sales/Price", ylab = "Revenue growth estimate (next year)",
-              ylabels = percent)
+              ylabels = percent,
+              panelwidth = panelwidth)
 
-f5 = relation_plot(company_plot, ROIC, ROE)
+f5 = relation_plot(company_plot, ROIC, ROE, panelwidth = panelwidth)
 
-f6 = relation_plot(company_plot, -DER, ROE, xlab = "Debt/Equity (reverse axis)", xlabels = function(x) {-x})
+f6 = relation_plot(company_plot, -DER, ROE, xlab = "Debt/Equity (reverse axis)", xlabels = function(x) {-x}, panelwidth = panelwidth)
 
-f7 = relation_plot(company_plot, -DER, ROIC, xlab = "Debt/Equity (reverse axis)", xlabels = function(x) {-x})
+f7 = relation_plot(company_plot, -DER, ROIC, xlab = "Debt/Equity (reverse axis)", xlabels = function(x) {-x}, panelwidth = panelwidth)
 ```
 
-```{r, fig.width = 7, fig.height = 60, fig.cap = "Scatterplot of key statistics"}
+```{r, fig.width = 7, fig.height = 9 * 7, fig.cap = "Scatterplot of key statistics"}
 ggarrange(f1, f2, f3, f4, f5, f6, f7, nrow = 7, ncol = 1, align = "v")
 ```
 
@@ -510,7 +523,7 @@ big_four_plot = function(.data, .variable, panelwidth, textsize) {
   get_expansion = function(.data, panelwidth, textsize) {
     
     .data %<>% 
-      mutate(name_width = stringWidth(Name) %>% convertUnit("inch") %>% as.numeric %>% multiply_by(textsize/12)) %>%
+      mutate(name_width = stringWidth(Name) %>% convertUnit("inch") %>% as.numeric %>% multiply_by(textsize / 12)) %>%
       group_by(Name) %>%
       mutate(date_modified = case_when(Date == max(Date) ~ Date + 10, 
                                        T ~ Date)) %>%
@@ -561,9 +574,10 @@ big_four_plot = function(.data, .variable, panelwidth, textsize) {
   
   g = .data %>%
     ggplot(mapping = aes(x = Date, y = Value)) +
+    annotation_custom(linesGrob(gp = gpar(lty = "dashed")), ymin = 0, ymax = 0) +
     geom_line(mapping = aes(group = Name), color = "gray") +
     geom_text(data = .data %>% group_by(Name) %>% filter(Date == max(Date)),
-              mapping = aes(x = Date + 10, label = Name), hjust = 0, size = textsize/.pt) +
+              mapping = aes(x = Date + 10, label = Name), hjust = 0, size = textsize / .pt) +
     scale_x_continuous(expand = c(0, 0, x_expansion, 0), breaks = xbreaks, labels = xlabels) +
     labs(y = .variable) +
     facet_grid_sc(rows = vars(group),
