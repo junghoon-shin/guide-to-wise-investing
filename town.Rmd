@@ -25,7 +25,7 @@ tibble(Moat = c("Strong brand",
                 full_width = F, position = "left")
 ```
 
-## Big four numbers
+## Big four numbers {#bigfour}
 
 1. Sales (a.k.a. revenue, top line)
 2. Net income (a.k.a. net profit, bottom line)

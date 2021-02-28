@@ -490,7 +490,7 @@ ggarrange(f1, f2, f3, f4, f5, f6, f7, nrow = 7, ncol = 1, align = "v")
 
 ## Big four numbers
 
-The trends of big 4 numbers of the last 3 to 4 years are shown below. All numbers are normalized to 100 (if positive) or -100 (if negative) as of the first year with available data.
+Trends of [big 4 numbers](#bigfour) over the last 3 to 4 years (depending on data availability at [Yahoo Finance](https://finance.yahoo.com/)) are shown below. All numbers are normalized to 100 (if positive) or -100 (if negative) as of the first year with available data for each company.
 
 ```{r}
 financials_plot = financials %>% 
@@ -530,7 +530,7 @@ big_four_plot = function(.data, .variable, panelwidth) {
 ```
 
 ```{r, fig.height = 7, fig.cap = "Total revenue"}
-big_four_plot(financials_plot, "Net income", 6.4)
+big_four_plot(financials_plot, "Total revenue", 6.4)
 ```
 
 ```{r, fig.height = 7, fig.cap = "Net income"}
@@ -572,7 +572,7 @@ company_decision %>%
 
 ## Small-cap companies
 
-These are a list of small-cap companies that interest me but need more research. Brief profile of each company is shown when available at [Wikipedia](https://en.wikipedia.org/wiki/Main_Page). Note that these profiles may be significantly outdated for some companies. For up-to-date comprehensive financial data, see Section \@ref(comprehensive).
+These are a list of small-cap companies that interest me but need more research. Brief profile of each company is shown when available at [Wikipedia](https://en.wikipedia.org/wiki/Main_Page). Note that these profiles might be significantly outdated. For up-to-date comprehensive financial data, see Section \@ref(comprehensive).
 
 ```{r}
 make_wikitable = function(name, which = 1) {
