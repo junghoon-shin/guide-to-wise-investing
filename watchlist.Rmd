@@ -406,15 +406,13 @@ relation_plot = function(.data, x, y, xlab = NULL, ylab = NULL, xlabels = waiver
     mutate(group = case_when(!!y >= base_limits[1] & !!y <= base_limits[2] ~ "Main",
                              !!y < base_limits[1] ~ "Low",
                              !!y > base_limits[2] ~ "High") %>% 
-             factor(levels = c("High", "Main", "Low")))
-  
-  .data %<>% mutate(fontsize = rescale(log10(Marketcap_USD/1e9), c(1, 6)),
-                    name_width = stringWidth(Name_trimmed) %>% convertUnit("inch") %>% as.numeric %>% multiply_by(fontsize * .pt / 12))
+             factor(levels = c("High", "Main", "Low")),
+           fontsize = rescale(log10(Marketcap_USD/1e9), c(1, 6)),
+           name_width = stringWidth(Name_trimmed) %>% convertUnit("inch") %>% as.numeric %>% multiply_by(fontsize * .pt / 12))
   
   get_expansion = function(.data, panelwidth) {
-    for (left_expansion in 1:20/20) {
-      for (right_expansion in 1:20/20) {
-        
+    for (left_expansion in 1:40/20) {
+      for (right_expansion in 1:40/20) {
         .data %<>% 
           mutate(data_position = rescale(!!x, to = c(panelwidth * left_expansion / (1 + left_expansion + right_expansion), 
                                                      panelwidth * (1 + left_expansion) / (1 + left_expansion + right_expansion))),
@@ -529,7 +527,7 @@ big_four_plot = function(.data, .variable, panelwidth, textsize) {
                                        T ~ Date)) %>%
       ungroup
     
-    for (expansion in 1:20/20) {
+    for (expansion in 1:40/20) {
       xmax = .data %>% 
         mutate(date_position = rescale(date_modified, c(0, panelwidth / (1 + expansion)))) %>%
         group_by(Name) %>%
