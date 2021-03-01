@@ -450,6 +450,8 @@ relation_plot = function(.data, x, y, xlab = NULL, ylab = NULL, xlabels = waiver
   
   gt = ggplot_gtable(ggplot_build(g))
   
+  fig_height = 4 + sum(str_detect(gt$layout$name, "panel-[13]-1")) * 2 + 1/2
+  
   gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] = gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] * 0.2
   
   ggrob = as_grob(gt)
@@ -460,7 +462,7 @@ relation_plot = function(.data, x, y, xlab = NULL, ylab = NULL, xlabels = waiver
     ggrob$grobs[[20]][[1]][[1]]$grobs[[i]]$label = "A"
   }
   
-  as_ggplot(ggrob)
+  list(as_ggplot(ggrob), fig_height)
 }
 ```
 
@@ -494,8 +496,10 @@ f6 = relation_plot(company_plot, -DER, ROE, xlab = "Debt/Equity (reverse axis)",
 f7 = relation_plot(company_plot, -DER, ROIC, xlab = "Debt/Equity (reverse axis)", xlabels = function(x) {-x}, panelwidth = panelwidth)
 ```
 
-```{r, fig.width = 7, fig.height = 9 * 7, fig.cap = "Scatterplot of key statistics"}
-ggarrange(f1, f2, f3, f4, f5, f6, f7, nrow = 7, ncol = 1, align = "v")
+```{r, fig.width = 7, fig.height = f1[[2]] + f2[[2]] + f3[[2]] + f4[[2]] + f5[[2]] + f6[[2]] + f7[[2]], fig.cap = "Scatterplot of key statistics"}
+ggarrange(f1[[1]], f2[[1]], f3[[1]], f4[[1]], f5[[1]], f6[[1]], f7[[1]], 
+          heights = c(f1[[2]], f2[[2]], f3[[2]], f4[[2]], f5[[2]], f6[[2]], f7[[2]]),
+          nrow = 7, ncol = 1, align = "v")
 ```
 
 ## Big four numbers
@@ -587,10 +591,12 @@ big_four_plot = function(.data, .variable, panelwidth, textsize) {
                   labeller = labeller(group = c(High = "Upper outlier", Main = "Majority", Low = "Lower outlier")))
   
   gt = ggplot_gtable(ggplot_build(g))
+  
+  fig_height = 4 + sum(str_detect(gt$layout$name, "panel-[13]-1")) * 2 + 1/2
     
   gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] = gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] * 0.2
     
-  as_ggplot(gt)
+  list(as_ggplot(gt), fig_height)
 }
 ```
 
@@ -603,20 +609,20 @@ f3 = big_four_plot(financials_plot, "Total cash from operating activities", pane
 f4 = big_four_plot(financials_plot, "Total stockholder equity", panelwidth, 10)
 ```
 
-```{r, fig.height = 9, fig.cap = "Total revenue"}
-f1
+```{r, fig.height = f1[[2]], fig.cap = "Total revenue"}
+f1[[1]]
 ```
 
-```{r, fig.height = 9, fig.cap = "Net income"}
-f2
+```{r, fig.height = f2[[2]], fig.cap = "Net income"}
+f2[[1]]
 ```
 
-```{r, fig.height = 9, fig.cap = "Operating cash flow"}
-f3
+```{r, fig.height = f3[[2]], fig.cap = "Operating cash flow"}
+f3[[1]]
 ```
 
-```{r, fig.height = 9, fig.cap = "Shareholder's equity"}
-f4
+```{r, fig.height = f4[[2]], fig.cap = "Shareholder's equity"}
+f4[[1]]
 ```
 
 ## Investment decision^[The decision is made by analyzing only numerical data, which do not represent the value of a business as a whole. For example, the value of an early-stage company with zero or negative earnings cannot be determined based on numbers, but rather should be assessed based on its mission, technology, management, and culture, as well as the state of the industry overall.]
