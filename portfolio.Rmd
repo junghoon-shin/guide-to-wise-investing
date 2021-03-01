@@ -90,8 +90,13 @@ portfolio_bond %>%
 ```{r}
 allocation %<>%
   mutate(category = str_c(Class, Region, sep = " - ") %>% 
-           replace(. == "Commodity - Global", "Commodity") %>%
-           factor(levels = c(setdiff(levels(interaction(Class, Region, sep = " - ", lex.order = T)), "Commodity - Global"), "Commodity"))) %>%
+           {case_when(. == "Commodity - Global" ~ "Commodity",
+                      . == "Gold - Global" ~ "Gold",
+                      T ~ .)} %>%
+           factor(levels = levels(interaction(Class, Region, sep = " - ", lex.order = T)) %>% 
+                    {case_when(. == "Commodity - Global" ~ "Commodity",
+                               . == "Gold - Global" ~ "Gold",
+                               T ~ .)})) %>%
   group_by(category) %>%
   summarise(across(c(`Current proportion`, `Target proportion`), sum)) %>%
   arrange(desc(category)) %>%
