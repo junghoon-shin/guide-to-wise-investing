@@ -450,8 +450,7 @@ relation_plot = function(.data, x, y, xlab = NULL, ylab = NULL, xlabels = waiver
   
   gt = ggplot_gtable(ggplot_build(g))
   
-  gt$heights[gt$layout$t[gt$layout$name == "panel-1-1"]] = gt$heights[gt$layout$t[gt$layout$name == "panel-1-1"]] * 0.2
-  gt$heights[gt$layout$t[gt$layout$name == "panel-3-1"]] = gt$heights[gt$layout$t[gt$layout$name == "panel-3-1"]] * 0.2
+  gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] = gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] * 0.2
   
   ggrob = as_grob(gt)
   
@@ -546,7 +545,9 @@ big_four_plot = function(.data, .variable, panelwidth, textsize) {
 
   x_expansion = get_expansion(.data, panelwidth, textsize)
   
-  xlabels = make_date(unique(year(seq(min(.data$Date), as_date(max(as.numeric(.data$Date)) * (1 + x_expansion)), by = 1)))[-1], 1, 1)
+  xlabels = make_date(unique(year(seq(min(.data$Date), 
+                                      as_date(max(as.numeric(.data$Date)) + (max(as.numeric(.data$Date)) - min(as.numeric(.data$Date))) * x_expansion), 
+                                      by = 1)))[-1], 1, 1)
   xbreaks = as.numeric(xlabels)
   xlabels = year(xlabels)
   
@@ -587,8 +588,7 @@ big_four_plot = function(.data, .variable, panelwidth, textsize) {
   
   gt = ggplot_gtable(ggplot_build(g))
     
-  gt$heights[gt$layout$t[gt$layout$name == "panel-1-1"]] = gt$heights[gt$layout$t[gt$layout$name == "panel-1-1"]] * 0.2
-  gt$heights[gt$layout$t[gt$layout$name == "panel-3-1"]] = gt$heights[gt$layout$t[gt$layout$name == "panel-3-1"]] * 0.2
+  gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] = gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] * 0.2
     
   as_ggplot(gt)
 }

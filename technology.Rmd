@@ -84,12 +84,22 @@ plan("default")
 ```{r}
 share_trend = function(.data, .machine, .variable) {
    
-   ranking = .data %>% filter(Machine == .machine) %>% group_by({{.variable}}) %>% arrange(desc(Date)) %>% slice(1) %>% arrange(desc(Share)) %>% pull({{.variable}})
+   .data %<>% filter(Machine == .machine)
+   
+   missing_date = .data %>% group_by(Date) %>% summarize(total = sum(Share)) %>% filter(total == 0) %>% pull(Date)
+   
+   .data %<>% filter(!Date %in% missing_date)
+   
+   ranking = .data %>% 
+      group_by({{.variable}}) %>% 
+      arrange(desc(Date)) %>% 
+      slice(1) %>% 
+      arrange(desc(Share)) %>% 
+      pull({{.variable}})
    
    top = ranking[1:min(5, length(ranking) - 1)]
    
    .data %<>% 
-      filter(Machine == .machine) %>%
       mutate(variable = case_when({{.variable}} %in% top ~ {{.variable}}, T ~ "Others") %>% factor(levels = c(top, "Others"))) %>%
       group_by(Date, variable) %>% 
       summarize(Share = sum(Share, na.rm = T)) %>% 
