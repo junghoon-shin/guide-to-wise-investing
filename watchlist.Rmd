@@ -450,7 +450,7 @@ relation_plot = function(.data, x, y, xlab = NULL, ylab = NULL, xlabels = waiver
   
   gt = ggplot_gtable(ggplot_build(g))
   
-  fig_height = 4 + sum(str_detect(gt$layout$name, "panel-[13]-1")) * 2 + 1/2
+  fig_height = 6 + sum(str_detect(gt$layout$name, "panel-[13]-1")) * 1.2 + 1/2
   
   gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] = gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] * 0.2
   
@@ -592,7 +592,7 @@ big_four_plot = function(.data, .variable, panelwidth, textsize) {
   
   gt = ggplot_gtable(ggplot_build(g))
   
-  fig_height = 4 + sum(str_detect(gt$layout$name, "panel-[13]-1")) * 2 + 1/2
+  fig_height = 6 + sum(str_detect(gt$layout$name, "panel-[13]-1")) * 1.2 + 1/2
     
   gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] = gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] * 0.2
     
