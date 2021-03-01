@@ -450,7 +450,7 @@ relation_plot = function(.data, x, y, xlab = NULL, ylab = NULL, xlabels = waiver
   
   gt = ggplot_gtable(ggplot_build(g))
   
-  fig_height = 6 + sum(str_detect(gt$layout$name, "panel-[13]-1")) * 1.2 + 1/2
+  fig_height = 5 + sum(str_detect(gt$layout$name, "panel-[13]-1")) * 1 + 1/2
   
   gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] = gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] * 0.2
   
@@ -580,8 +580,9 @@ big_four_plot = function(.data, .variable, panelwidth, textsize) {
     annotation_custom(linesGrob(gp = gpar(lty = "dashed")), ymin = 0, ymax = 0) +
     geom_line(mapping = aes(group = Name), color = "gray") +
     geom_text(data = .data %>% group_by(Name) %>% filter(Date == max(Date)),
-              mapping = aes(x = Date + 10, label = Name), hjust = 0, size = textsize / .pt) +
+              mapping = aes(x = Date + 10, label = Name, color = factor(sign(Value), levels = c(1, -1, 0))), hjust = 0, size = textsize / .pt) +
     scale_x_continuous(expand = c(0, 0, x_expansion, 0), breaks = xbreaks, labels = xlabels) +
+    scale_color_manual(values = line_color, guide = F) +
     labs(y = .variable) +
     facet_grid_sc(rows = vars(group),
                   scales = list(x = "fixed",
