@@ -137,6 +137,7 @@ clean_name = function(name) {
     str_trim
   
   case_when(name == "TAKE-TWO INTERACTIVE SOFTWARE" ~ "Take-Two Interactive",
+            name == "QUALCOMM" ~ "Qualcomm",
             T ~ name)
 }
 
