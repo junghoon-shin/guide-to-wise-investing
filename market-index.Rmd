@@ -291,7 +291,7 @@ relabel = function(symbol) c(KOSPI = "KOSPI",
                              Gold = "Gold fixing price", 
                              Copper = "Copper price",
                              WTI = "Crude oil price",
-                             Tbondfutures = "U.S. T-note futures",
+                             Tbondfutures = "U.S. T-bond futures",
                              Tnoteyield = "U.S. T-note yield",
                              AAA = "AAA corporate bond yield",
                              USDKRW = "USD/KRW exchange rate")[symbol]
