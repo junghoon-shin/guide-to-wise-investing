@@ -128,9 +128,9 @@ intellia-therapeutics-4.1b
 si-bone-1b
 cymabay-therapeutics
 nano-x-imaging-2.1b
-green-cross-lab-cell-850.8m
+green-cross-lab-cell-848.2m
 unity-software-29.7b
-parrot-208.8m
+parrot-208.7m
 ambarella-4.2b
 aerovironment-2.8b
 price
