@@ -127,11 +127,11 @@ small-cap-companies
 intellia-therapeutics-4.3b
 si-bone-1b
 cymabay-therapeutics
-nano-x-imaging-2b
-green-cross-lab-cell-910.5m
-unity-software-30.1b
+nano-x-imaging-1.9b
+green-cross-lab-cell-911.2m
+unity-software-30b
 parrot-223.1m
-ambarella-4b
+ambarella-4.1b
 aerovironment-2.8b
 price
 normalized-closing-price
