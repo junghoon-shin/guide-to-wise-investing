@@ -126,11 +126,10 @@ investment-decision
 small-cap-companies
 intellia-therapeutics-4.2b
 si-bone-1b
-cymabay-therapeutics
 nano-x-imaging-2b
-green-cross-lab-cell-935.6m
+green-cross-lab-cell-921.6m
 unity-software-29.6b
-parrot-223.2m
+parrot-223.3m
 ambarella-4b
 aerovironment-2.8b
 price

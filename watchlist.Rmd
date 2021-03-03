@@ -702,10 +702,6 @@ marketcap = company_plot %>% select(Name_trimmed, Marketcap_USD)
 
 [![](images/SI_Bone.png){width=240px}](https://si-bone.com/)
 
-### CymaBay Therapeutics (`r marketcap %>% filter(Name_trimmed == "CymaBay Therapeutics") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
-
-[![](images/CymaBay_Therapeutics.png){width=240px}](https://www.cymabay.com/)
-
 ### Nano-X Imaging (`r marketcap %>% filter(Name_trimmed == "Nano-X Imaging") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
 
 [![](images/NanoX.svg){width=240px}](https://www.nanox.vision/)
