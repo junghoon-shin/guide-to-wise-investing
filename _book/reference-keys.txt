@@ -128,7 +128,7 @@ intellia-therapeutics-4.2b
 si-bone-1b
 cymabay-therapeutics
 nano-x-imaging-2b
-green-cross-lab-cell-911.4m
+green-cross-lab-cell-911.1m
 unity-software-29.6b
 parrot-223.2m
 ambarella-4b
