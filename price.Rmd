@@ -157,7 +157,7 @@ g = price_data %>%
               ungroup,
             mapping = aes(label = str_c("Market cap: ", Marketcap_USD), vjust = vjust), x = min(price_data$date, na.rm = T) + 10, hjust = 0, size = 10 / .pt) +
   scale_x_date(expand = c(0, 0)) +
-  scale_y_continuous(position = "right") +
+  scale_y_continuous(position = "right", labels = make_readable) +
   labs(x = "Date", y = "Adjusted closing price") +
   facet_grid(rows = vars(Name), scales = "free_y", switch = "y")
 
