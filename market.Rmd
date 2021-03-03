@@ -1,6 +1,6 @@
 # Market evaluation {#market}
 
-## Market capitalization^[`r str_c('Data are from [World Bank](https://data.worldbank.org/indicator/CM.MKT.LCAP.CD?view=chart). Most recent 3 years for which top 3 countries\' data are available are shown.')`]
+## Market capitalization^[Data are from [World Bank](https://data.worldbank.org/indicator/CM.MKT.LCAP.CD?view=chart) and [Wikipedia](https://en.wikipedia.org/wiki/List_of_stock_exchanges). Most recent 3 years for which top 3 countries\' data are available are shown.]
 
 ```{r}
 gdp_ranking = read_html("https://www.worldometers.info/gdp/gdp-by-country/", which = 1, header = T) %>% pull(Country)
@@ -288,7 +288,7 @@ f2 = All %>%
 ggarrange(f1, f2, nrow = 1, legend = "right", common.legend = T)
 ```
 
-## Projected annual return
+## Projected annual return^[Source data and details can be found at [Gurufocus.com](https://www.gurufocus.com/global-market-valuation.php).]
 
 ```{r}
 Project = read_html("https://www.gurufocus.com/global-market-valuation.php", which = 1, header = T) %>% 
