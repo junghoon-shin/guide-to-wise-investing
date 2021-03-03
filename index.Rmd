@@ -14,7 +14,7 @@ cover-image: "images/mathieu-stern-1zO4O3Z0UJA-unsplash.jpg"
 apple-touch-icon: "images/bull.svg"
 apple-touch-icon-size: 120
 favicon: "images/bull.svg"
-description: "Investment guidebook containing business financials, industry and market environment, and global economy"
+description: "Investment data book containing business financials, industry and market environment, and global economy"
 ---
 
 ```{r, include = F}
@@ -117,9 +117,9 @@ make_percent = function(x, times) {
 }
 
 make_readable = function(x) case_when(abs(x) >= 1e12 ~ str_c(round(x/1e12, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "T"),
-                                      abs(x) >= 1e9 ~ str_c(round(x/1e9, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "B"),
-                                      abs(x) >= 1e6 ~ str_c(round(x/1e6, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "M"),
-                                      abs(x) >= 1e3 ~ str_c(round(x/1e3, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "k"),
+                                      abs(x) >= 1e9 ~ str_c(round(x/1e9, 1) %>% format(scientific = F, drop0trailing = T) %>% str_trim, "B"),
+                                      abs(x) >= 1e6 ~ str_c(round(x/1e6, 1) %>% format(scientific = F, drop0trailing = T) %>% str_trim, "M"),
+                                      abs(x) >= 1e3 ~ str_c(round(x/1e3, 1) %>% format(scientific = F, drop0trailing = T) %>% str_trim, "K"),
                                       T ~ round(x, 1) %>% format(scientific = F, drop0trailing = T) %>% str_trim)
 
 clean_name = function(name) {
