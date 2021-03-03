@@ -226,5 +226,5 @@ h_height = h@ht_list_param$height %>% as.numeric %>% conv_unit("mm", "inch")
 ```
 
 ```{r, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between adjusted closing prices over 2 years of my watchlist"}
-h
+draw(h, background = "transparent")
 ```

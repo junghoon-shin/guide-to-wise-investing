@@ -318,7 +318,7 @@ grid_size = heatmap_body_size/nrow(index_cor)
 ```
 
 ```{r, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between the stock matket index, REIT index, gold price, copper price, crude oil price, bond yields, and USD/KRW exchange rate over the last 30 years (weighted average over 5-year intervals)"}
-h
+draw(h, background = "transparent")
 
 index_cor_clustered = index_cor[row_order(h), column_order(h)]
 
