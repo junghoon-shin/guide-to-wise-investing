@@ -127,7 +127,7 @@ small-cap-companies
 intellia-therapeutics-3.9b
 si-bone-983.4m
 nano-x-imaging-2b
-green-cross-lab-cell-852.5m
+green-cross-lab-cell-878.6m
 unity-software-28.1b
 parrot-224m
 ambarella-4b
