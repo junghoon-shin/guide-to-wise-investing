@@ -210,8 +210,9 @@ fiveyearsago = (today() - round(365.25 * 5)) %>% as.character %>% str_replace(" 
 thirtyyearsago = (today() - round(365.25 * 30)) %>% as.character %>% str_replace(" ", "")
 fiftyyearsago = (today() - round(365.25 * 50)) %>% as.character %>% str_replace(" ", "")
 
-thisyear = today() %>% format("%Y") %>% as.numeric
-thismonth = today() %>% format("%m")
+thishour = now(tzone = "Europe/London") %>% strftime(format = "%H") %>% as.numeric
+thisyear = today() %>% strftime("%Y") %>% as.numeric
+thismonth = today() %>% strftime("%m")
 ```
 
 # Preface {#preface .unnumbered}

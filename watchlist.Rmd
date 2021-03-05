@@ -195,7 +195,9 @@ names(company) %<>% str_replace_all(., "_", " ")
 ```
 
 ```{r}
-company %>% write_sheet(ss = drive_get("Investment/Valuation"), sheet = "Valuation")
+if (thishour == 0) {
+  company %>% write_sheet(ss = drive_get("Investment/Valuation"), sheet = "Valuation")
+}
 ```
 
 ```{r}

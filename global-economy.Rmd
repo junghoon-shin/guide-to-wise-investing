@@ -37,12 +37,17 @@ ggplotly(g) %>% layout(xaxis = list(title = list(font = list(size = 16)), tickfo
 ## GDP growth
 
 ```{r}
-download.file("https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.KD.ZG?downloadformat=csv", destfile = "gdp_growth.zip", mode = "wb")
+if (thishour == 0) {
+  download.file("https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.KD.ZG?downloadformat=csv", destfile = "gdp_growth.zip", mode = "wb")
+  unzip("gdp_growth.zip", overwrite = T, exdir = "gdp_growth")
+  
+  download.file("https://api.worldbank.org/v2/en/indicator/FP.CPI.TOTL.ZG?downloadformat=csv", destfile = "inflation.zip", mode = "wb")
+  unzip("inflation.zip", overwrite = T, exdir = "inflation")
+}
+```
 
+```{r}
 gdp_growth_csv = unzip("gdp_growth.zip", list = T) %>% pull(Name) %>% str_subset("^(?!Metadata)")
-
-unzip("gdp_growth.zip", files = gdp_growth_csv, overwrite = T, exdir = "gdp_growth")
-
 gdp_growth = read_csv(file.path("gdp_growth", gdp_growth_csv), skip = 4, col_names = T)
 
 gdp_growth %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russian Federation" = "Russia",
@@ -73,12 +78,7 @@ ggplotly(g) %>% layout(xaxis = list(title = list(font = list(size = 16)), tickfo
 ## Inflation {#inflation}
 
 ```{r}
-download.file("https://api.worldbank.org/v2/en/indicator/FP.CPI.TOTL.ZG?downloadformat=csv", destfile = "inflation.zip", mode = "wb")
-
 inflation_csv = unzip("inflation.zip", list = T) %>% pull(Name) %>% str_subset("^(?!Metadata)")
-
-unzip("inflation.zip", files = inflation_csv, overwrite = T, exdir = "inflation")
-
 inflation = read_csv(file.path("inflation", inflation_csv), skip = 4, col_names = T)
 
 inflation %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russian Federation" = "Russia",

@@ -3,14 +3,26 @@
 ## Market capitalization^[Data are from [World Bank](https://data.worldbank.org/indicator/CM.MKT.LCAP.CD?view=chart) and [Wikipedia](https://en.wikipedia.org/wiki/List_of_stock_exchanges). Most recent 3 years for which top 3 countries\' data are available are shown.]
 
 ```{r}
+if (thishour == 0) {
+  download.file("https://api.worldbank.org/v2/en/indicator/CM.MKT.LCAP.CD?downloadformat=csv", destfile = "marketcap.zip", mode = "wb")
+  unzip("marketcap.zip", overwrite = T, exdir = "marketcap")
+  
+  tryCatch(
+    {
+      download.file("https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.CD?downloadformat=csv", destfile = "gdp.zip", mode = "wb")
+    },
+    error = function(cond) {
+      message(cond)
+      return(NULL)
+    })
+  unzip("gdp.zip", overwrite = T, exdir = "gdp")
+}
+```
+
+```{r}
 gdp_ranking = read_html("https://www.worldometers.info/gdp/gdp-by-country/", which = 1, header = T) %>% pull(Country)
 
-download.file("https://api.worldbank.org/v2/en/indicator/CM.MKT.LCAP.CD?downloadformat=csv", destfile = "marketcap.zip", mode = "wb")
-
 marketcap_csv = unzip("marketcap.zip", list = T) %>% pull(Name) %>% str_subset("^(?!Metadata)")
-
-unzip("marketcap.zip", files = marketcap_csv, overwrite = T, exdir = "marketcap")
-
 marketcap = read_csv(file.path("marketcap", marketcap_csv), skip = 4, col_names = T, trim_ws = T)
 
 rename_country1 = function(x) {
@@ -130,19 +142,7 @@ marketcap %>%
 ## GDP and market capitalization
 
 ```{r}
-tryCatch(
-  {
-    download.file("https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.CD?downloadformat=csv", destfile = "gdp.zip", mode = "wb")
-  },
-  error = function(cond) {
-    message(cond)
-    return(NULL)
-})
-
 gdp_csv = unzip("gdp.zip", list = T) %>% pull(Name) %>% str_subset("^(?!Metadata)")
-
-unzip("gdp.zip", files = gdp_csv, overwrite = T, exdir = "gdp")
-
 gdp = read_csv(file.path("gdp", gdp_csv), skip = 4, col_names = T, trim_ws = T)
 
 gdp %<>% mutate(`Country Name` = rename_country2(`Country Name`)) %>%
