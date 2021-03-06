@@ -3,87 +3,91 @@
 # Technology market share trend^[Data are from [StatCounter](https://gs.statcounter.com/).] {#technology}
 
 ```{r}
-fromyear = thisyear - 5
-toyear = thisyear
-frommonth = tomonth = thismonth
+fromdate = today() - 365.25 * 5
+todate = today()
 
-plan(multisession)
+fromyear = fromdate %>% strftime("%Y")
+frommonth = fromdate %>% strftime("%m")
 
-machine = c("Desktop", "Mobile", "Tablet", "Console")
+toyear = todate %>% strftime("%Y")
+tomonth = todate %>% strftime("%m")
+```
 
-OS = machine %>% 
-   map_dfr(~{
-      URL = str_c("https://gs.statcounter.com/", "os-market-share/", str_to_lower(.), "/worldwide/chart.php?device=", ., "&device_hidden=", str_to_lower(.), 
+```{r}
+if (thishour == 0) {
+   machine = c("Desktop", "Mobile", "Tablet")
+   
+   for (x in machine) {
+      URL = str_c("https://gs.statcounter.com/", "os-market-share/", 
+                  str_to_lower(x), "/worldwide/chart.php?device=", x, "&device_hidden=", str_to_lower(x), 
                   "&statType_hidden=os_combined&region_hidden=ww&granularity=monthly&statType=Operating%20System&region=Worldwide",
                   "&fromInt=", fromyear, frommonth, "&toInt=", toyear, tomonth, 
                   "&fromMonthYear=", fromyear, "-", frommonth, "&toMonthYear=", toyear, "-", tomonth, 
                   "&csv=1")
       
-      mutate(read_csv(URL, col_names = T), Machine = .) %>% pivot_longer(cols = -c(Machine, Date), names_to = "OS", values_to = "Share")
-   }) %>% 
-   mutate(Date = as_date(str_c(Date, "-01")), Share = Share / 100) %>%
-   relocate(Machine)
-
-Browser = machine %>% 
-   map_dfr(~{
-      URL = str_c("https://gs.statcounter.com/", "browser-market-share/", str_to_lower(.), "/worldwide/chart.php?device=", ., "&device_hidden=", str_to_lower(.), 
+      download.file(URL, str_c("OS_", x, ".csv"))
+      
+      URL = str_c("https://gs.statcounter.com/", "browser-market-share/", 
+                  str_to_lower(x), "/worldwide/chart.php?device=", x, "&device_hidden=", str_to_lower(x),
                   "&statType_hidden=browser&region_hidden=ww&granularity=monthly&statType=Browser&region=Worldwide",
                   "&fromInt=", fromyear, frommonth, "&toInt=", toyear, tomonth, 
                   "&fromMonthYear=", fromyear, "-", frommonth, "&toMonthYear=", toyear, "-", tomonth, 
                   "&csv=1")
       
-      mutate(read_csv(URL, col_names = T), Machine = .) %>% pivot_longer(cols = -c(Machine, Date), names_to = "Browser", values_to = "Share")
-   }) %>% 
-   mutate(Date = as_date(str_c(Date, "-01")), Share = Share / 100) %>%
-   relocate(Machine)
-
-Search = machine %>% 
-   map_dfr(~{
-      URL = str_c("https://gs.statcounter.com/", "search-engine-market-share/", str_to_lower(.), "/worldwide/chart.php?device=", ., "&device_hidden=", str_to_lower(.), 
+      download.file(URL, str_c("Browser_", x, ".csv"))
+      
+      URL = str_c("https://gs.statcounter.com/", "search-engine-market-share/", 
+                  str_to_lower(x), "/worldwide/chart.php?device=", x, "&device_hidden=", str_to_lower(x), 
                   "&statType_hidden=search_engine&region_hidden=ww&granularity=monthly&statType=Search%20Engine&region=Worldwide",
                   "&fromInt=", fromyear, frommonth, "&toInt=", toyear, tomonth, 
                   "&fromMonthYear=", fromyear, "-", frommonth, "&toMonthYear=", toyear, "-", tomonth, 
                   "&csv=1")
       
-      mutate(read_csv(URL, col_names = T), Machine = .) %>% pivot_longer(cols = -c(Machine, Date), names_to = "Search", values_to = "Share")
-   }) %>% 
-   mutate(Date = as_date(str_c(Date, "-01")), Share = Share / 100) %>%
-   relocate(Machine)
-
-SNS = machine %>% 
-   map_dfr(~{
-      URL = str_c("https://gs.statcounter.com/", "social-media-stats/", str_to_lower(.), "/worldwide/chart.php?device=", ., "&device_hidden=", str_to_lower(.), 
+      download.file(URL, str_c("Search_", x, ".csv"))
+      
+      URL = str_c("https://gs.statcounter.com/", "social-media-stats/", 
+                  str_to_lower(x), "/worldwide/chart.php?device=", x, "&device_hidden=", str_to_lower(x),
                   "&statType_hidden=social_media&region_hidden=ww&granularity=monthly&statType=Social%20Media&region=Worldwide",
-                  "&fromInt=", fromyear, frommonth, "&toInt=", toyear, tomonth, 
+                  "&fromInt=", fromyear, frommonth, "&toInt=", toyear, tomonth,
                   "&fromMonthYear=", fromyear, "-", frommonth, "&toMonthYear=", toyear, "-", tomonth, 
                   "&csv=1")
       
-      mutate(read_csv(URL, col_names = T), Machine = .) %>% pivot_longer(cols = -c(Machine, Date), names_to = "SNS", values_to = "Share")
-   }) %>% 
-   mutate(Date = as_date(str_c(Date, "-01")), Share = Share / 100) %>%
-   relocate(Machine)
-
-machine = c("Mobile", "Tablet", "Console")
-
-Device = machine %>% 
-   map_dfr(~{
-      URL = str_c("https://gs.statcounter.com/", "vendor-market-share/", str_to_lower(.), "/worldwide/chart.php?device=", ., "&device_hidden=", str_to_lower(.), 
+      download.file(URL, str_c("SNS_", x, ".csv"))
+   }
+   
+   machine = c("Mobile", "Tablet", "Console")
+   
+   for (x in machine) {
+      URL = str_c("https://gs.statcounter.com/", "vendor-market-share/", 
+                  str_to_lower(x), "/worldwide/chart.php?device=", x, "&device_hidden=", str_to_lower(x),
                   "&statType_hidden=vendor&region_hidden=ww&granularity=monthly&statType=Device%20Vendor&region=Worldwide",
                   "&fromInt=", fromyear, frommonth, "&toInt=", toyear, tomonth, 
                   "&fromMonthYear=", fromyear, "-", frommonth, "&toMonthYear=", toyear, "-", tomonth, 
                   "&csv=1")
       
-      mutate(read_csv(URL, col_names = T), Machine = .) %>% pivot_longer(cols = -c(Machine, Date), names_to = "Device", values_to = "Share")
-   }) %>% 
-   mutate(Date = as_date(str_c(Date, "-01")), Share = Share / 100) %>%
-   relocate(Machine)
+      download.file(URL, str_c("Device_", x, ".csv"))
+   }
+}
 
-plan("default")
+read_stat = function(machine, category) {
+   machine %>%
+      map_dfr(~{
+         mutate(read_csv(str_c(category, "_", ., ".csv"), col_names = T), Machine = .) %>%
+            pivot_longer(cols = -c(Machine, Date), names_to = category, values_to = "Share")
+      }) %>%
+      mutate(Date = as_date(str_c(Date, "-01")), Share = Share / 100) %>%
+      relocate(Machine)
+}
+
+OS = read_stat(c("Desktop", "Mobile", "Tablet"), "OS")
+Browser = read_stat(c("Desktop", "Mobile", "Tablet"), "Browser")
+Search = read_stat(c("Desktop", "Mobile", "Tablet"), "Search")
+SNS = read_stat(c("Desktop", "Mobile", "Tablet"), "SNS")
+Device = read_stat(c("Mobile", "Tablet", "Console"), "Device")
 ```
 
 ```{r}
 share_trend = function(.data, .machine, .variable) {
-   
    .data %<>% filter(Machine == .machine)
    
    missing_date = .data %>% group_by(Date) %>% summarize(total = sum(Share)) %>% filter(total == 0) %>% pull(Date)
