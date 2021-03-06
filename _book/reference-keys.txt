@@ -129,7 +129,7 @@ si-bone-953m
 nano-x-imaging-1.8b
 green-cross-lab-cell-901.6m
 unity-software-25.7b
-parrot-198m
+parrot-197.8m
 ambarella-4b
 aerovironment-2.6b
 price
