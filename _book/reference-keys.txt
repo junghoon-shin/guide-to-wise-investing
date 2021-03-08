@@ -125,10 +125,10 @@ big-four-numbers
 investment-decision
 small-cap-companies
 intellia-therapeutics-3.3b
-si-bone-950.1m
+si-bone-954.6m
 nano-x-imaging-1.8b
-green-cross-lab-cell-820.4m
-unity-software-25.7b
+green-cross-lab-cell-819.6m
+unity-software-25.8b
 parrot-211.1m
 ambarella-3.8b
 aerovironment-2.5b
