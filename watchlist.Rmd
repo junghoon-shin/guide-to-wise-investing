@@ -458,10 +458,10 @@ relation_plot = function(.data, x, y, xlab = NULL, ylab = NULL, xlabels = waiver
   
   ggrob = as_grob(gt)
   
-  label_indices = sapply(ggrob$grobs[[20]][[1]][[1]]$grobs, function(i) "label" %in% names(i)) %>% which
+  label_indices = sapply(ggrob$grobs[[str_which(ggrob$layout$name, "guide-box")]][[1]][[1]]$grobs, function(i) "label" %in% names(i)) %>% which
   
   for (i in label_indices) {
-    ggrob$grobs[[20]][[1]][[1]]$grobs[[i]]$label = "A"
+    ggrob$grobs[[str_which(ggrob$layout$name, "guide-box")]][[1]][[1]]$grobs[[i]]$label = "A"
   }
   
   list(as_ggplot(ggrob), fig_height)
@@ -498,7 +498,7 @@ f6 = relation_plot(company_plot, -DER, ROE, xlab = "Debt/Equity (reverse axis)",
 f7 = relation_plot(company_plot, -DER, ROIC, xlab = "Debt/Equity (reverse axis)", xlabels = function(x) {-x}, panelwidth = panelwidth)
 ```
 
-```{r, fig.width = 7, fig.height = f1[[2]] + f2[[2]] + f3[[2]] + f4[[2]] + f5[[2]] + f6[[2]] + f7[[2]], fig.cap = "Scatterplot of key statistics"}
+```{r, fig.height = f1[[2]] + f2[[2]] + f3[[2]] + f4[[2]] + f5[[2]] + f6[[2]] + f7[[2]], fig.cap = "Scatterplot of key statistics"}
 ggarrange(f1[[1]], f2[[1]], f3[[1]], f4[[1]], f5[[1]], f6[[1]], f7[[1]], 
           heights = c(f1[[2]], f2[[2]], f3[[2]], f4[[2]], f5[[2]], f6[[2]], f7[[2]]),
           nrow = 7, ncol = 1, align = "v")
