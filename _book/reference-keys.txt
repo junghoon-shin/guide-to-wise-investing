@@ -124,8 +124,8 @@ key-financials
 big-four-numbers
 investment-decision
 small-cap-companies
-intellia-therapeutics-4.1b
-si-bone-988.9m
+intellia-therapeutics-4b
+si-bone-993.8m
 nano-x-imaging-1.8b
 green-cross-lab-cell-830.7m
 unity-software-27.8b
