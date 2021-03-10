@@ -283,6 +283,7 @@ glossary = tribble(~Concept, ~Meaning,
         "Sustainable growth rate", "ROE $\\times$ retention ratio") 
 
 glossary %>%
+  arrange(Concept) %>%
   kbl(escape = F, col.names = names(.), caption = "Glossary") %>%
     kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
                   full_width = F, position = "left")
