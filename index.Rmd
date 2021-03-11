@@ -48,6 +48,7 @@ p_load(bookdown,
        httr,
        kableExtra,
        knitr,
+       labeling,
        lubridate,
        magrittr,
        measurements,
@@ -70,8 +71,8 @@ knitr::opts_chunk$set(echo = FALSE,
                       error = FALSE,
                       message = FALSE, 
                       out.width = "100%", out.height = "100%", 
-                      fig.width = 7, fig.height = 5, 
-                      dev.args = list(bg = "transparent"))
+                      fig.width = 7, fig.height = 5,
+                      dev.args = list(bg = "transparent", type = "cairo"))
 
 theme_set(theme_bw(base_family = "Lato"))
 

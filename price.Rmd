@@ -136,7 +136,7 @@ normalized_price_trend(price_data, interesting_sectors[14])
 normalized_price_trend(price_data, interesting_sectors[15])
 ```
 
-## Adjusted closing price^[https://www.investopedia.com/terms/a/adjusted_closing_price.asp]
+## Adjusted closing price^[Shades indicate trading volume per day (smoothed for visualization)]
 
 ```{r}
 price_data %<>%
@@ -144,7 +144,45 @@ price_data %<>%
   mutate(Marketcap_USD = str_c(round(Marketcap_USD/1e9, 1), " ($billion)"))
 ```
 
-```{r}
+(ref:adjusted-closing-price) [Adjusted closing stock price](https://www.investopedia.com/terms/a/adjusted_closing_price.asp) over the last 2 years
+
+```{r, fig.height = 2.5 * length(unique(price_data$Name)), fig.cap = "(ref:adjusted-closing-price)"}
+inset_height = 0.2
+inset_expansion = 1.1 * inset_height / (1 - inset_height)
+
+get_inset = function(.data) {
+  g = .data %>%
+    ggplot(mapping = aes(x = date, y = volume)) +
+    geom_area(stat = "smooth", method = "loess", span = 0.1, fill = fill_color[1], alpha = 0.5) +
+    scale_x_date(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0, 0.05, 0)) +
+    theme(axis.ticks = element_blank(), 
+          axis.ticks.length = unit(0, "points"), 
+          axis.text = element_blank(), 
+          axis.title = element_blank(),
+          panel.grid = element_blank(),
+          panel.border = element_blank(),
+          plot.margin = unit(c(0, 0, 0, 0), "points"))
+  
+  ggplotGrob(g)
+}
+
+annotation_custom2 = function (grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, data) {
+  layer(data = data, stat = StatIdentity, position = PositionIdentity, geom = GeomCustomAnn,
+        inherit.aes = TRUE, params = list(grob = grob, xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax))
+}
+
+inset_xmin = min(price_data$date)
+inset_xmax = max(price_data$date)
+
+insets = price_data %>%
+  split(.$symbol) %>%
+  map(~annotation_custom2(grob = get_inset(.),
+                          xmin = inset_xmin, xmax = inset_xmax,
+                          ymin = min(.$adjusted) - (max(.$adjusted) - min(.$adjusted)) * (0.05 + inset_expansion),
+                          ymax = min(.$adjusted) - (max(.$adjusted) - min(.$adjusted)) * 0.05,
+                          data = .))
+
 g = price_data %>%
   ggplot(mapping = aes(x = date, y = adjusted)) +
   geom_line(color = line_color[1]) +
@@ -159,15 +197,21 @@ g = price_data %>%
               ungroup,
             mapping = aes(label = str_c("Market cap: ", Marketcap_USD), vjust = vjust), x = min(price_data$date, na.rm = T) + 10, hjust = 0, size = 10 / .pt) +
   scale_x_date(expand = c(0, 0)) +
-  scale_y_continuous(position = "right", labels = make_readable) +
+  scale_y_continuous(position = "right", 
+                     expand = c(0.05 + inset_expansion, 0, 0.05, 0),
+                     breaks = function(x) { 
+                       limits = c(x[1] + (x[2] - x[1]) * inset_expansion / (1.1 + inset_expansion), x[2])
+                       breaks = extended(limits[1], limits[2], 5)
+                       breaks[breaks >= limits[1] & breaks <= limits[2]]
+                     },
+                     labels = make_readable) +
   labs(x = "Date", y = "Adjusted closing price") +
-  facet_grid(rows = vars(Name), scales = "free_y", switch = "y")
+  facet_grid(rows = vars(Name), scales = "free_y", switch = "y") +
+  insets
 
 gt = ggplot_gtable(ggplot_build(g))
 gt$layout$clip[str_detect(gt$layout$name, "panel")] = "off"
-```
 
-```{r, fig.height = 2.5 * length(unique(price_data$Name)), fig.cap = "Adjusted closing stock price over the last 2 years"}
 as_ggplot(gt)
 ```
 
