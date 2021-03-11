@@ -126,7 +126,7 @@ investment-decision
 small-cap-companies
 intellia-therapeutics-4.4b
 si-bone-1b
-nano-x-imaging-2.1b
+nano-x-imaging-2b
 green-cross-lab-cell-886.3m
 unity-software-29.6b
 parrot-227.8m
