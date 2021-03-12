@@ -136,7 +136,7 @@ normalized_price_trend(price_data, interesting_sectors[14])
 normalized_price_trend(price_data, interesting_sectors[15])
 ```
 
-## Adjusted closing price^[Shades indicate trading volume per day (smoothed for visualization).]
+## Adjusted closing price
 
 ```{r}
 price_data %<>%
@@ -144,7 +144,7 @@ price_data %<>%
   mutate(Marketcap_USD = str_c(round(Marketcap_USD/1e9, 1), " ($billion)"))
 ```
 
-(ref:adjusted-closing-price) [Adjusted closing stock price](https://www.investopedia.com/terms/a/adjusted_closing_price.asp) over the last 2 years
+(ref:adjusted-closing-price) [Adjusted stock prices](https://www.investopedia.com/terms/a/adjusted_closing_price.asp) over the last 2 years. Blue shade at the bottom of each panel indicates trading volume per day (smoothed for visualization).
 
 ```{r, fig.height = 2.5 * length(unique(price_data$Name)), fig.cap = "(ref:adjusted-closing-price)"}
 inset_height = 0.2
@@ -271,6 +271,6 @@ h = price_cor %>% Heatmap(name = "Pearson's r",
 h_height = h@ht_list_param$height %>% as.numeric %>% conv_unit("mm", "inch")
 ```
 
-```{r, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between adjusted closing prices over 2 years of my watchlist"}
+```{r, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between adjusted closing prices for 2 years of my watchlist"}
 draw(h, background = "transparent")
 ```
