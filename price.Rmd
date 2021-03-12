@@ -136,7 +136,7 @@ normalized_price_trend(price_data, interesting_sectors[14])
 normalized_price_trend(price_data, interesting_sectors[15])
 ```
 
-## Adjusted closing price^[Shades indicate trading volume per day (smoothed for visualization)]
+## Adjusted closing price^[Shades indicate trading volume per day (smoothed for visualization).]
 
 ```{r}
 price_data %<>%
