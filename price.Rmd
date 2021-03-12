@@ -153,7 +153,7 @@ inset_expansion = 1.1 * inset_height / (1 - inset_height)
 get_inset = function(.data) {
   g = .data %>%
     ggplot(mapping = aes(x = date, y = volume)) +
-    geom_area(stat = "smooth", method = "loess", span = 0.1, fill = fill_color[1], alpha = 0.5) +
+    geom_area(stat = "smooth", method = "loess", span = 0.05, fill = fill_color[1], alpha = 0.5) +
     scale_x_date(expand = c(0, 0)) +
     scale_y_continuous(expand = c(0, 0, 0.05, 0)) +
     theme(axis.ticks = element_blank(), 
@@ -172,13 +172,11 @@ annotation_custom2 = function (grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax 
         inherit.aes = TRUE, params = list(grob = grob, xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax))
 }
 
-inset_xmin = min(price_data$date)
-inset_xmax = max(price_data$date)
-
 insets = price_data %>%
   split(.$symbol) %>%
   map(~annotation_custom2(grob = get_inset(.),
-                          xmin = inset_xmin, xmax = inset_xmax,
+                          xmin = min(.$date), 
+                          xmax = max(.$date),
                           ymin = min(.$adjusted) - (max(.$adjusted) - min(.$adjusted)) * (0.05 + inset_expansion),
                           ymax = min(.$adjusted) - (max(.$adjusted) - min(.$adjusted)) * 0.05,
                           data = .))
