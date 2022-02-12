@@ -1,0 +1,458 @@
+# My watchlist {#watchlist}
+
+## Comprehensive financials^[Data are automatically retrieved from [Google Finance](https://www.google.com/finance) and [Yahoo Finance](https://finance.yahoo.com/).] {#comprehensive}
+
+```{r}
+company_display = company %>% 
+  select(-c(Ticker, Yahoo, Ticker3)) %>%
+  mutate(Changepct = make_percent(Changepct, 1)) %>%
+  mutate(across(c(`Expected payout ratio change rate`,
+                  `Payout ratio`,
+                  `Retention ratio`,
+                  `Profit margin`,
+                  `Debt-to-equity ratio`,
+                  ROA,
+                  ROIC,
+                  ROE,
+                  contains(c("growth", "yield"))),
+                ~make_percent(., 100))) %>%
+  mutate(across(c(Shares,
+                  Marketcap,
+                  NOPAT,
+                  IC,
+                  Payback8,
+                  `Operating cash flow`,
+                  `Levered free cash flow`,
+                  `Free cash flow`),
+                make_readable)) %>%
+  mutate(across(c(Price:Closeyest,
+                  Low52:Target, 
+                  `Expected PE in 10yrs`:DCF10,
+                  `Adjusted Graham formula`,
+                  PBR:`Marketcap/Payback8`), 
+                ~round(., 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim)) %>%
+  replace(. == "NA", NA)
+
+financials %<>% 
+  left_join(company %>% select(Yahoo, Name, Currency)) %>%
+  select(-Yahoo)
+
+names(financials) %<>% 
+  str_replace_all(c("([a-z])([A-Z])" = "\\1 \\2",
+                    "Liab$" = "Liabilities",
+                    "Netincome" = "Net income")) %>%
+  str_to_sentence
+
+financials %<>% 
+  rename(EBIT = Ebit) %>%
+  arrange(Name, Date) %>%
+  relocate(Name, Currency)
+
+financials_display = financials %>% 
+  mutate(across(-c(Name, Currency, Date), make_readable),
+         across(-Date, ~replace(., . == "NA", NA)))
+```
+
+```{r, fig.cap = "Summarized statistics of my watchlist"}
+my_datatable(company_display, paging = T, pageLength = 5, scrollY = NULL, caption = NULL)
+```
+
+```{r, fig.cap = "Income statement, balance sheet, and cash flow data over the last 4 years"}
+my_datatable(financials_display, paging = T, pageLength = 8, scrollY = NULL, caption = NULL)
+```
+
+(ref:roe) ROE $\times$ retention ratio
+
+```{r}
+glossary = tribble(~Term, ~Meaning,
+        "Adjusted Graham formula", "Defined [here](https://www.oldschoolvalue.com/stock-valuation/benjamin-graham-formula/)",
+        "BVPS", "Book value per share",
+        "DCF10", "Discounted cash flow per share in 10 years as defined [here](https://www.investopedia.com/terms/d/dcf.asp)",
+        "EPS", "Earnings per share",
+        "High52", "52-week high price",
+        "IC", "Invested capital",
+        "Industry PER", "Data from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html)",
+        "Low52", "52-week low price",
+        "NOPAT", "Net operating profit after taxes",
+        "Payback8", "8-year payback time buy price of the whole company [@town2018]",
+        "PBR", "Price/book-value ratio",
+        "PEG", "Price/earnings-to-growth ratio",
+        "PER", "Price/earnings ratio",
+        "PSR", "Price/sales ratio",
+        "ROA", "Return on asset",
+        "ROIC", "Return on invested capital",
+        "ROE", "Return on equity",
+        "Sustainable growth rate", "ROE $\\times$ retention ratio")
+
+glossary %>%
+  arrange(Term) %>%
+  kbl(escape = F, col.names = names(.), caption = "Glossary") %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  full_width = F, position = "left")
+```
+
+## Key financials
+
+```{r}
+company_plot %<>% 
+  mutate(`Earnings-to-price` = 1/PER,
+         `Sales-to-price` = 1/PSR,
+         `Book-to-price` = 1/PBR) %>%
+  arrange(desc(Industry), 
+          !is.na(`Earnings-to-price`), `Earnings-to-price`, 
+          !is.na(`Sales-to-price`), `Sales-to-price`, 
+          !is.na(`Book-to-price`), `Book-to-price`) %>%
+  mutate(Name = factor(Name, levels = Name))
+```
+
+```{r}
+f1 = company_plot %>%
+  ggplot(mapping = aes(x = Name, y = 0)) + 
+  geom_col(mapping = aes(fill = Industry), color = "transparent") +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 0)) +
+  scale_fill_manual(limits = unique(company_plot$Industry), 
+                    values = fill_color[length(unique(company_plot$Industry)):1],
+                    guide = guide_legend(title = NULL, ncol = 3, reverse = T, override.aes = list(color = "black"))) +
+  coord_flip() +
+  labs(x = NULL, y = NULL) +
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank(),
+        panel.border = element_blank(),
+        panel.grid = element_blank(),
+        panel.background = element_rect(fill = "transparent"), 
+        plot.margin = unit(c(5.5, 0, 5.5, 5.5), "points"),
+        legend.position = "bottom")
+
+financial_plot = function(financials, variable, title = NULL, labels = waiver()) {
+  
+  if (is.null(title)) title = enquo(variable)
+  
+  variable = enquo(variable)
+  
+  financials %>%
+    ggplot(mapping = aes(x = Name, y = !!variable)) + 
+    geom_col(mapping = aes(fill = Industry), color = "black", width = 0.7) +
+    scale_y_continuous(expand = c(0.05, 0), breaks = pretty_breaks(3), labels = labels) +
+    scale_fill_manual(limits = unique(company_plot$Industry), 
+                      values = fill_color[length(unique(financials$Industry)):1], 
+                      guide = F) +
+    coord_flip() +
+    labs(x = NULL, y = title) +
+    theme(axis.ticks.y = element_blank(), axis.ticks.length.y = unit(0, "npc"), axis.text.y = element_blank(), plot.margin = unit(c(5.5, 5.5, 5.5, 0), "points"))
+  
+}
+
+f2 = financial_plot(company_plot, `Earnings-to-price`, "Earnings/Price")
+f3 = financial_plot(company_plot, `Sales-to-price`, "Sales/Price")
+f4 = financial_plot(company_plot, `Book-to-price`, "Book/Price")
+f5 = financial_plot(company_plot, ROE, "ROE")
+f6 = financial_plot(company_plot, ROIC, "ROIC")
+f7 = financial_plot(company_plot, ROA, "ROA")
+f8 = financial_plot(company_plot, DER, "Debt/Equity")
+f9 = financial_plot(company_plot, Quarterly_earnings_growth, "Earnings growth (yoy)", percent)
+f10 = financial_plot(company_plot, Quarterly_revenue_growth, "Revenue growth (yoy)", percent)
+
+n_industry = company_plot$Industry %>% unique %>% length
+
+legend_ratio = (nrow(company_plot) + 2) / (ceiling(n_industry/3) + 1)
+
+name_width = stringWidth(company_plot$Name) %>% 
+  convertUnit("inch") %>% 
+  as.numeric %>% 
+  multiply_by(as.numeric(theme_get()$axis.text$size * theme_get()$text$size) / 12) %>% 
+  max %>%
+  add(0.1)
+
+plot_width = 7 - name_width
+```
+
+```{r, fig.height = (nrow(company_plot) + 2) * 3/4 + (ceiling(n_industry/3) + 1)/4, fig.cap = "Key financials of my watchlist"}
+ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))), 
+          ggarrange(f1 + guides(fill = F), f5, f6, f7, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))),
+          ggarrange(f1 + guides(fill = F), f8, f9, f10, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))),
+          get_legend(f1),
+          nrow = 4, ncol = 1,
+          heights = c(legend_ratio, legend_ratio, legend_ratio, 1))
+```
+
+```{r}
+exchange = getQuote(str_c("USD", company_plot$Currency, "=X"), src = "yahoo") %>% 
+  rownames_to_column("Ticker") %>% 
+  mutate(Currency = str_extract(Ticker, "(?<=USD)[A-Z]+(?=\\=)")) %>%
+  select(Currency, Last) %>%
+  rename(Exchange = Last)
+
+company_plot %<>% 
+  left_join(exchange) %>%
+  mutate(Name = as.character(Name), 
+         Marketcap_USD = Marketcap / Exchange) %>%
+  arrange(desc(Marketcap_USD)) %>%
+  mutate(Name_trimmed = case_when(Name == "Taiwan Semiconductor" ~ "TSMC",
+                                  Name == "Pacific Biosciences of California" ~ "PacBio",
+                                  Name == "Logitech International" ~ "Logitech",
+                                  Name == "Dell Technologies" ~ "Dell",
+                                  Name == "Amazon.com" ~ "Amazon",
+                                  Name == "LVMH Moet Hennessy Louis Vuitton" ~ "LVMH",
+                                  T ~ Name))
+```
+
+```{r}
+relation_plot = function(.data, x, y, xlab = NULL, ylab = NULL, xlabels = waiver(), ylabels = waiver(), panelwidth) {
+  
+  if (is.null(xlab)) xlab = enquo(x)
+  if (is.null(ylab)) ylab = enquo(y)
+  
+  x = enquo(x)
+  y = enquo(y)
+  
+  b = .data %>% pull(!!y) %>% boxplot(range = 1)
+  base_limits = b$stats[c(1, 5), ]
+  
+  .data %<>%
+    filter(!is.na(!!x) & !is.na(!!y) & !is.na(Marketcap_USD)) %>%
+    mutate(group = case_when(!!y >= base_limits[1] & !!y <= base_limits[2] ~ "Main",
+                             !!y < base_limits[1] ~ "Low",
+                             !!y > base_limits[2] ~ "High") %>% 
+             factor(levels = c("High", "Main", "Low")),
+           fontsize = rescale(log10(Marketcap_USD/1e9), c(1, 6)),
+           name_width = stringWidth(Name_trimmed) %>% convertUnit("inch") %>% as.numeric %>% multiply_by(fontsize * .pt / 12))
+  
+  get_expansion = function(.data, panelwidth) {
+    for (left_expansion in 1:40/20) {
+      for (right_expansion in 1:40/20) {
+        .data %<>% 
+          mutate(data_position = rescale(!!x, to = c(panelwidth * left_expansion / (1 + left_expansion + right_expansion), 
+                                                     panelwidth * (1 + left_expansion) / (1 + left_expansion + right_expansion))),
+                 left_position = data_position - name_width / 2,
+                 right_position = data_position + name_width / 2)
+        
+        leftmost = min(.data$left_position)
+        rightmost = max(.data$right_position)
+        
+        if (leftmost >= 0) {
+          if (rightmost <= panelwidth) {
+            return(c(left_expansion, right_expansion))
+            break
+          }
+        }
+      }
+    }
+  }
+  
+  x_expansion = get_expansion(.data, panelwidth)
+  
+  g = .data %>%
+    ggplot(mapping = aes(!!x, !!y)) +
+    annotation_custom(linesGrob(gp = gpar(lty = "dashed")), ymin = 0, ymax = 0) +
+    annotation_custom(linesGrob(gp = gpar(lty = "dashed")), xmin = 0, xmax = 0) +
+    geom_text(mapping = aes(label = Name_trimmed, size = Marketcap_USD/1e9), hjust = 0.5, vjust = 0.5) +
+    scale_x_continuous(expand = c(x_expansion[1], 0, x_expansion[2], 0), labels = xlabels) +
+    scale_size(trans = "log10", range = c(1, 6), guide = guide_legend(title = "Market cap\n($billion)")) +
+    labs(x = xlab, y = ylab) +
+    facet_grid_sc(rows = vars(group), 
+                  scales = list(y = list(High = scale_y_continuous(labels = ylabels, expand = c(0.1, 0)),
+                                         Main = scale_y_continuous(labels = ylabels, expand = c(0.02, 0)),
+                                         Low = scale_y_continuous(labels = ylabels, expand = c(0.1, 0)))),
+                  labeller = labeller(group = c(High = "Upper outlier", Main = "Majority", Low = "Lower outlier")))
+  
+  gt = ggplot_gtable(ggplot_build(g))
+  
+  fig_height = 7.5 + sum(str_detect(gt$layout$name, "panel-[13]-1")) * 1.5 + 1/2
+  
+  gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] = gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] * 0.2
+  
+  ggrob = as_grob(gt)
+  
+  label_indices = sapply(ggrob$grobs[[str_which(ggrob$layout$name, "guide-box")]][[1]][[1]]$grobs, function(i) "label" %in% names(i)) %>% which
+  
+  for (i in label_indices) {
+    ggrob$grobs[[str_which(ggrob$layout$name, "guide-box")]][[1]][[1]]$grobs[[i]]$label = "A"
+  }
+  
+  list(as_ggplot(ggrob), fig_height)
+}
+```
+
+```{r, include = F}
+panelwidth = 4.8
+
+f1 = relation_plot(company_plot, `Earnings-to-price`, Earnings_growth_past_5yrs, 
+              xlab = "Earnings/Price", ylab = "Earnings growth per annum (past 5 years)", 
+              ylabels = percent,
+              panelwidth = panelwidth)
+
+f2 = relation_plot(company_plot, `Earnings-to-price`, Earnings_growth_estimate_next_5yrs, 
+              xlab = "Earnings/Price", ylab = "Earnings growth per annum (next 5 years)",
+              ylabels = percent,
+              panelwidth = panelwidth)
+
+f3 = relation_plot(company_plot, `Sales-to-price`, Revenue_growth_estimate_current, 
+              xlab = "Sales/Price", ylab = "Revenue growth estimate (current year)",
+              ylabels = percent,
+              panelwidth = panelwidth)
+
+f4 = relation_plot(company_plot, `Sales-to-price`, Revenue_growth_estimate_next, 
+              xlab = "Sales/Price", ylab = "Revenue growth estimate (next year)",
+              ylabels = percent,
+              panelwidth = panelwidth)
+
+f5 = relation_plot(company_plot, ROIC, ROE, panelwidth = panelwidth)
+
+f6 = relation_plot(company_plot, -DER, ROE, xlab = "Debt/Equity (reverse axis)", xlabels = function(x) {-x}, panelwidth = panelwidth)
+
+f7 = relation_plot(company_plot, -DER, ROIC, xlab = "Debt/Equity (reverse axis)", xlabels = function(x) {-x}, panelwidth = panelwidth)
+```
+
+```{r, fig.height = f1[[2]] + f2[[2]] + f3[[2]] + f4[[2]] + f5[[2]] + f6[[2]] + f7[[2]], fig.cap = "Scatterplot of key statistics"}
+ggarrange(f1[[1]], f2[[1]], f3[[1]], f4[[1]], f5[[1]], f6[[1]], f7[[1]], 
+          heights = c(f1[[2]], f2[[2]], f3[[2]], f4[[2]], f5[[2]], f6[[2]], f7[[2]]),
+          nrow = 7, ncol = 1, align = "v")
+```
+
+## Big four numbers
+
+Trends of [big 4 numbers](#bigfour) over the last 3 to 4 years (depending on data availability at [Yahoo Finance](https://finance.yahoo.com/)) are shown below. All numbers are normalized to 100 (if positive) or -100 (if negative) as of the first year with available data for each company.
+
+```{r}
+financials_plot = financials %>% 
+  select(Name, Date, `Total revenue`, `Net income`, `Total cash from operating activities`, `Total stockholder equity`) %>%
+  pivot_longer(cols = c(`Total revenue`, `Net income`, `Total cash from operating activities`, `Total stockholder equity`), 
+               names_to = "Variable",
+               values_to = "Value") %>%
+  filter(!is.na(Value)) %>%
+  group_by(Variable, Name) %>%
+  filter(!(Value == 0 & Date == min(Date))) %>%
+  mutate(Value = Value / Value[Date == min(Date)] * sign(Value[Date == min(Date)]) * 100) %>%
+  ungroup
+
+big_four_plot = function(.data, .variable, panelwidth, textsize) {
+  .data %<>% filter(Variable == .variable)
+  
+  get_expansion = function(.data, panelwidth, textsize) {
+    
+    .data %<>% 
+      mutate(name_width = stringWidth(Name) %>% convertUnit("inch") %>% as.numeric %>% multiply_by(textsize / 12)) %>%
+      group_by(Name) %>%
+      mutate(date_modified = case_when(Date == max(Date) ~ Date + 10, 
+                                       T ~ Date)) %>%
+      ungroup
+    
+    for (expansion in 1:40/20) {
+      xmax = .data %>% 
+        mutate(date_position = rescale(date_modified, c(0, panelwidth / (1 + expansion)))) %>%
+        group_by(Name) %>%
+        slice(which.max(date_position)) %>%
+        ungroup %>%
+        mutate(text_position = date_position + name_width) %>%
+        pull(text_position) %>%
+        max
+      
+      if (xmax <= panelwidth) {
+        return(expansion)
+        break
+      }
+    }
+  }
+
+  x_expansion = get_expansion(.data, panelwidth, textsize)
+  
+  xlabels = make_date(unique(year(seq(min(.data$Date), 
+                                      as_date(max(as.numeric(.data$Date)) + (max(as.numeric(.data$Date)) - min(as.numeric(.data$Date))) * x_expansion), 
+                                      by = 1)))[-1], 1, 1)
+  xbreaks = as.numeric(xlabels)
+  xlabels = year(xlabels)
+  
+  b = .data %>% 
+    group_by(Name) %>% 
+    slice(which.max(case_when(Value >= 0 ~ abs(Value - 100),
+                              Value < 0 ~ abs(Value + 100)))) %>% 
+    ungroup %>% 
+    pull(Value) %>% 
+    boxplot
+  
+  base_limits = b$stats[c(1, 5), ]
+  
+  high = .data %>% filter(Value > base_limits[2]) %>% pull(Name) %>% unique
+  low = .data %>% filter(Value < base_limits[1]) %>% pull(Name) %>% unique %>% setdiff(high)
+  
+  .data %<>% 
+    mutate(Date = as.numeric(Date),
+           group = case_when(Name %in% high ~ "High",
+                             Name %in% low ~ "Low",
+                             T ~ "Main") %>%
+             factor(levels = c("High", "Main", "Low")))
+  
+  g = .data %>%
+    ggplot(mapping = aes(x = Date, y = Value)) +
+    annotation_custom(linesGrob(gp = gpar(lty = "dashed")), ymin = 0, ymax = 0) +
+    geom_line(mapping = aes(group = Name), color = "gray") +
+    geom_text(data = .data %>% group_by(Name) %>% filter(Date == max(Date)),
+              mapping = aes(x = Date + 10, label = Name, color = factor(sign(Value), levels = c(1, -1, 0))), hjust = 0, size = textsize / .pt) +
+    scale_x_continuous(expand = c(0, 0, x_expansion, 0), breaks = xbreaks, labels = xlabels) +
+    scale_color_manual(values = line_color, guide = F) +
+    labs(y = .variable) +
+    facet_grid_sc(rows = vars(group),
+                  scales = list(y = list(High = scale_y_continuous(expand = c(0.1, 0), labels = make_readable),
+                                         Main = scale_y_continuous(expand = c(0.02, 0), labels = make_readable),
+                                         Low = scale_y_continuous(expand = c(0.1, 0), labels = make_readable))),
+                  labeller = labeller(group = c(High = "Upper outlier", Main = "Majority", Low = "Lower outlier")))
+  
+  gt = ggplot_gtable(ggplot_build(g))
+  
+  fig_height = 7.5 + sum(str_detect(gt$layout$name, "panel-[13]-1")) * 1.5 + 1/2
+    
+  gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] = gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] * 0.2
+    
+  list(as_ggplot(gt), fig_height)
+}
+```
+
+```{r, include = F}
+panelwidth = 6.3
+
+f1 = big_four_plot(financials_plot, "Total revenue", panelwidth, 10)
+f2 = big_four_plot(financials_plot, "Net income", panelwidth, 10)
+f3 = big_four_plot(financials_plot, "Total cash from operating activities", panelwidth, 10)
+f4 = big_four_plot(financials_plot, "Total stockholder equity", panelwidth, 10)
+```
+
+```{r, fig.height = f1[[2]], fig.cap = "Total revenue"}
+f1[[1]]
+```
+
+```{r, fig.height = f2[[2]], fig.cap = "Net income"}
+f2[[1]]
+```
+
+```{r, fig.height = f3[[2]], fig.cap = "Operating cash flow"}
+f3[[1]]
+```
+
+```{r, fig.height = f4[[2]], fig.cap = "Shareholder's equity"}
+f4[[1]]
+```
+
+## Investment decision^[The decision is made by analyzing only numerical data, which do not represent the value of a business as a whole. For example, the value of an early-stage company with zero or negative earnings cannot be determined based on numbers but should be assessed based on its mission, technology, management, and culture as well as the state of the industry overall.]
+
+```{r}
+company_decision = company %>% 
+  mutate(Decision = factor(Decision, levels = c("Buy",
+                                                "Maybe buy",
+                                                "Wait",
+                                                "Zero or negative cash flow",
+                                                "Zero or negative earnings",
+                                                "Zero or negative growth",
+                                                "High debt-to-equity ratio", 
+                                                "Negative equity",
+                                                "Insufficient data")))
+```
+
+```{r, fig.height = (nrow(company_decision) + 6)/4, fig.cap = "Investment decision made by a fundamental analysis-based algorithm for listed companies"}
+company_decision %>%
+  ggplot(mapping = aes(x = Name, y = Decision)) +
+  geom_point(mapping = aes(fill = Decision), shape = 21, size = 3, stroke = 1) +
+  scale_x_discrete(limits = sort(company$Name, decreasing = T)) +
+  scale_fill_manual(values = fill_color[1:length(unique(company_decision$Decision))]) +
+  coord_flip() +
+  labs(x = NULL) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.key = element_rect(fill = "transparent"))
+```

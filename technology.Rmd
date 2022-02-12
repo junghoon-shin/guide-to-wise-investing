@@ -1,0 +1,160 @@
+# (PART) Environment {-}
+
+# Technology market share trend^[Data are from [StatCounter](https://gs.statcounter.com/).] {#technology}
+
+```{r}
+fromdate = today() - 365.25 * 5
+todate = today()
+
+fromyear = fromdate %>% strftime("%Y")
+frommonth = fromdate %>% strftime("%m")
+
+toyear = todate %>% strftime("%Y")
+tomonth = todate %>% strftime("%m")
+```
+
+```{r}
+if (thishour %in% c(0, 6, 12, 18)) {
+   machine = c("Desktop", "Mobile", "Tablet")
+   
+   for (x in machine) {
+      URL = str_c("https://gs.statcounter.com/", "os-market-share/", 
+                  str_to_lower(x), "/worldwide/chart.php?device=", x, "&device_hidden=", str_to_lower(x), 
+                  "&statType_hidden=os_combined&region_hidden=ww&granularity=monthly&statType=Operating%20System&region=Worldwide",
+                  "&fromInt=", fromyear, frommonth, "&toInt=", toyear, tomonth, 
+                  "&fromMonthYear=", fromyear, "-", frommonth, "&toMonthYear=", toyear, "-", tomonth, 
+                  "&csv=1")
+      
+      download.file(URL, str_c("OS_", x, ".csv"))
+      
+      URL = str_c("https://gs.statcounter.com/", "browser-market-share/", 
+                  str_to_lower(x), "/worldwide/chart.php?device=", x, "&device_hidden=", str_to_lower(x),
+                  "&statType_hidden=browser&region_hidden=ww&granularity=monthly&statType=Browser&region=Worldwide",
+                  "&fromInt=", fromyear, frommonth, "&toInt=", toyear, tomonth, 
+                  "&fromMonthYear=", fromyear, "-", frommonth, "&toMonthYear=", toyear, "-", tomonth, 
+                  "&csv=1")
+      
+      download.file(URL, str_c("Browser_", x, ".csv"))
+      
+      URL = str_c("https://gs.statcounter.com/", "search-engine-market-share/", 
+                  str_to_lower(x), "/worldwide/chart.php?device=", x, "&device_hidden=", str_to_lower(x), 
+                  "&statType_hidden=search_engine&region_hidden=ww&granularity=monthly&statType=Search%20Engine&region=Worldwide",
+                  "&fromInt=", fromyear, frommonth, "&toInt=", toyear, tomonth, 
+                  "&fromMonthYear=", fromyear, "-", frommonth, "&toMonthYear=", toyear, "-", tomonth, 
+                  "&csv=1")
+      
+      download.file(URL, str_c("Search_", x, ".csv"))
+      
+      URL = str_c("https://gs.statcounter.com/", "social-media-stats/", 
+                  str_to_lower(x), "/worldwide/chart.php?device=", x, "&device_hidden=", str_to_lower(x),
+                  "&statType_hidden=social_media&region_hidden=ww&granularity=monthly&statType=Social%20Media&region=Worldwide",
+                  "&fromInt=", fromyear, frommonth, "&toInt=", toyear, tomonth,
+                  "&fromMonthYear=", fromyear, "-", frommonth, "&toMonthYear=", toyear, "-", tomonth, 
+                  "&csv=1")
+      
+      download.file(URL, str_c("SNS_", x, ".csv"))
+   }
+   
+   machine = c("Mobile", "Tablet", "Console")
+   
+   for (x in machine) {
+      URL = str_c("https://gs.statcounter.com/", "vendor-market-share/", 
+                  str_to_lower(x), "/worldwide/chart.php?device=", x, "&device_hidden=", str_to_lower(x),
+                  "&statType_hidden=vendor&region_hidden=ww&granularity=monthly&statType=Device%20Vendor&region=Worldwide",
+                  "&fromInt=", fromyear, frommonth, "&toInt=", toyear, tomonth, 
+                  "&fromMonthYear=", fromyear, "-", frommonth, "&toMonthYear=", toyear, "-", tomonth, 
+                  "&csv=1")
+      
+      download.file(URL, str_c("Device_", x, ".csv"))
+   }
+}
+
+read_stat = function(machine, category) {
+   machine %>%
+      map_dfr(~{
+         mutate(read_csv(str_c(category, "_", ., ".csv"), col_names = T), Machine = .) %>%
+            pivot_longer(cols = -c(Machine, Date), names_to = category, values_to = "Share")
+      }) %>%
+      mutate(Date = as_date(str_c(Date, "-01")), Share = Share / 100) %>%
+      relocate(Machine)
+}
+
+OS = read_stat(c("Desktop", "Mobile", "Tablet"), "OS")
+Browser = read_stat(c("Desktop", "Mobile", "Tablet"), "Browser")
+Search = read_stat(c("Desktop", "Mobile", "Tablet"), "Search")
+SNS = read_stat(c("Desktop", "Mobile", "Tablet"), "SNS")
+Device = read_stat(c("Mobile", "Tablet", "Console"), "Device")
+```
+
+```{r}
+share_trend = function(.data, .machine, .variable) {
+   .data %<>% filter(Machine == .machine)
+   
+   missing_date = .data %>% group_by(Date) %>% summarize(total = sum(Share)) %>% filter(total == 0) %>% pull(Date)
+   
+   .data %<>% filter(!Date %in% missing_date)
+   
+   ranking = .data %>% 
+      group_by({{.variable}}) %>% 
+      arrange(desc(Date)) %>% 
+      slice(1) %>% 
+      arrange(desc(Share)) %>% 
+      pull({{.variable}})
+   
+   top = ranking[1:min(5, length(ranking) - 1)]
+   
+   .data %<>% 
+      mutate(variable = case_when({{.variable}} %in% top ~ {{.variable}}, T ~ "Others") %>% factor(levels = c(top, "Others"))) %>%
+      group_by(Date, variable) %>% 
+      summarize(Share = sum(Share, na.rm = T)) %>% 
+      ungroup
+   
+   .data %>%
+      ggplot(mapping = aes(x = Date, y = Share)) +
+      geom_line(mapping = aes(color = variable)) +
+      scale_x_date(expand = c(0, 0)) +
+      scale_y_continuous(labels = percent) +
+      scale_color_manual(values = line_color, guide = guide_legend(title = NULL)) +
+      labs(y = "Market share")
+}
+```
+
+## Operating system
+
+```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = c("Desktop", "Mobile", "Tablet")}
+share_trend(OS, "Desktop", OS)
+share_trend(OS, "Mobile", OS)
+share_trend(OS, "Tablet", OS)
+```
+
+## Browser
+
+```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = c("Desktop", "Mobile", "Tablet")}
+share_trend(Browser, "Desktop", Browser)
+share_trend(Browser, "Mobile", Browser)
+share_trend(Browser, "Tablet", Browser)
+```
+
+## Search engine
+
+```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = c("Desktop", "Mobile", "Tablet")}
+share_trend(Search, "Desktop", Search)
+share_trend(Search, "Mobile", Search)
+share_trend(Search, "Tablet", Search)
+```
+
+## Social media
+
+```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = c("Desktop", "Mobile", "Tablet")}
+share_trend(SNS, "Desktop", SNS)
+share_trend(SNS, "Mobile", SNS)
+share_trend(SNS, "Tablet", SNS)
+```
+
+## Device vendor
+
+```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = c("Mobile", "Tablet", "Console")}
+share_trend(Device, "Mobile", Device)
+share_trend(Device, "Tablet", Device)
+share_trend(Device, "Console", Device)
+```

@@ -1,0 +1,79 @@
+# (PART) Practice {-}
+
+# My portfolio {#portfolio}
+
+## Invested asset composition
+
+```{r, fig.height = 3.5, fig.cap = "Invested asset allocation"}
+portfolio %>%
+  ggplot(mapping = aes(x = 1, y = Weight)) +
+  geom_bar(stat = "summary", fun = sum, position = "fill", mapping = aes(fill = Class), color = "black") +
+  scale_y_continuous(breaks = pretty_breaks(), labels = function(x) {percent(rev(x))}) +
+  scale_fill_manual(values = fill_color, guide = guide_legend(title = NULL)) +
+  coord_polar(theta = "y", direction = -1) +
+  labs(x = NULL, y = NULL) +
+  theme(panel.border = element_blank(), panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank())
+```
+
+```{r, fig.height = 6.3, fig.cap = "Regional distribution of invested assets"}
+portfolio %>%
+  group_by(Class) %>%
+  mutate(width = sqrt(sum(Weight))) %>%
+  ungroup %>%
+  ggplot(mapping = aes(x = 1 + width/2, y = Weight)) +
+  geom_bar(stat = "summary", fun = sum, position = "fill", mapping = aes(fill = Region, width = width), color = "black") +
+  scale_y_continuous(breaks = pretty_breaks(), labels = function(x) {percent(rev(x))}) +
+  scale_fill_manual(values = fill_color, guide = guide_legend(title = NULL)) +
+  coord_polar(theta = "y", direction = -1) +
+  facet_wrap(vars(Class), nrow = 2) +
+  labs(x = NULL, y = NULL) +
+  theme(panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank())
+```
+
+```{r, fig.cap = "Sector distribution of stock investment"}
+portfolio_stock %>%
+  ggplot(mapping = aes(x = Region, y = Weight)) +
+  geom_bar(mapping = aes(fill = Industry), stat = "summary", fun = sum, color = "black", width = 0.7) +
+  scale_y_continuous(expand = c(0, 0, 0.05, 0), labels = percent) +
+  scale_fill_manual(values = fill_color, guide = guide_legend(title = "Sector")) +
+  labs(x = "Market", y = "Proportion")
+```
+
+```{r, fig.height = 3.5, fig.cap = "Bond composition"}
+portfolio_bond %>%
+  ggplot(mapping = aes(x = 1, y = Weight)) +
+  geom_bar(mapping = aes(fill = Sector), stat = "summary", fun = sum, position = "fill", color = "black") +
+  scale_y_continuous(breaks = pretty_breaks(), labels = function(x) {percent(rev(x))}) +
+  scale_fill_manual(values = fill_color, guide = guide_legend(title = NULL)) +
+  coord_polar(theta = "y", direction = -1) +
+  labs(x = NULL, y = NULL) +
+  theme(panel.border = element_blank(), panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank())
+```
+
+## Current and target asset allocation
+
+```{r, fig.width = 7, fig.height = 4.5, fig.cap = "Current and long-term target allocation of my asset"}
+f1 = allocation %>%
+  ggplot(mapping = aes(x = 1, y = `Current proportion`)) +
+  geom_col(mapping = aes(fill = category), position = "fill", color = "black") +
+  geom_text(data = allocation %>% filter(`Current proportion` > 0),
+            mapping = aes(x = 1.3, y = current_y, label = make_percent(`Current proportion`, 100)), hjust = 0.5, vjust = 0.5, size = 9 / .pt) +
+  scale_y_continuous(breaks = pretty_breaks(), labels = function(x) {percent(rev(x))}) +
+  scale_fill_manual(values = fill_color, guide = guide_legend(title = NULL)) +
+  coord_polar(theta = "y", direction = -1) +
+  labs(title = "Current allocation", x = NULL, y = NULL) +
+  theme(panel.border = element_blank(), panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text = element_blank())
+
+f2 = allocation %>%
+  ggplot(mapping = aes(x = 1, y = `Target proportion`)) +
+  geom_col(mapping = aes(fill = category), position = "fill", color = "black") +
+  geom_text(data = allocation %>% filter(`Target proportion` > 0),
+            mapping = aes(x = 1.3, y = target_y, label = make_percent(`Target proportion`, 100)), hjust = 0.5, vjust = 0.5, size = 9 / .pt) +
+  scale_y_continuous(breaks = pretty_breaks(), labels = function(x) {percent(rev(x))}) +
+  scale_fill_manual(values = fill_color, guide = guide_legend(title = NULL)) +
+  coord_polar(theta = "y", direction = -1) +
+  labs(title = "Target allocation", x = NULL, y = NULL) +
+  theme(panel.border = element_blank(), panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text = element_blank())
+
+ggarrange(f1, f2, common.legend = T, legend = "bottom", align = "hv")
+```

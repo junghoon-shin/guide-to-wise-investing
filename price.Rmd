@@ -1,0 +1,354 @@
+# Stock price trend {#price}
+
+## Normalized closing price^[Only top 20 industry sectors are shown.]
+
+```{r}
+yahoo_to_name = function(Yahoo) company$Name[match(Yahoo, company$Yahoo)]
+
+price_data = tq_get(company$Yahoo, get = "stock.prices", from = twoyearsago)
+
+sufficient_data = price_data %>% count(symbol) %>% filter(n >= 30) %>% pull(symbol) %>% unique
+
+price_data %<>%
+  mutate(Name = yahoo_to_name(symbol)) %>%
+  left_join(company %>% select(Name, Industry)) %>%
+  filter(!is.na(adjusted) & symbol %in% sufficient_data)
+```
+
+```{r}
+get_legend_nrow = function(close, industry) {
+  ceiling((close %>% filter(Industry == industry) %>% pull(Name) %>% unique %>% length)/4)
+}
+
+get_legend_nrow = Vectorize(get_legend_nrow, "industry")
+
+legend_key_size = theme_get()$legend.key.size %>% convertUnit("inch") %>% as.numeric
+
+normalized_price_trend = function(price, industry) {
+  price_subset = price %>% 
+    filter(Industry == industry) %>%
+    mutate(Name = clean_name(Name))
+  
+  price_subset %<>%
+    group_by(Name, date) %>%
+    summarize(adjusted = adjusted[length(adjusted)]) %>%
+    ungroup
+  
+  base_date = price_subset %>% count(date) %>% arrange(desc(n), date) %>% slice(1) %>% pull(date)
+  
+  price_subset %<>% 
+    group_by(Name) %>%
+    mutate(normalized = adjusted/adjusted[date == base_date] * 100) %>%
+    ungroup
+
+  ncompany = length(unique(price_subset$Name))
+  legend_nrow = ceiling(ncompany/4)
+  
+  g = price_subset %>%
+    ggplot(mapping = aes(x = date, y = normalized)) +
+    geom_line(mapping = aes(color = Name)) +
+    scale_x_date(expand = c(0, 0)) +
+    scale_color_manual(values = line_color[1:ncompany], 
+                       guide = guide_legend(title = NULL, nrow = legend_nrow)) +
+    coord_cartesian(xlim = c(as_date(twoyearsago), today())) +
+    labs(x = "Date", y = "Normalized closing price") +
+    annotation_custom(segmentsGrob(x0 = unit(0.5, "npc"), 
+                                   x1 = unit(0.5, "npc"), 
+                                   y0 = unit(0, "npc"), 
+                                   y1 = unit(1.1, "npc"),
+                                   gp = gpar(lty = "dashed")),
+                      xmin = base_date, xmax = base_date) +
+    annotation_custom(textGrob(str_c("Normalized to 100 as of ", base_date), 
+                               x = unit(0.5, "npc"),
+                               y = unit(1.05, "npc"), 
+                               hjust = ifelse(base_date < yearago, -0.03, 1.03), 
+                               vjust = 0.5,
+                               gp = gpar(fontfamily = "Lato", fontsize = 10)),
+                      xmin = base_date, xmax = base_date) +
+    theme(legend.position = "bottom", legend.key = element_rect(fill = "transparent"),
+          plot.margin = unit(c(convertUnit(unit(0.35, "inch"), unitTo = "points") %>% as.numeric, 5.5, 5.5, 5.5), "points"))
+  
+  g_legend = get_legend(g)
+  
+  g = ggplot_gtable(ggplot_build(g + guides(color = F)))
+  
+  g$layout$clip[g$layout$name == "panel"] = "off"
+  
+  ggarrange(ggdraw(g), g_legend, nrow = 2, ncol = 1, heights = c(3.5, legend_nrow * legend_key_size + 0.1 * 2))
+}
+
+interesting_sectors = price_data %>% select(Name, Industry) %>% unique %>% count(Industry) %>% arrange(desc(n), Industry) %>% pull(Industry)
+
+fig_height = 3.5 + get_legend_nrow(price_data, interesting_sectors) * legend_key_size + 0.1 * 2
+```
+
+```{r, fig.height = fig_height[1], fig.cap = interesting_sectors[1]}
+normalized_price_trend(price_data, interesting_sectors[1])
+```
+
+```{r, fig.height = fig_height[2], fig.cap = interesting_sectors[2]}
+normalized_price_trend(price_data, interesting_sectors[2])
+```
+
+```{r, fig.height = fig_height[3], fig.cap = interesting_sectors[3]}
+normalized_price_trend(price_data, interesting_sectors[3])
+```
+
+```{r, fig.height = fig_height[4], fig.cap = interesting_sectors[4]}
+normalized_price_trend(price_data, interesting_sectors[4])
+```
+
+```{r, fig.height = fig_height[5], fig.cap = interesting_sectors[5]}
+normalized_price_trend(price_data, interesting_sectors[5])
+```
+
+```{r, fig.height = fig_height[6], fig.cap = interesting_sectors[6]}
+normalized_price_trend(price_data, interesting_sectors[6])
+```
+
+```{r, fig.height = fig_height[7], fig.cap = interesting_sectors[7]}
+normalized_price_trend(price_data, interesting_sectors[7])
+```
+
+```{r, fig.height = fig_height[8], fig.cap = interesting_sectors[8]}
+normalized_price_trend(price_data, interesting_sectors[8])
+```
+
+```{r, fig.height = fig_height[9], fig.cap = interesting_sectors[9]}
+normalized_price_trend(price_data, interesting_sectors[9])
+```
+
+```{r, fig.height = fig_height[10], fig.cap = interesting_sectors[10]}
+normalized_price_trend(price_data, interesting_sectors[10])
+```
+
+```{r, fig.height = fig_height[11], fig.cap = interesting_sectors[11]}
+normalized_price_trend(price_data, interesting_sectors[11])
+```
+
+```{r, fig.height = fig_height[12], fig.cap = interesting_sectors[12]}
+normalized_price_trend(price_data, interesting_sectors[12])
+```
+
+```{r, fig.height = fig_height[13], fig.cap = interesting_sectors[13]}
+normalized_price_trend(price_data, interesting_sectors[13])
+```
+
+```{r, fig.height = fig_height[14], fig.cap = interesting_sectors[14]}
+normalized_price_trend(price_data, interesting_sectors[14])
+```
+
+```{r, fig.height = fig_height[15], fig.cap = interesting_sectors[15]}
+normalized_price_trend(price_data, interesting_sectors[15])
+```
+
+```{r, fig.height = fig_height[16], fig.cap = interesting_sectors[16]}
+normalized_price_trend(price_data, interesting_sectors[16])
+```
+
+```{r, fig.height = fig_height[17], fig.cap = interesting_sectors[17]}
+normalized_price_trend(price_data, interesting_sectors[17])
+```
+
+```{r, fig.height = fig_height[18], fig.cap = interesting_sectors[18]}
+normalized_price_trend(price_data, interesting_sectors[18])
+```
+
+```{r, fig.height = fig_height[19], fig.cap = interesting_sectors[19]}
+normalized_price_trend(price_data, interesting_sectors[19])
+```
+
+```{r, fig.height = fig_height[20], fig.cap = interesting_sectors[20]}
+normalized_price_trend(price_data, interesting_sectors[20])
+```
+
+## Adjusted closing price
+
+```{r}
+inset_height = 0.2
+inset_expansion = 1.1 * inset_height / (1 - inset_height)
+
+get_inset = function(.data) {
+  g = .data %>%
+    ggplot(mapping = aes(x = date, y = volume)) +
+    geom_area(stat = "smooth", method = "loess", span = 0.05, fill = fill_color[1], alpha = 0.5) +
+    scale_x_date(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0, 0.05, 0)) +
+    theme(axis.ticks = element_blank(), 
+          axis.ticks.length = unit(0, "points"), 
+          axis.text = element_blank(), 
+          axis.title = element_blank(),
+          panel.grid = element_blank(),
+          panel.border = element_blank(),
+          plot.margin = unit(c(0, 0, 0, 0), "points"))
+  
+  ggplotGrob(g)
+}
+
+annotation_custom2 = function (grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, data) {
+  layer(data = data, stat = StatIdentity, position = PositionIdentity, geom = GeomCustomAnn,
+        inherit.aes = TRUE, params = list(grob = grob, xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax))
+}
+```
+
+```{r}
+price_data %<>%
+  left_join(company_plot %>% select(Name, Marketcap_USD)) %>%
+  mutate(Marketcap_USD = str_c(round(Marketcap_USD/1e9, 1), " ($billion)"))
+
+price_data_atol = price_data %>% 
+  filter(str_detect(Name, "^[0-9A-La-l]"))
+
+price_data_mtoz = price_data %>% 
+  filter(str_detect(Name, "^[^0-9A-La-l]"))
+```
+
+(ref:adjusted-closing-price-atol) [Adjusted stock prices](https://www.investopedia.com/terms/a/adjusted_closing_price.asp) of companies with names starting with numbers or letters A-L over the last 2 years. The blue shade at the bottom of each panel indicates trading volume per day (smoothed for visualization).
+
+```{r, fig.height = 2.5 * length(unique(price_data_atol$Name)), fig.cap = "(ref:adjusted-closing-price-atol)"}
+insets = price_data_atol %>%
+  split(.$symbol) %>%
+  map(~annotation_custom2(grob = get_inset(.),
+                          xmin = min(.$date), 
+                          xmax = max(.$date),
+                          ymin = min(.$adjusted) - (max(.$adjusted) - min(.$adjusted)) * (0.05 + inset_expansion),
+                          ymax = min(.$adjusted) - (max(.$adjusted) - min(.$adjusted)) * 0.05,
+                          data = .))
+
+g = price_data_atol %>%
+  ggplot(mapping = aes(x = date, y = adjusted)) +
+  geom_line(color = line_color[1]) +
+  geom_point(data = price_data_atol %>% group_by(Name) %>% filter(date == max(date, na.rm = T)) %>% ungroup, color = line_color[2]) +
+  geom_text(data = price_data_atol %>% 
+              group_by(Name) %>% 
+              summarise(Marketcap_USD = unique(Marketcap_USD),
+                        midprice = median(range(adjusted, na.rm = T)),
+                        firstprice = adjusted[date == min(date, na.rm = T)],
+                        vjust = ifelse(firstprice < midprice, 1, 0),
+                        adjusted = ifelse(firstprice < midprice, max(adjusted, na.rm = T), min(adjusted, na.rm = T))) %>%
+              ungroup,
+            mapping = aes(label = str_c("Market cap: ", Marketcap_USD), vjust = vjust), x = min(price_data_atol$date, na.rm = T) + 10, hjust = 0, size = 10 / .pt) +
+  scale_x_date(expand = c(0, 0)) +
+  scale_y_continuous(position = "right", 
+                     expand = c(0.05 + inset_expansion, 0, 0.05, 0),
+                     breaks = function(x) { 
+                       limits = c(x[1] + (x[2] - x[1]) * inset_expansion / (1.1 + inset_expansion), x[2])
+                       breaks = extended(limits[1], limits[2], 5)
+                       breaks[breaks >= limits[1] & breaks <= limits[2]]
+                     },
+                     labels = make_readable) +
+  labs(x = "Date", y = "Adjusted closing price") +
+  facet_grid(rows = vars(Name), scales = "free_y", switch = "y") +
+  insets
+
+gt = ggplot_gtable(ggplot_build(g))
+gt$layout$clip[str_detect(gt$layout$name, "panel")] = "off"
+
+as_ggplot(gt)
+```
+
+(ref:adjusted-closing-price-mtoz) [Adjusted stock prices](https://www.investopedia.com/terms/a/adjusted_closing_price.asp) of companies with names starting with letters M-Z over the last 2 years. The blue shade at the bottom of each panel indicates trading volume per day (smoothed for visualization).
+
+```{r, fig.height = 2.5 * length(unique(price_data_mtoz$Name)), fig.cap = "(ref:adjusted-closing-price-mtoz)"}
+insets = price_data_mtoz %>%
+  split(.$symbol) %>%
+  map(~annotation_custom2(grob = get_inset(.),
+                          xmin = min(.$date), 
+                          xmax = max(.$date),
+                          ymin = min(.$adjusted) - (max(.$adjusted) - min(.$adjusted)) * (0.05 + inset_expansion),
+                          ymax = min(.$adjusted) - (max(.$adjusted) - min(.$adjusted)) * 0.05,
+                          data = .))
+
+g = price_data_mtoz %>%
+  ggplot(mapping = aes(x = date, y = adjusted)) +
+  geom_line(color = line_color[1]) +
+  geom_point(data = price_data_mtoz %>% group_by(Name) %>% filter(date == max(date, na.rm = T)) %>% ungroup, color = line_color[2]) +
+  geom_text(data = price_data_mtoz %>% 
+              group_by(Name) %>% 
+              summarise(Marketcap_USD = unique(Marketcap_USD),
+                        midprice = median(range(adjusted, na.rm = T)),
+                        firstprice = adjusted[date == min(date, na.rm = T)],
+                        vjust = ifelse(firstprice < midprice, 1, 0),
+                        adjusted = ifelse(firstprice < midprice, max(adjusted, na.rm = T), min(adjusted, na.rm = T))) %>%
+              ungroup,
+            mapping = aes(label = str_c("Market cap: ", Marketcap_USD), vjust = vjust), x = min(price_data_mtoz$date, na.rm = T) + 10, hjust = 0, size = 10 / .pt) +
+  scale_x_date(expand = c(0, 0)) +
+  scale_y_continuous(position = "right", 
+                     expand = c(0.05 + inset_expansion, 0, 0.05, 0),
+                     breaks = function(x) { 
+                       limits = c(x[1] + (x[2] - x[1]) * inset_expansion / (1.1 + inset_expansion), x[2])
+                       breaks = extended(limits[1], limits[2], 5)
+                       breaks[breaks >= limits[1] & breaks <= limits[2]]
+                     },
+                     labels = make_readable) +
+  labs(x = "Date", y = "Adjusted closing price") +
+  facet_grid(rows = vars(Name), scales = "free_y", switch = "y") +
+  insets
+
+gt = ggplot_gtable(ggplot_build(g))
+gt$layout$clip[str_detect(gt$layout$name, "panel")] = "off"
+
+as_ggplot(gt)
+```
+
+## Stock price correlation^[Industry sector classification is based on data from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html).]
+
+```{r, include = F}
+price_cor = price_data %>% 
+  mutate(Name = clean_name(Name)) %>%
+  select(Name, date, adjusted) %>%
+  pivot_wider(id_cols = date, names_from = Name, values_from = adjusted, values_fn = function(x) x[length(x)]) %>%
+  column_to_rownames("date") %>%
+  cor(use = "pairwise.complete.obs")
+
+company_annotation = company %>% 
+  select(Name, `Broad group`, Country, Industry) %>% 
+  mutate(Name = clean_name(Name)) %>%
+  column_to_rownames("Name") %>% 
+  .[rownames(price_cor), ]
+
+n_industry = company_annotation$Industry %>% unique %>% length
+
+broad_group_color = fill_color[1:length(unique(company_annotation$`Broad group`))] %>% setNames(sort(unique(company_annotation$`Broad group`)))
+country_color = fill_color[1:length(unique(company_annotation$Country))] %>% setNames(sort(unique(company_annotation$Country)))
+industry_color = fill_color[1:length(unique(company_annotation$Industry))] %>% setNames(sort(unique(company_annotation$Industry)))
+
+column_annotation = HeatmapAnnotation(df = company_annotation,
+                                      col = list(Industry = industry_color,
+                                                 Country = country_color,
+                                                 `Broad group` = broad_group_color),
+                                      annotation_name_gp = gpar(fontsize = 8),
+                                      annotation_legend_param = list(`Broad group` = list(grid_width = unit(4, "mm"),
+                                                                                          grid_height = unit(4, "mm"),
+                                                                                          title_gp = gpar(fontsize = 8, fontface = "bold"),
+                                                                                          labels_gp = gpar(fontsize = 7)),
+                                                                     Country = list(grid_width = unit(4, "mm"),
+                                                                                    grid_height = unit(4, "mm"),
+                                                                                    title_gp = gpar(fontsize = 8, fontface = "bold"),
+                                                                                    labels_gp = gpar(fontsize = 7)),
+                                                                     Industry = list(ncol = 2, 
+                                                                                     grid_width = unit(4, "mm"),
+                                                                                     grid_height = unit(4, "mm"),
+                                                                                     title_gp = gpar(fontsize = 8, fontface = "bold"),
+                                                                                     labels_gp = gpar(fontsize = 7))))
+
+labwidth = stringWidth(rownames(price_cor)) %>% convertUnit("inch") %>% max %>% divide_by(2) %>% as.numeric
+
+h = price_cor %>% Heatmap(name = "Pearson's r",
+                        width = unit(7 - labwidth - 0.3, "inch"), height = unit(0.11 * nrow(price_cor), "inch"),
+                        show_column_names = F, show_column_dend = T,
+                        show_row_names = T, show_row_dend = F,
+                        row_names_gp = gpar(fontsize = 6),
+                        heatmap_legend_param = list(legend_height = unit(min(ceiling(n_industry/2), 10) * 4, "mm"),
+                                                    grid_width = unit(4, "mm"),
+                                                    title_gp = gpar(fontsize = 8, fontface = "bold"),
+                                                    labels_gp = gpar(fontsize = 7)),
+                        top_annotation = column_annotation) %>% 
+  draw(merge_legend = T, heatmap_legend_side = "bottom")
+
+h_height = h@ht_list_param$height %>% as.numeric %>% conv_unit("mm", "inch")
+```
+
+```{r, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between adjusted closing prices for 2 years of my watchlist"}
+draw(h, background = "transparent")
+```

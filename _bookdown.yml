@@ -1,0 +1,10 @@
+book_filename: "guide-to-wise-investing"
+output_dir: "_book"
+delete_merged_file: yes
+new_session: no
+clean: ["_bookdown_files"]
+language:
+  ui:
+    chapter_name: "Chapter "
+    appendix_name: "Appendix "
+rmd_files: ["index.Rmd", "author.Rmd", "disclaimer.Rmd", "buffett.Rmd", "town.Rmd", "largest.Rmd", "watchlist.Rmd", "small-cap.Rmd", "ceo.Rmd", "price.Rmd", "technology.Rmd", "sector.Rmd", "market-index.Rmd", "market.Rmd", "global-economy.Rmd", "portfolio.Rmd", "simulation.Rmd", "resources.Rmd", "references.Rmd"]

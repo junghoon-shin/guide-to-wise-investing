@@ -1,0 +1,349 @@
+# Index evaluation {#market-index}
+
+## Index trend (2 years)^[Data are from [Yahoo Finance](https://finance.yahoo.com/).]
+
+```{r}
+ticker = tribble(
+  ~name, ~symbol,
+  "USDKRW", "KRW=X",
+  "EURKRW", "EURKRW=X",
+  "KOSPI", "^KS11",
+  "KOSDAQ", "^KQ11",
+  "S&P500", "^GSPC",
+  "NASDAQ", "^IXIC",
+  "MSCIEM", "EEM",
+  "CSI300", "ASHR",
+  "EUROSTOXX50", "EXW1.DE",
+  "EUROSTOXX30", "EXSG.DE",
+  "WilshireREIT", "^WILREIT",
+  "Gold", "GC=F",
+  "Copper", "CPER",
+  "Oil", "USO",
+  "Tbond", "GOVT",
+  "AAAETF", "QLTA",
+  "Tnoteyield", "^TNX")
+
+index_2yr = tq_get(ticker$symbol, get = "stock.prices", from = twoyearsago)
+
+index_2yr %<>% left_join(ticker)
+
+index_2yr$low[index_2yr$name == "KOSPI" & index_2yr$date == "2020-05-06"] = 1925.55 # Correct wrong data
+
+index_2yr %<>% 
+  mutate(low = case_when(low == 0 & high == 0 ~ close,
+                         low > close ~ close, 
+                         T ~ low),
+         high = case_when(low == 0 & high == 0 ~ close,
+                          high < close ~ close, 
+                          T ~ high)) %>%
+  filter(!is.na(close))
+
+index_plot = function(indexdata, title, from, ribbon = F) {
+  if (ribbon) {
+    g = indexdata %>% 
+      ggplot(mapping = aes(x = date, y = close)) + 
+      geom_ribbon(mapping = aes(ymin = low, ymax = high), fill = line_color[1], alpha = 0.4) +
+      geom_line(color = line_color[1]) +
+      geom_point(data = indexdata %>% filter(date == max(date, na.rm = T)), color = line_color[2]) +
+      scale_x_date(expand = c(0, 0)) +
+      coord_cartesian(xlim = c(from, today())) +
+      labs(x = "Date", y = title)
+  } 
+  
+  else {
+    g = indexdata %>%
+      ggplot(mapping = aes(x = date, y = price)) + 
+      geom_line(color = line_color[1]) +
+      geom_point(data = indexdata %>% filter(date == max(date, na.rm = T)), color = line_color[2]) +
+      scale_x_date(expand = c(0, 0)) +
+      coord_cartesian(xlim = c(from, today())) +
+      labs(x = "Date", y = title)
+  }
+  
+  g = ggplot_gtable(ggplot_build(g))
+  g$layout$clip[g$layout$name == "panel"] = "off"
+
+  ggdraw(g)
+}
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "South Korea/U.S. Foreign Exchange Rate"}
+index_plot(index_2yr %>% filter(name == "USDKRW"), "USD/KRW", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "South Korea/Europe Foreign Exchange Rate"}
+index_plot(index_2yr %>% filter(name == "EURKRW"), "EUR/KRW", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "KOSPI Index"}
+index_plot(index_2yr %>% filter(name == "KOSPI"), "KOSPI", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "KOSDAQ Index"}
+index_plot(index_2yr %>% filter(name == "KOSDAQ"), "KOSDAQ", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "S&P 500 Index"}
+index_plot(index_2yr %>% filter(name == "S&P500"), "S&P 500", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "NASDAQ Composite Index"}
+index_plot(index_2yr %>% filter(name == "NASDAQ"), "NASDAQ", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "iShares MSCI Emerging Markets ETF"}
+index_plot(index_2yr %>% filter(name == "MSCIEM"), "iShares MSCI Emerging Markets", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Xtrackers Harvest CSI 300 China A-Shares ETF"}
+index_plot(index_2yr %>% filter(name == "CSI300"), "Xtrackers Harvest CSI 300", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "iShares EURO STOXX 50 UCITS ETF (DE)"}
+index_plot(index_2yr %>% filter(name == "EUROSTOXX50"), "iShares EURO STOXX 50", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "iShares EURO STOXX Select Dividend 30 UCITS ETF (DE)"}
+index_plot(index_2yr %>% filter(name == "EUROSTOXX30"), "iShares EURO STOXX 30", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Wilshire US REIT Index"}
+index_plot(index_2yr %>% filter(name == "WilshireREIT"), "Wilshire REIT", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Gold"}
+index_plot(index_2yr %>% filter(name == "Gold"), "Gold price", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "U.S Copper Index Fund, LP"}
+index_plot(index_2yr %>% filter(name == "Copper"), "U.S. copper index fund", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "U.S. Oil Fund, LP"}
+index_plot(index_2yr %>% filter(name == "Oil"), "U.S. oil fund", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "iShares U.S. Treasury Bond ETF"}
+index_plot(index_2yr %>% filter(name == "Tbond"), "iShares T-bond", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "iShares Aaa - A Rated Corporate Bond ETF"}
+index_plot(index_2yr %>% filter(name == "AAAETF"), "iShares AAA", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Treasury Yield 10 Years"}
+index_plot(index_2yr %>% filter(name == "Tnoteyield"), "U.S. T-note yield", from = as_date(twoyearsago), ribbon = T)
+```
+
+## Index trend (30 years)^[Data are from [Federal Reserve Bank of St. Louis](https://fred.stlouisfed.org/).]
+
+```{r}
+ticker = tribble(
+  ~name, ~symbol,
+  "Wilshire5000", "WILL5000PRFC",
+  "WilshireREIT", "WILLREITIND",
+  "Gold", "GOLDAMGBD228NLBM",
+  "Copper", "PCOPPUSDM",
+  "WTI", "DCOILWTICO",
+  "Tnoteyield", "IRLTLT01USM156N",
+  "AAAyield", "DAAA",
+  "USDKRW", "DEXKOUS")
+
+index_30yr = tq_get(ticker$symbol, get = "economic.data", from = as_date(thirtyyearsago) - 30)
+
+index_30yr %<>% left_join(ticker) %>% select(-symbol)
+
+ticker = tribble(
+  ~name, ~symbol,
+  "KOSPI", "^KS11",
+  "KOSDAQ", "^KQ11",
+  "Tbond", "GOVT",
+  "AAAETF", "QLTA"
+)
+
+index_30yr_yahoo = tq_get(ticker$symbol, get = "stock.prices", from = as_date(thirtyyearsago) - 30)
+
+index_30yr_yahoo %<>% 
+  left_join(ticker) %>%
+  rename(price = close) %>%
+  select(name, date, price)
+
+index_30yr %<>% 
+  bind_rows(index_30yr_yahoo) %>% 
+  filter(!is.na(price)) %>%
+  mutate(name = factor(name, levels = c("USDKRW", 
+                                        "KOSPI", 
+                                        "KOSDAQ", 
+                                        "Wilshire5000", 
+                                        "WilshireREIT", 
+                                        "Gold", 
+                                        "Copper", 
+                                        "WTI", 
+                                        "Tbond", 
+                                        "AAAETF",
+                                        "Tnoteyield", 
+                                        "AAAyield"))) %>%
+  arrange(name) %>%
+  mutate(name = as.character(name))
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "South Korea/U.S. Foreign Exchange Rate"}
+index_plot(index_30yr %>% filter(name == "USDKRW"), "USD/KRW", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "KOSPI Index"}
+index_plot(index_30yr %>% filter(name == "KOSPI"), "KOSPI", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "KOSDAQ Index"}
+index_plot(index_30yr %>% filter(name == "KOSDAQ"), "KOSDAQ", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Wilshire 5000 Full Cap Price Index"}
+index_plot(index_30yr %>% filter(name == "Wilshire5000"), "Wilshire 5000", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Wilshire US REIT Total Market Index"}
+index_plot(index_30yr %>% filter(name == "WilshireREIT"), "Wilshire REIT", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Gold Fixing Price 10:30 A.M. (London time) in London Bullion Market, based in U.S. Dollars"}
+index_plot(index_30yr %>% filter(name == "Gold"), "Gold fixing price", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Global Price of Copper (U.S. Dollars per Metric Ton)"}
+index_plot(index_30yr %>% filter(name == "Copper"), "Copper price", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Crude Oil Prices: West Texas Intermediate (WTI) - Cushing, Oklahoma"}
+index_plot(index_30yr %>% filter(name == "WTI"), "Crude oil price", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "iShares U.S. Treasury Bond ETF"}
+index_plot(index_30yr %>% filter(name == "Tbond"), "iShares T-bond", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "iShares Aaa - A Rated Corporate Bond ETF"}
+index_plot(index_30yr %>% filter(name == "AAAETF"), "iShares AAA", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Long-Term Government Bond Yields: 10-year: Main (Including Benchmark) for the United States"}
+index_plot(index_30yr %>% filter(name == "Tnoteyield"), "U.S. T-note yield", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Moody's Seasoned AAA Corporate Bond Yield"}
+index_plot(index_30yr %>% filter(name == "AAAyield"), "AAA corporate bond yield", from = as_date(thirtyyearsago) - 30)
+```
+
+## Index correlation
+
+```{r}
+daily = c("KOSPI", "KOSDAQ", "Wilshire5000", "WilshireREIT", "Gold", "WTI", "Tbond", "AAAETF", "AAAyield", "USDKRW")
+monthly = c("Tnoteyield", "Copper")
+
+index_30yr_daily = index_30yr %>% 
+  filter(name %in% daily) %>%
+  pivot_wider(id_cols = date, names_from = name, values_from = price)
+
+index_30yr_monthly = index_30yr %>%
+  filter(name %in% monthly) %>%
+  pivot_wider(id_cols = date, names_from = name, values_from = price)
+
+index_30yr_cross = index_30yr_daily %>%
+  mutate(date = make_date(year = format(date, "%Y"), month = format(date, "%m"), day = 1)) %>%
+  group_by(date) %>%
+  summarise(across(everything(), ~mean(., na.rm = T))) %>%
+  left_join(index_30yr_monthly)
+```
+
+```{r}
+index_dailycor = index_30yr_daily %>%
+  mutate(interval = cut(date, 30)) %>%
+  group_by(interval) %>%
+  group_map(~pairwise_cor(select(., -date)) %>% list %>% setNames(as.character(unlist(.y)))) %>%
+  flatten %>%
+  reverseList
+
+index_monthlycor = index_30yr_monthly %>%
+  mutate(interval = cut(date, 30)) %>%
+  group_by(interval) %>%
+  group_map(~pairwise_cor(select(., -date)) %>% list %>% setNames(as.character(unlist(.y)))) %>%
+  flatten %>%
+  reverseList
+
+index_crosscor = index_30yr_cross %>%
+  mutate(interval = cut(date, 30)) %>%
+  group_by(interval) %>%
+  group_map(~pairwise_cor(select(., all_of(names(select(index_30yr_daily, -date)))),
+                          select(., all_of(names(select(index_30yr_monthly, -date))))) %>% 
+              list %>% 
+              setNames(as.character(unlist(.y)))) %>%
+  flatten %>%
+  reverseList
+
+index_dailycor = weighted_mean(index_dailycor)
+index_monthlycor = weighted_mean(index_monthlycor)
+index_crosscor = weighted_mean(index_crosscor)
+```
+
+```{r}
+index_cor = bind_rows(index_dailycor %>% as_tibble(rownames = "var1") %>% pivot_longer(cols = -var1, names_to = "var2", values_to = "r"),
+                      index_monthlycor %>% as_tibble(rownames = "var1") %>% pivot_longer(cols = -var1, names_to = "var2", values_to = "r"),
+                      index_crosscor %>% as_tibble(rownames = "var1") %>% pivot_longer(cols = -var1, names_to = "var2", values_to = "r"),
+                      index_crosscor %>% t %>% as_tibble(rownames = "var1") %>% pivot_longer(cols = -var1, names_to = "var2", values_to = "r")) %>%
+  pivot_wider(id_cols = var1, names_from = var2, values_from = r) %>%
+  column_to_rownames("var1") %>% 
+  as.matrix
+
+relabel = function(symbol) c(KOSPI = "KOSPI",
+                             KOSDAQ = "KOSDAQ",
+                             Wilshire5000 = "Wilshire 5000", 
+                             WilshireREIT = "Wilshire US REIT", 
+                             Gold = "Gold fixing price", 
+                             Copper = "Copper price",
+                             WTI = "Crude oil price",
+                             Tbond = "U.S. T-bond",
+                             AAAETF = "iShares AAA",
+                             Tnoteyield = "U.S. T-note yield",
+                             AAAyield = "AAA corporate bond yield",
+                             USDKRW = "USD/KRW exchange rate")[symbol]
+
+colnames(index_cor) %<>% relabel
+rownames(index_cor) %<>% relabel
+```
+
+```{r, include = F}
+heatmap_body_size = unit(4.3, "inch")
+
+h = Heatmap(index_cor, 
+        name = "Pearson's r", 
+        width = heatmap_body_size, 
+        height = heatmap_body_size, 
+        show_row_dend = F,
+        row_names_gp = gpar(fontsize = 10),
+        column_names_gp = gpar(fontsize = 10),
+        heatmap_legend_param = list(legend_height = unit(1.5, "inch"))) %>%
+  draw
+
+h_height = convertHeight(h@ht_list_param$height, "inch") %>% as.numeric
+
+grid_size = heatmap_body_size/nrow(index_cor)
+```
+
+```{r, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between the stock matket index, REIT index, gold price, copper price, crude oil price, bond yields, and USD/KRW exchange rate over the last 30 years (weighted average over 1-year intervals)"}
+draw(h, background = "transparent")
+
+index_cor_clustered = index_cor[row_order(h), column_order(h)]
+
+for (i in 1:ncol(index_cor_clustered)) {
+  for (j in 1:nrow(index_cor_clustered)) {
+    decorate_heatmap_body("Pearson's r", row_slice = 1, column_slice = 1, {
+      grid.text(label = index_cor_clustered[nrow(index_cor_clustered) + 1 - j, i] %>% round(2),
+                x = grid_size * i - grid_size/2, 
+                y = grid_size * j - grid_size/2, 
+                just = "center",
+                gp = gpar(fontsize = 9, fontfamily = "Lato"))
+    })
+  }
+}
+```

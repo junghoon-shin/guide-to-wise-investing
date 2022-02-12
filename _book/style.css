@@ -1,0 +1,20 @@
+p.caption {
+  color: #777;
+  margin-top: 10px;
+}
+p code {
+  white-space: inherit;
+}
+pre {
+  word-break: normal;
+  word-wrap: normal;
+}
+pre code {
+  white-space: inherit;
+}
+.book.font-family-1, .book .book-header, .book .book-summary {
+  font-family: 'Lato', 'Open Sans', sans-serif;
+}
+input[type="search"] {
+  margin: 10px;
+}

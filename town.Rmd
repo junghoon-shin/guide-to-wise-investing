@@ -1,0 +1,45 @@
+# Munger and Town's lessons^[Contents of this chapter are mostly adapted from @town2018.] {#town}
+
+## Charlie Munger's four principles of investing
+
+1. It must be a business within your circle of competence.
+2. The business should have [*intrinsic* characteristics](#moat) that give it a durable competitive advantage.
+3. The business should have [management](#management) with integrity and talent.
+4. The business should be available for a fair price that gives a "margin of safety."
+
+## Five and a half moats {#moat}
+
+```{r}
+tibble(Moat = c("Strong brand", 
+                "Painful switching<br>(Network effect)", 
+                "Toll bridge<br>(Monopoly)", 
+                "Secret<br>(Patent)", 
+                "Price"),
+       Example = c("![](images/CocaCola.png){height=80px} ![](images/Starbucks.png){height=80px} ![](images/Hermes.png){height=80px}",
+                   "![](images/Apple.png){height=80px} ![](images/Facebook.png){height=80px} ![](images/Kakao.png){height=80px} ![](images/TikTok.png){height=80px}",
+                   "![](images/CN_Railway.png){height=80px} ![](images/Norfolk_Southern.png){height=80px}",
+                   "![](images/Pfizer.png){height=80px} ![](images/Roche.png){height=80px} ![](images/Janssen.png){height=80px}",
+                   "![](images/Costco.png){height=80px} ![](images/Amazon.png){height=80px}")) %>% 
+  kbl(escape = F, col.names = colnames(.), caption = "Five and a half moats that determine the durable competitive advantage of a business with nice examples") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = F, position = "left")
+```
+
+## Big four numbers {#bigfour}
+
+1. Sales (a.k.a. revenue, top line)
+2. Net income (a.k.a. net profit, bottom line)
+3. Operating cash flow
+4. Book value (a.k.a. equity) + dividends (if any)
+
+## Management numbers {#management}
+
+1. Return on equity
+2. Return on invested capital (equity + debt)
+3. Debt
+
+## Pricing methods
+
+1. Ten cap (10-year owner earnings)
+2. Payback time (8-year payback)
+3. Margin of safety (10-year discounted cash flow)

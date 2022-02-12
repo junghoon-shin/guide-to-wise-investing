@@ -1,0 +1,16 @@
+# Resources {#resources .unnumbered}
+
+- [Google Finance](https://www.google.com/finance)
+- [Yahoo Finance](https://finance.yahoo.com/)
+- [Federal Reserve Bank of St. Louis](https://fred.stlouisfed.org/)
+- [World Bank](https://www.worldbank.org/)
+- [OECD](https://www.oecd.org/)
+- [Gurufocus](https://www.gurufocus.com/new_index/)
+- [Worldometer](https://www.worldometers.info/)
+- [StatCounter](https://gs.statcounter.com/)
+- [multpl.com](https://www.multpl.com/sitemap)
+- [Investopedia](https://www.investopedia.com/)
+- [Wikipedia](https://en.wikipedia.org/wiki/Main_Page)
+- [Company ranking by market cap](https://companiesmarketcap.com/)
+- [Industry sector classification](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html)
+- [Adjusted Graham formula](https://www.oldschoolvalue.com/stock-valuation/benjamin-graham-formula/)

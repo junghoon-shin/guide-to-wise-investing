@@ -1,0 +1,112 @@
+# CEO analysis {#ceo}
+
+## CEO payment relative to business income
+
+```{r, include = F}
+ceo = financials %>%
+  arrange(desc(Date)) %>%
+  group_by(Name) %>%
+  slice(1) %>%
+  ungroup %>%
+  select(Name, Currency, `Net income`) %>%
+  left_join(company_plot %>% select(Name, Exchange, CEO, `CEO_pay`)) %>%
+  mutate(CEO = clean_ceo_name(CEO),
+         `CEO pay` = make_numeric(`CEO_pay`)) %>%
+  mutate(across(c(`Net income`, `CEO pay`), ~. / Exchange)) %>%
+  filter(!is.na(`Net income`) & !is.na(`CEO pay`)) %>%
+  arrange(`Net income`) %>%
+  mutate(Name = factor(Name, levels = Name),
+         CEO = factor(CEO, levels = CEO))
+
+textsize = 10
+panelwidth = 6.05
+
+ceo %<>% 
+  rowwise %>%
+  mutate(name_width = stringWidth(c_across(c(Name, CEO))) %>% convertUnit("inch") %>% as.numeric %>% max %>% multiply_by(textsize / 12)) %>%
+  ungroup
+
+for (left_expansion in 1:10/20) {
+  for (right_expansion in 1:10/20) {
+    position = ceo %>% 
+      mutate(income_position = rescale(`Net income`, c(panelwidth * left_expansion / (1 + left_expansion + right_expansion), 
+                                                       panelwidth * (1 + left_expansion) / (1 + left_expansion + right_expansion))),
+             left_position = income_position - name_width / 2,
+             right_position = income_position + name_width / 2)
+    
+    xmin = min(position$left_position)
+    xmax = max(position$right_position)
+    
+    if (xmin >= 0 & xmax <= panelwidth) {
+      xexpansion = c(left_expansion, right_expansion)
+      break
+    }
+  }
+  
+  if (xmin >= 0 & xmax <= panelwidth) {
+    xexpansion = c(left_expansion, right_expansion)
+    break
+  }
+}
+
+b = ceo %>% pull(`CEO pay`) %>% boxplot(range = 1)
+base_limits = b$stats[c(1, 5), ]
+  
+ceo %<>%
+  mutate(group = case_when(`CEO pay` >= base_limits[1] & `CEO pay` <= base_limits[2] ~ "Main",
+                           `CEO pay` < base_limits[1] ~ "Low",
+                           `CEO pay` > base_limits[2] ~ "High") %>% 
+           factor(levels = c("High", "Main", "Low")))
+
+fitting = lm(`CEO pay` ~ `Net income`, data = ceo)$coefficients
+
+outlier_to_main_ratio = 0.15
+main_height = 20
+
+g = ceo %>%
+  ggplot(mapping = aes(x = `Net income`, y = `CEO pay`)) +
+  geom_abline(slope = fitting["`Net income`"], intercept = fitting["(Intercept)"], linetype = "dashed", color = "gray") +
+  geom_text(mapping = aes(label = str_c(Name, "\n (", CEO, ")")), size = textsize / .pt) +
+  scale_x_continuous(expand = c(xexpansion[1], 0, xexpansion[2], 0), labels = make_readable) +
+  labs(x = "Net income ($)", y = "CEO salary ($)") +
+  facet_grid_sc(rows = vars(group), 
+                scales = list(y = list(High = scale_y_continuous(expand = c(0.3 / main_height / outlier_to_main_ratio, 0), labels = make_readable),
+                                       Main = scale_y_continuous(expand = c(0.3 / main_height, 0), labels = make_readable),
+                                       Low = scale_y_continuous(expand = c(0.3 / main_height / outlier_to_main_ratio, 0), labels = make_readable))),
+                labeller = labeller(group = c(High = "Upper outlier", Main = "Majority", Low = "Lower outlier")))
+
+gt = ggplot_gtable(ggplot_build(g))
+
+fig_height = main_height + (sum(str_detect(gt$layout$name, "panel-[13]-1")) * main_height * outlier_to_main_ratio) + 1/2
+
+gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] = gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] * outlier_to_main_ratio
+```
+
+```{r, fig.height = fig_height, fig.cap = "The annual salary of CEOs relative to the net income of each company. Linear regression fit is shown as the gray dashed line."}
+as_ggplot(gt)
+```
+
+## CEO analysis reports
+
+### Ran Poliakine (Nano-X Imaging)
+
+(ref:poliakine) [Brief profile of Ran Poliakine](https://en.wikipedia.org/wiki/Ran_Poliakine)
+
+```{r}
+read_html("https://en.wikipedia.org/wiki/Ran_Poliakine", which = 1, header = T, trim = T) %>%
+  column_to_rownames("V1") %>%
+  t %>%
+  as_tibble %>%
+  mutate(across(Occupation, ~str_replace_all(., "([a-z])([A-Z])", "\\1<br>\\2"))) %>%
+  t %>%
+  as_tibble(rownames = "var") %>%
+  kbl(escape = F, col.names = NULL, caption = "(ref:poliakine)") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = F, position = "left")
+```
+
+*Work in progress*
+
+### Serge Saxonov (10X Genomics)
+
+*Work in progress*

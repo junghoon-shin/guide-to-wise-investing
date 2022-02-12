@@ -1,0 +1,85 @@
+# (PART) Principles {-} 
+
+# Buffett's wisdom^[The quotes are picked and reorganized from https://www.fool.com/investing/best-warren-buffett-quotes.aspx.] {#buffett}
+
+![Warren Buffett, CEO of Berkshire Hathaway](images/Warren.jpg){width=240px}
+
+## Rule No. 1
+
+- "Rule No. 1 is never lose money. Rule No. 2 is never forget Rule No. 1."
+
+## Value investing
+
+- "Price is what you pay. Value is what you get."
+
+- "It's far better to buy a wonderful company at a fair price than a fair company at a wonderful price."
+
+- “The key to investing is not assessing how much an industry is going to affect society, or how much it will grow, but rather determining the competitive advantage of any given company and, above all, the durability of that advantage.”
+
+- "Buy into a company because you want to own it, not because you want the stock to go up."
+
+- "Buy a stock the way you would buy a house. Understand and like it such that you'd be content to own it in the absence of any market."
+
+## Investing for the long term
+
+- "Someone's sitting in the shade today because someone planted a tree a long time ago."
+
+- "If you aren't willing to own a stock for ten years, don't even think about owning it for ten minutes."
+
+- "All there is to investing is picking good stocks at good times and staying with them as long as they remain good companies."
+
+- "Do not take yearly results too seriously. Instead, focus on four or five-year averages."
+
+## Dealing with losing investments
+
+- "The most important thing to do if you find yourself in a hole is to stop digging."
+
+## Right mindset for investing
+
+- "We simply attempt to be fearful when others are greedy and to be greedy only when others are fearful."
+
+- "It is not necessary to do extraordinary things to get extraordinary results."
+
+- "The stock market is a device for transferring money from the impatient to the patient."
+
+- "The difference between successful people and really successful people is that really successful people say no to almost everything."
+
+- “Chains of habits are too light to be felt until they are too heavy to be broken.”
+
+## Market crashes and recessions
+
+- "In the 20th century, the United States endured two world wars and other traumatic and expensive military conflicts; the Depression; a dozen or so recessions and financial panics; oil shocks; a flu epidemic; and the resignation of a disgraced president. Yet the Dow rose from 66 to 11,497."
+
+- "Only when the tide goes out do you discover who's been swimming naked."
+
+- "Predicting rain doesn't count, building the ark does."
+
+## Importance of learning
+
+- "I just sit in my office and read all day."
+
+- "Read 500 pages like this every day. That's how knowledge works. It builds up, like compound interest. All of you can do it, but I guarantee not many of you will do it."
+
+- "I insist on a lot of time being spent, almost every day, to just sit and think. That is very uncommon in American business."
+
+- "One can best prepare themselves for the economic future by investing in your own education. If you study hard and learn at a young age, you will be in the best circumstances to secure your future."
+
+- "Never invest in a business you cannot understand."
+
+- "Risk comes from not knowing what you're doing."
+
+## Ignoring market noise
+
+- "The most important quality for an investor is temperament, not intellect. You need a temperament that neither derives great pleasure from being with the crowd nor against the crowd."
+
+- "You are neither right nor wrong because the crowd disagrees with you. You are right because your data and reasoning are right."
+
+- "We've long felt that the only value of stock forecasters is to make fortune tellers look good. Even now, Charlie and I continue to believe that short-term market forecasts are poison and should be kept locked up in a safe place, away from children and also from grown-ups who behave in the market like children."
+
+- "Don't get caught up with what other people are doing. Being a contrarian isn't the key but being a crowd follower isn't either. You need to detach yourself emotionally."
+
+## Index funds
+
+- "Among the various propositions offered to you, if you invested in a very low cost index fund --- where you don't put the money in at one time, but average in over 10 years --- you'll do better than 90% of people who start investing at the same time."
+
+- "Just pick a broad index like the S&P 500. Don't put your money in all at once; do it over a period of time."

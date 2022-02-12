@@ -1,0 +1,275 @@
+# Disclaimer {#disclaimer .unnumbered}
+
+```{r}
+confident_return = 0.05
+marr = 0.2 # minimum acceptable rate of return
+per_no_growth = 7
+
+AAA_return = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "DAAA", "&cosd=", monthago, "&coed=", today(),
+                            "&fq=Daily&fam=avg&vintage_date=", today(), "&revision_date=", today(), "&nd=", monthago), col_names = T) %>% 
+  mutate(DAAA = as.numeric(DAAA)) %>%
+  filter(!is.na(DAAA)) %>%
+  pull(DAAA) %>%
+  .[length(.)]
+```
+
+```{r}
+drive_auth(email = T, scopes = "https://www.googleapis.com/auth/drive")
+gs4_auth(token = drive_token(), scopes = "https://www.googleapis.com/auth/drive")
+
+company = drive_get("Investment/Valuation") %>% read_sheet(sheet = "Company") %>%
+  mutate(Yahoo = Ticker %>% convert_ticker) %>%
+  relocate(Yahoo, .after = Ticker)
+
+plan(multisession)
+
+yahoo_data = future_map_dfr(company$Yahoo, ~{
+  ticker = .
+  
+  out = tryCatch({
+    Summary = read_html(file.path("https://finance.yahoo.com/quote", ticker), header = F) %>% bind_rows
+    Profile = read_html(file.path("https://finance.yahoo.com/quote" , ticker, "profile"), which = 1, header = T)
+    Statistics = read_html(file.path("https://finance.yahoo.com/quote", ticker, "key-statistics"), header = F) %>% map_dfr(~select(., 1:2))
+    Statistics$V1 %<>% str_replace(" [0-9]$", "")
+    Revenue = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 2, header = F)
+    Growth = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 6, header = T)
+    
+    tibble(Yahoo = ticker,
+           Marketcap = Summary %>% filter(V1 == "Market Cap") %>% pull(V2),
+           Beta = Summary %>% filter(V1 == "Beta (5Y Monthly)") %>% pull(V2),
+           Target = Summary %>% filter(V1 == "1y Target Est") %>% pull(V2),
+           CEO = Profile %>% slice(1) %>% pull(Name),
+           CEO_title = Profile %>% slice(1) %>% pull(Title),
+           CEO_pay = Profile %>% slice(1) %>% pull(Pay),
+           CEO_age = thisyear - (Profile %>% slice(1) %>% pull(`Year Born`) %>% as.numeric),
+           Profit_margin = Statistics %>% filter(V1 == "Profit Margin") %>% pull(V2),
+           ROA = Statistics %>% filter(V1 == "Return on Assets (ttm)") %>% pull(V2),
+           ROE = Statistics %>% filter(V1 == "Return on Equity (ttm)") %>% pull(V2),
+           Revenue_per_share = Statistics %>% filter(V1 == "Revenue Per Share (ttm)") %>% pull(V2),
+           Quarterly_revenue_growth = Statistics %>% filter(V1 == "Quarterly Revenue Growth (yoy)") %>% pull(V2),
+           Diluted_EPS = Statistics %>% filter(V1 == "Diluted EPS (ttm)") %>% pull(V2),
+           Quarterly_earnings_growth = Statistics %>% filter(V1 == "Quarterly Earnings Growth (yoy)") %>% pull(V2),
+           DER = Statistics %>% filter(V1 == "Total Debt/Equity (mrq)") %>% pull(V2),
+           BVPS = Statistics %>% filter(V1 == "Book Value Per Share (mrq)") %>% pull(V2),
+           Operating_cash_flow = Statistics %>% filter(V1 == "Operating Cash Flow (ttm)") %>% pull(V2),
+           Levered_free_cash_flow = Statistics %>% filter(V1 == "Levered Free Cash Flow (ttm)") %>% pull(V2),
+           Forward_annual_dividend_yield = Statistics %>% filter(V1 == "Forward Annual Dividend Yield") %>% pull(V2),
+           Trailing_annual_dividend_yield = Statistics %>% filter(V1 == "Trailing Annual Dividend Yield") %>% pull(V2),
+           Average_dividend_yield_5yrs = Statistics %>% filter(V1 == "5 Year Average Dividend Yield") %>% pull(V2),
+           Payout_ratio = Statistics %>% filter(V1 == "Payout Ratio") %>% pull(V2),
+           Revenue_growth_estimate_current = Revenue %>% filter(V1 == "Sales Growth (year/est)") %>% pull(V4),
+           Revenue_growth_estimate_next = Revenue %>% filter(V1 == "Sales Growth (year/est)") %>% pull(V5),
+           Earnings_growth_past_5yrs = Growth %>% filter(`Growth Estimates` == "Past 5 Years (per annum)") %>% pull(ticker),
+           Earnings_growth_estimate_next_5yrs = Growth %>% filter(`Growth Estimates` == "Next 5 Years (per annum)") %>% pull(ticker))
+    },
+    
+    error = function(e) {
+      message(str_c("Error: ", ticker))
+      message(e$message)
+      return(NULL)
+    })
+  
+  return(out)
+})
+
+financials = future_map_dfr(company$Yahoo, get_financials) %>%
+  group_by(ticker, date) %>%
+  summarize(across(everything(), ~{
+    if(sum(!is.na(.)) > 0) unique(.[!is.na(.)])
+    else NA
+  })) %>%
+  ungroup %>%
+  rename(Yahoo = ticker) %>%
+  mutate(date = as_date(date))
+
+plan("default")
+
+financials_TSM = financials %>% filter(Yahoo == "TSM")
+financials_others = financials %>% filter(Yahoo != "TSM")
+
+TSM_exchange = getQuote(str_c(company %>% filter(Ticker == "NYSE:TSM") %>% pull(Currency), "TWD", "=X"), src = "yahoo")$Last
+
+financials_TSM %<>% mutate(across(-c(Yahoo, date), ~. / TSM_exchange)) # Summary statistics for TSM are in USD, but financial statement is in TWD.
+
+financials = bind_rows(financials_TSM, financials_others) %>% arrange(Yahoo)
+
+netIncomeGrowth = financials %>%
+  arrange(date) %>%
+  group_by(Yahoo) %>%
+  summarize(netIncomeGrowth = (netIncome[length(netIncome)] / netIncome[1]) ^ (1/(length(netIncome) - 1)) - 1,
+            firstnetIncome = netIncome[1],
+            lastnetIncome = netIncome[length(netIncome)]) %>%
+  ungroup %>%
+  filter(firstnetIncome > 0 & lastnetIncome > 0) %>%
+  select(Yahoo, netIncomeGrowth)
+
+ROIC = financials %>%
+  arrange(desc(date)) %>%
+  group_by(Yahoo) %>%
+  slice(1) %>%
+  ungroup %>%
+  mutate(NOPAT = ebit - incomeTaxExpense,
+         IC = totalStockholderEquity + longTermDebt + shortLongTermDebt - cash,
+         ROIC = NOPAT/IC,
+         Free_cash_flow = totalCashFromOperatingActivities + capitalExpenditures) %>%
+  select(Yahoo, NOPAT, IC, ROIC, Free_cash_flow)
+
+yahoo_data %<>% left_join(netIncomeGrowth) %>% left_join(ROIC)
+
+company %<>% 
+  left_join(yahoo_data) %>% 
+  replace(. == "N/A", NA) %>%
+  mutate(Name = clean_name(Name)) %>%
+  mutate(across(c(Beta, 
+                  Target, 
+                  Revenue_per_share,
+                  Diluted_EPS, 
+                  BVPS), 
+                ~as.numeric(str_replace(., ",", ""))),
+         across(c(DER, 
+                  Average_dividend_yield_5yrs), 
+                ~as.numeric(.)/100),
+         across(c(Profit_margin, 
+                  ROA,
+                  ROE,
+                  Quarterly_revenue_growth, 
+                  Quarterly_earnings_growth, 
+                  Forward_annual_dividend_yield, 
+                  Trailing_annual_dividend_yield,
+                  Payout_ratio, 
+                  Revenue_growth_estimate_current, 
+                  Revenue_growth_estimate_next, 
+                  Earnings_growth_past_5yrs, 
+                  Earnings_growth_estimate_next_5yrs), 
+                ~as.numeric(str_replace_all(., c("%" = "", "," = "")))/100),
+         Earnings_growth_estimate_next_5yrs = case_when(is.na(Earnings_growth_estimate_next_5yrs) ~ netIncomeGrowth, T ~ Earnings_growth_estimate_next_5yrs),
+         across(c(Marketcap, Operating_cash_flow, Levered_free_cash_flow),
+                ~case_when(str_detect(., "[Kk]$") ~ str_replace(., "[Kk]", "") %>% as.numeric %>% multiply_by(1e3),
+                           str_detect(., "M$") ~ str_replace(., "M", "") %>% as.numeric %>% multiply_by(1e6),
+                           str_detect(., "B$") ~ str_replace(., "B", "") %>% as.numeric %>% multiply_by(1e9),
+                           str_detect(., "T$") ~ str_replace(., "T", "") %>% as.numeric %>% multiply_by(1e12)))) %>% 
+  select(-netIncomeGrowth) %>%
+  rowwise %>%
+  mutate(PSR = Price / Revenue_per_share,
+         PBR = Price / BVPS,
+         Retention_ratio = 1 - Payout_ratio,
+         Sustainable_growth_rate = ROE * Retention_ratio,
+         Expected_EPS_growth_rate = Earnings_growth_estimate_next_5yrs,
+         Expected_payout_ratio_change_rate = 0,
+         Expected_dividend_growth_rate = Expected_EPS_growth_rate * (1 + Expected_payout_ratio_change_rate),
+         Expected_PE_in_10yrs = `Industry PER`,
+         Estimated_price_in_10yrs = EPS * (1 + Expected_EPS_growth_rate)^10 * Expected_PE_in_10yrs,
+         Reinvested_dividend_in_10yrs = sum(EPS * Payout_ratio * (1 + Expected_dividend_growth_rate)^(1:10) * (1 + confident_return)^(10 - 1:10)),
+         Expected_price_in_10yrs = ifelse(!is.na(Estimated_price_in_10yrs), sum(Estimated_price_in_10yrs, Reinvested_dividend_in_10yrs, na.rm = T), NA),
+         DCF10 = Expected_price_in_10yrs / (1 + marr)^10,
+         Payback8 = sum(Free_cash_flow * (1 + Earnings_growth_estimate_next_5yrs)^(1:8)),
+         Adjusted_Graham_formula = EPS * (per_no_growth + 100 * Earnings_growth_estimate_next_5yrs) * 4.4 / AAA_return,
+         `Price/Target` = Price/Target,
+         PEG = PER/(100 * Earnings_growth_estimate_next_5yrs),
+         `Price/Graham` = Price / Adjusted_Graham_formula,
+         `Price/DCF10` = Price / DCF10,
+         `Marketcap/Payback8` = Marketcap / Payback8,
+         Decision = case_when(BVPS < 0 ~ "Negative equity",
+                              DER > 2.5 ~ "High debt-to-equity ratio",
+                              EPS <= 0 ~ "Zero or negative earnings",
+                              Earnings_growth_estimate_next_5yrs <= 0 ~ "Zero or negative growth",
+                              Free_cash_flow <= 0 ~ "Zero or negative cash flow",
+                              sum(c_across(c(PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`)) < 1, `Price/Target` < 1 / 1.2, na.rm = T) >= 3 ~ "Buy",
+                              sum(c_across(c(PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`)) < 1, `Price/Target` < 1 / 1.2, na.rm = T) >= 2 ~ "Maybe buy",
+                              sum(is.na(c_across(c(PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`, `Price/Target`)))) >= 1 ~ "Insufficient data",
+                              T ~ "Wait")) %>%
+  ungroup %>%
+  relocate(Marketcap, .after = Shares) %>%
+  relocate(Diluted_EPS, Revenue_per_share, BVPS, .after = EPS) %>%
+  relocate(Revenue_growth_estimate_current, Revenue_growth_estimate_next, Earnings_growth_estimate_next_5yrs,
+           Operating_cash_flow, Levered_free_cash_flow, Free_cash_flow,
+           Profit_margin,
+           DER, ROA, ROIC, ROE, PBR, PSR, PER, `Industry PER`,
+           .before = `Price/Target`) %>%
+  relocate(Retention_ratio, .after = Payout_ratio) %>%
+  arrange(Name)
+
+company_plot = company
+
+company %<>% 
+  rename(`Debt-to-equity ratio` = DER,
+         `5yrs average dividend yield` = Average_dividend_yield_5yrs,
+         `Revenue growth estimate (current year)` = Revenue_growth_estimate_current,
+         `Revenue growth estimate (next year)` = Revenue_growth_estimate_next,
+         `Earnings growth (past 5yrs)` = Earnings_growth_past_5yrs,
+         `Earnings growth estimate (next 5yrs)` = Earnings_growth_estimate_next_5yrs)
+
+names(company) %<>% str_replace_all(., "_", " ")
+```
+
+```{r}
+if (thishour == 0) {
+  company %>% write_sheet(ss = drive_get("Investment/Valuation"), sheet = "Valuation")
+}
+```
+
+```{r}
+portfolio = drive_get("Investment/Investment") %>% read_sheet(sheet = "Portfolio")
+
+allocation = drive_get("Investment/Investment") %>% read_sheet(sheet = "Asset allocation")
+
+class_level = c("Stock", "REIT", "Commodity", "Gold", "Bond", "Cash")
+
+region_level = c("Korea", "USA", "Europe", "Emerging", "Global")
+
+portfolio %<>%
+  mutate(Name = clean_name(Name),
+         Name = case_when(Name == "Hyundai Motor S2 Pref Shs" ~ "Hyundai Motor",
+                          T ~ Name),
+         Class = factor(Class, levels = class_level),
+         Region = factor(Region, levels = region_level))
+
+allocation %<>%
+  mutate(`Target proportion` = round(`Target proportion`, 3),
+         Class = factor(Class, levels = class_level),
+         Region = factor(Region, levels = region_level),
+         category = str_c(Class, Region, sep = " - ") %>% 
+           {case_when(. == "Commodity - Global" ~ "Commodity",
+                      . == "Gold - Global" ~ "Gold",
+                      T ~ .)} %>%
+           factor(levels = levels(interaction(Class, Region, sep = " - ", lex.order = T)) %>% 
+                    {case_when(. == "Commodity - Global" ~ "Commodity",
+                               . == "Gold - Global" ~ "Gold",
+                               T ~ .)})) %>%
+  group_by(category) %>%
+  summarise(across(c(`Current proportion`, `Target proportion`), sum)) %>%
+  arrange(desc(category)) %>%
+  mutate(current_y = cumsum(`Current proportion`) - `Current proportion`/2,
+         target_y = cumsum(`Target proportion`) - `Target proportion`/2) %>%
+  filter(`Current proportion` > 0 | `Target proportion` > 0)
+
+portfolio_stock = portfolio %>% 
+  filter(Class == "Stock") %>%
+  select(Name, Region, Weight) %>%
+  left_join(company %>% select(Name, Industry)) %>% 
+  mutate(Industry = case_when(is.na(Industry) ~ "Index Fund",
+                              T ~ Industry) %>% 
+           factor %>% relevel("Index Fund"),
+         Weight = Weight / sum(Weight))
+
+portfolio_bond = portfolio %>% 
+  filter(Class == "Bond") %>%
+  select(Name, Region, Weight) %>%
+  mutate(Sector = case_when(Region == "USA" & str_detect(Name, "T-NOTE") & str_detect(Name, "10") ~ "U.S. 10-year treasury note",
+                            Name == "ARIRANG US Long-term Credit" ~ "U.S. long-term AAA-A corporate bond",
+                            Region == "Korea" & str_detect(Name, "10") ~ "South Korea 10-year government bond",
+                            T ~ "Others"),
+         Weight = Weight / sum(Weight))
+
+my_stock = portfolio %>% 
+  filter(Class %in% c("Stock", "REIT")) %>%
+  left_join(company %>% select(Name, Industry)) %>%
+  filter(!is.na(Industry)) %>% 
+  pull(Name) %>%
+  unique %>% 
+  sort
+```
+
+While I love delving into investing-related data and playing around with programming software for intuitive data visualization, I have no formal education or degree in economics, finance, accounting, or business administration or management, and thus I am in no way a certified expert. I am not a licensed financial advisor, portfolio manager, or accountant. All contents published on this website are for informational and recreational purposes only. They should not be considered as recommendations to buy, sell, or transact in any of the equities, index funds, mutual funds, bonds, commodities, or any other securities mentioned and analyzed. While I believe the information provided herein is reliable, I do not warrant its accuracy or completeness. Keep in mind that there is no "one-size-fits-all" investment strategy. Do your due diligence.
+
+**Disclosure**: I own shares of `r str_c(str_c(my_stock[-length(my_stock)], collapse = ", "), my_stock[length(my_stock)], sep = ", and ")`.

@@ -1,0 +1,112 @@
+# Small-cap list {#small-cap}
+
+These are a list of relatively small-cap companies that interest me but need more research. Brief profile of each company is shown when available at [Wikipedia](https://en.wikipedia.org/wiki/Main_Page). Note that these profiles might be significantly outdated. For up-to-date comprehensive financial data, see Section \@ref(comprehensive).
+
+```{r}
+make_wikitable = function(name, which = 1) {
+  wikitable = read_html(str_c("https://en.wikipedia.org/wiki/", name), which = which, header = T, trim = T) %>% 
+    mutate(V2 = str_replace_all(V2, c("([A-Za-z])\\(" = "\\1 (",
+                                      "\\[[0-9]+\\](?=(\\s+|$))" = ""))) %>%
+    column_to_rownames("V1") %>% 
+    t %>% 
+    as_tibble
+  
+  missing = setdiff(c("Traded as", "Key people", "Products", "Services", "Industry", "Founders", "Subsidiaries"), names(wikitable))
+  wikitable %<>% bind_cols(matrix(NA, nrow = 1, ncol = length(missing)) %>% set_colnames(missing) %>% as_tibble)
+  
+  wikitable %>%
+    mutate(`Traded as` = str_replace_all(`Traded as`, "(.)(NYSE|NASDAQ|S&P|Russell)", "\\1<br>\\2")) %>%
+    mutate(across(c(`Key people`, Services), ~str_replace_all(., c("\\)([A-Z])" = ")<br>\\1",
+                                                                   "\\s*\\n\\s*" = "<br>"))),
+           across(c(Industry, Founders, Products, Services, Subsidiaries), ~str_replace_all(., c("([a-z])([A-Z])" = "\\1<br>\\2",
+                                                                                       ", " = "<br>",
+                                                                                       ",* and " = "<br>")))) %>%
+    t %>% 
+    set_colnames("Val") %>%
+    as_tibble(.name_repair = "minimal", rownames = "Var") %>%
+    filter(!is.na(Val))
+}
+
+display_wikitable = function(wikitable, caption) {
+  wikitable %>%
+    kbl(escape = F, col.names = NULL, caption = caption) %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  full_width = F, position = "left")
+}
+
+image_link = function(image_file, url, ...) {
+  a(href = url, img(src = image_file, ...))
+}
+
+marketcap = company_plot %>% select(Name_trimmed, Marketcap_USD)
+```
+
+## Intellia Therapeutics (`r marketcap %>% filter(Name_trimmed == "Intellia Therapeutics") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+```{r}
+image_link(image_file = "images/Intellia_Therapeutics.png", url = "https://www.intelliatx.com/", width = "240px")
+
+wikitable = "Intellia_Therapeutics" %>% make_wikitable(1) 
+
+wikitable %>% display_wikitable("Intellia Therapeutics")
+```
+
+## Nano-X Imaging (`r marketcap %>% filter(Name_trimmed == "Nano-X Imaging") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+```{r}
+image_link(image_file = "images/NanoX.svg", url = "https://www.nanox.vision/", width = "240px")
+```
+
+## Unity Software (`r marketcap %>% filter(Name_trimmed == "Unity Software") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+```{r}
+image_link(image_file = "images/Unity.png", url = "https://unity.com/", width = "240px")
+
+wikitable = "Unity_Technologies" %>% make_wikitable(1)
+
+wikitable$Val[wikitable$Var == "Subsidiaries"] %<>% 
+  str_replace_all(c("Chilli<br>Connect" = "ChilliConnect",
+                    "(.+)delta<br>DNA" = "\\1<br>deltaDNA",
+                    "deltaDNA(.+)" = "deltaDNA<br>\\1"))
+
+wikitable %>% display_wikitable("Unity Software")
+```
+
+## Parrot (`r marketcap %>% filter(Name_trimmed == "Parrot") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+```{r}
+image_link(image_file = "images/Parrot.png", url = "https://www.parrot.com/en", width = "240px")
+
+wikitable = "Parrot_SA" %>% make_wikitable(7)
+
+wikitable$Val[wikitable$Var == "Subsidiaries"] %<>% 
+  str_replace_all(c("sense<br>Fly" = "senseFly"))
+
+wikitable %>% display_wikitable("Parrot")
+```
+
+## Ambarella (`r marketcap %>% filter(Name_trimmed == "Ambarella") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+```{r}
+image_link(image_file = "images/Ambarella.png", url = "https://www.ambarella.com/", width = "240px")
+
+wikitable = "Ambarella_Inc." %>% make_wikitable(2)
+
+wikitable %>% display_wikitable("Ambarella")
+```
+
+## AeroVironment (`r marketcap %>% filter(Name_trimmed == "AeroVironment") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+```{r}
+image_link(image_file = "images/Aerovironment.png", url = "https://www.avinc.com/", width = "240px")
+
+wikitable = "AeroVironment" %>% make_wikitable(1)
+
+wikitable %>% display_wikitable("AeroVironment")
+```
+
+## Surface Oncology (`r marketcap %>% filter(Name_trimmed == "Surface Oncology") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+```{r}
+image_link(image_file = "images/Surface_Oncology.png", url = "https://www.surfaceoncology.com/", width = "240px")
+```

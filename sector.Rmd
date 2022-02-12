@@ -1,0 +1,92 @@
+# Sector evaluation^[Data are from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html) and [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/mgnroc.html). All data are based on U.S. companies.] {#sector}
+
+## PE ratio
+
+```{r}
+industry = drive_get("Investment/Valuation") %>% read_sheet(sheet = "Industry valuation")
+
+names(industry) %<>% str_replace_all("/ ", "/")
+
+industry %<>% 
+  filter(nchar(`Industry Name`) > 0) %>% 
+  mutate(`Industry Name` = str_replace_all(`Industry Name`, c("\\s+" = " ", "\\t+" = " ")),
+         across(-c(`Industry Name`, `Expected growth in EPS - next 5 years`), as.numeric),
+         `Expected growth in EPS - next 5 years` = str_replace(`Expected growth in EPS - next 5 years`, "%", "") %>% as.numeric %>% divide_by(100))
+
+industry_per = industry %>% 
+  arrange(`Current PE`) %>% 
+  mutate(`Industry Name` = factor(`Industry Name`, levels = `Industry Name`)) %>% 
+  select(`Industry Name`, ends_with("PE")) %>%
+  pivot_longer(cols = ends_with("PE"), names_to = "Variable", values_to = "PE ratio") %>%
+  mutate(Variable = Variable %>% str_replace(" PE", "") %>% factor(levels = c("Current", "Trailing", "Forward")))
+
+notNA_per = industry_per %>% group_by(`Industry Name`) %>% summarise(notNA = sum(!is.na(`PE ratio`))) %>% filter(notNA > 0) %>% nrow
+```
+
+```{r, fig.height = (notNA_per + 3)/4, fig.cap = "Current, trailing, and forward PE ratio by industry sector (note the x-axis is in log scale)"}
+industry_per %>%
+  ggplot(mapping = aes(x = `Industry Name`, y = `PE ratio`)) +
+  geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
+  geom_text(mapping = aes(y = `PE ratio` + diff(range(`PE ratio`, na.rm = T))/35, label = round(`PE ratio`)), hjust = 0, size = 8 / .pt) +
+  scale_y_continuous(expand = c(0, 0, 0.25, 0), labels = make_readable) +
+  coord_flip() +
+  labs(x = NULL, y = "PE ratio") +
+  facet_grid(cols = vars(Variable)) +
+  theme(axis.ticks.y = element_blank())
+```
+
+## Expected growth rate
+
+```{r, fig.height = (nrow(industry %>% filter(!is.na(`Expected growth in EPS - next 5 years`))) + 2)/4, fig.cap = "Expected growth rate for the next 5 years by industry sector"}
+industry %>%
+  arrange(`Expected growth in EPS - next 5 years`) %>%
+  mutate(`Industry Name` = factor(`Industry Name`, levels = `Industry Name`)) %>%
+  ggplot(mapping = aes(x = `Industry Name`, y = `Expected growth in EPS - next 5 years`)) +
+  geom_col(mapping = aes(fill = factor(sign(`Expected growth in EPS - next 5 years`), levels = c(-1, 1, 0))), color = "black", width = 0.7) +
+  scale_y_continuous(labels = percent) +
+  scale_fill_brewer(type = "qual", palette = 4, guide = F) +
+  coord_flip() +
+  labs(x = NULL, y = "Expected growth rate (next 5 years)") +
+  theme(axis.ticks.y = element_blank())
+```
+
+## PEG ratio
+
+```{r, fig.height = (nrow(industry %>% filter(!is.na(`PEG Ratio`))) + 2)/4, fig.cap = "PEG ratio by industry sector"}
+industry %>%
+  filter(!is.na(`PEG Ratio`)) %>%
+  arrange(`PEG Ratio`) %>%
+  mutate(`Industry Name` = factor(`Industry Name`, levels = `Industry Name`)) %>%
+  ggplot(mapping = aes(x = `Industry Name`, y = `PEG Ratio`)) +
+  geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
+  scale_y_continuous(expand = c(0, 0, 0.05, 0)) +
+  coord_flip() +
+  labs(x = NULL, y = "PEG ratio") +
+  theme(axis.ticks.y = element_blank())
+```
+
+## ROIC
+
+```{r}
+industry2 = drive_get("Investment/Valuation") %>% read_sheet(sheet = "Industry MROIC")
+
+industry2 %<>% 
+  filter(nchar(`Industry name`) > 0) %>%
+  mutate(`Industry name` = str_replace_all(`Industry name`, "\\s+", " "),
+         across(c(`Number of firms`, `Sales/Capital`), as.numeric),
+         across(c(`After-tax Operating Margin`, `Return on Capital`), ~str_replace(., "%", "") %>% as.numeric %>% divide_by(100)))
+```
+
+```{r, fig.height = (nrow(industry2 %>% filter(!is.na(`Return on Capital`))) + 2)/4, fig.cap = "Return on invested capital by industry sector"}
+industry2 %>%
+  filter(!is.na(`Return on Capital`)) %>%
+  arrange(`Return on Capital`) %>%
+  mutate(`Industry name` = factor(`Industry name`, levels = `Industry name`)) %>%
+  ggplot(mapping = aes(x = `Industry name`, y = `Return on Capital`)) +
+  geom_col(mapping = aes(fill = factor(sign(`Return on Capital`), levels = c(-1, 1, 0))), color = "black", width = 0.7) +
+  scale_y_continuous(labels = percent) +
+  scale_fill_brewer(type = "qual", palette = 4, guide = F) +
+  coord_flip() +
+  labs(x = NULL, y = "ROIC") +
+  theme(axis.ticks.y = element_blank())
+```

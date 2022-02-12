@@ -1,0 +1,19 @@
+# (PART) Business {-}
+
+# Largest companies {#largest}
+
+```{r}
+largest = map_dfr(str_c("https://companiesmarketcap.com/page/", 1:5), ~read_html(., which = 1, header = T, trim = T))
+
+largest %<>% 
+  select(-`Price (30 days)`) %>%
+  mutate(Ticker = str_extract(Name, "(?<=\\n).+$") %>% str_trim,
+         Name = str_extract(Name, "^.+(?=\\n)") %>% str_trim) %>%
+  relocate(Rank, Name, Ticker)
+```
+
+(ref:largest) The `r nrow(largest)` largest public companies in the world by market value^[Data are from https://companiesmarketcap.com/.]
+
+```{r, fig.cap = "(ref:largest)"}
+my_datatable(largest, paging = T, pageLength = 100, scrollY = NULL, caption = NULL)
+```

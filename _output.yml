@@ -1,0 +1,17 @@
+bookdown::gitbook:
+  number_sections: yes
+  fig_caption: yes
+  highlight: tango
+  css: style.css
+  includes:
+    in_header: in_header.html
+  split_by: "chapter+number"
+  split_bib: yes
+  config:
+    toc:
+      before: |
+        <li><a href="./">Guide to Wise Investing</a></li>
+      after: |
+        <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+    edit: https://github.com/junghoon-shin/guide-to-wise-investing/edit/master/%s
+    download: no

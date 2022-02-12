@@ -1,0 +1,22 @@
+# Asset growth simulation {#simulation}
+
+In the Shiny web application embedded below, you can freely tune your investment scenario and see how your asset will grow over time. Specifically, you can choose 6 parameters depending on your financial situation:
+
+1. Initial amount of investment
+2. Investment amount per month
+3. Increment of monthly investment per year
+4. Your target annual profit
+5. [Annual inflation rate](#inflation)
+6. Total period of investment
+
+## Simulation in USD
+
+```{r, fig.cap = "Shiny web application for asset growth simulation in USD. The live version is available at https://junghoonshin.shinyapps.io/asset-growth-simulation-usd/."}
+include_app("https://junghoonshin.shinyapps.io/asset-growth-simulation-usd/", height = "1000px")
+```
+
+## Simulation in KRW
+
+```{r, fig.cap = "Shiny web application for asset growth simulation in KRW. The live version is available at https://junghoonshin.shinyapps.io/asset-growth-simulation-krw/."}
+include_app("https://junghoonshin.shinyapps.io/asset-growth-simulation-krw/", height = "1000px")
+```
