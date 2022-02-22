@@ -1,0 +1,3090 @@
+--- 
+title: "Guide to Wise Investing"
+author: "Junghoon Shin"
+date: "`r paste({t = Sys.time(); attributes(t)$tzone = 'Asia/Seoul'; t}, 'KST')`"
+site: bookdown::bookdown_site
+documentclass: book
+bibliography: [book.bib, packages.bib]
+csl: apa-with-abstract.csl
+biblio-style: apalike
+link-citations: yes
+url: 'https\://bookdown.org/junghoonshin/guide-to-wise-investing/'
+github-repo: "junghoon-shin/guide-to-wise-investing"
+cover-image: "images/mathieu-stern-1zO4O3Z0UJA-unsplash.jpg"
+apple-touch-icon: "images/bull.svg"
+apple-touch-icon-size: 120
+favicon: "images/bull.svg"
+description: "Investment databook containing business financials, industry and market environments, and global economy"
+---
+
+```{r, include = F}
+knitr::write_bib(c(.packages(), "bookdown", "knitr", "rmarkdown"), "packages.bib")
+```
+
+```{r, include = F}
+if (!"remotes" %in% installed.packages()) {
+  install.packages("remotes")
+}
+
+library(remotes)
+
+if (!"facetscales" %in% installed.packages()) {
+  install_github("zeehio/facetscales")
+}
+
+if (!"yfinance" %in% installed.packages()) {
+  install_github("ljupch0/yfinance")
+}
+
+if (!"pacman" %in% installed.packages()) {
+  install.packages("pacman")
+}
+
+if (!"BiocManager" %in% installed.packages()) {
+  install.packages("BiocManager")
+}
+
+library(pacman)
+
+p_load(bookdown,
+       ComplexHeatmap,
+       cowplot,
+       DT,
+       facetscales,
+       furrr,
+       ggpubr,
+       googledrive,
+       googlesheets4,
+       grid,
+       gridExtra,
+       htmltools,
+       httr,
+       kableExtra,
+       knitr,
+       labeling,
+       lubridate,
+       magrittr,
+       measurements,
+       paleotree,
+       pander,
+       plotly,
+       quantmod,
+       RColorBrewer,
+       rlist,
+       rvest,
+       scales,
+       stringi,
+       tidyquant,
+       tidyverse,
+       XML,
+       yfinance)
+
+options(bitmapType = "cairo")
+
+knitr::opts_chunk$set(echo = FALSE, 
+                      message = FALSE, 
+                      warning = FALSE, 
+                      error = FALSE,
+                      out.width = "100%", 
+                      out.height = "100%", 
+                      fig.width = 7, 
+                      fig.height = 5,
+                      dev = "png",
+                      dev.args = list(bg = "transparent", type = "cairo"))
+
+theme_set(theme_bw(base_family = "Lato"))
+
+theme_update(plot.title = element_text(hjust = 0.5, vjust = 0.5),
+             plot.margin = unit(c(5.5, 11, 5.5, 5.5), "points"),
+             rect = element_rect(fill = "transparent"),
+             plot.background = element_rect(color = "transparent"),
+             legend.key = element_rect(fill = "transparent"),
+             panel.background = element_rect(fill = "transparent"))
+
+update_geom_defaults(geom = "text", new = list(family = "Lato"))
+```
+
+```{r}
+read_html = function(url, which = integer(), header = T, trim = T) {
+  readHTMLTable(rawToChar(GET(url)$content), which = which, header = header, trim = trim)
+}
+
+my_datatable = function(tbl, paging = F, pageLength = 5, scrollY = unit(700, "lines"), caption = NULL) {
+  DT::datatable(tbl,
+                options = list(dom = "lfrtip",
+                               paging = paging,
+                               pageLength = pageLength,
+                               searching = T,
+                               ordering = T,
+                               scrollX = T, 
+                               scrollY = scrollY,
+                               fixedColumns = list(leftColumns = 1),
+                               colReorder = list(realtime = F),
+                               keys = T,
+                               autoWidth = T,
+                               initComplete = JS("function(settings, json) {", 
+                                                 "$(this.api().table().header()).css({'font-size': '14px'});",
+                                                 "}")),
+                extensions = c("FixedColumns", "ColReorder", "KeyTable"),
+              rownames = F,
+              caption = caption) %>%
+    formatStyle(columns = 1:ncol(tbl), fontSize = "14px")
+}
+
+make_percent = function(x, times) {
+  (x * times) %>% round(1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim %>% {ifelse(. == "NA", ., str_c(., "%"))}
+}
+
+make_readable = function(x) case_when(abs(x) >= 1e12 ~ str_c(round(x/1e12, 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim, "T"),
+                                      abs(x) >= 1e9 ~ str_c(round(x/1e9, 1) %>% format(scientific = F, drop0trailing = T) %>% str_trim, "B"),
+                                      abs(x) >= 1e6 ~ str_c(round(x/1e6, 1) %>% format(scientific = F, drop0trailing = T) %>% str_trim, "M"),
+                                      abs(x) >= 1e3 ~ str_c(round(x/1e3, 1) %>% format(scientific = F, drop0trailing = T) %>% str_trim, "K"),
+                                      T ~ round(x, 1) %>% format(scientific = F, drop0trailing = T) %>% str_trim)
+
+make_numeric = function(x) {
+  str_replace(x, ",", "") %>% {
+    case_when(str_detect(., "T$") ~ as.numeric(str_replace(., "T", "")) * 1e12,
+              str_detect(., "B$") ~ as.numeric(str_replace(., "B", "")) * 1e9,
+              str_detect(., "M$") ~ as.numeric(str_replace(., "M", "")) * 1e6,
+              str_detect(., "[Kk]$") ~ as.numeric(str_replace(., "[Kk]", "")) * 1e3)
+  }
+}
+
+clean_name = function(name) {
+  name %<>% 
+    str_replace_all(c("-* ADR([, ]+|$)" = "",
+                      "Common Stock([, ]+|$)" = "",
+                      "(?<=[ ,a-z])Co(rporation|rp)*([., ]+|$)" = "",
+                      "(?<=[ ,a-z])(Inc|INC|Ltd|SA|AG|NV|SE|PLC|Mfg|Holdings*|Class [A-Z])([., ]+|$)" = "",
+                      "[,& ]+$" = "",
+                      "\\s+" = " ")) %>% 
+    str_trim
+  
+  case_when(name == "TAKE-TWO INTERACTIVE SOFTWARE" ~ "Take-Two Interactive",
+            name == "QUALCOMM" ~ "Qualcomm",
+            T ~ name)
+}
+
+clean_ceo_name = function(ceo) {
+  str_replace_all(ceo, c("Mr\\.*\\s*" = "",
+                         "Dr\\.*\\s*" = "",
+                         "Ph\\.*D\\.*" = "",
+                         "M\\.*B\\.*A\\.*" = "",
+                         "J\\.*D\\.*" = "",
+                         "D\\.*V\\.*M\\.*" = "",
+                         "[, ]+$" = "")) %>% 
+    str_trim
+}
+
+convert_ticker = function(google) {
+  google %>% 
+    str_replace("^(.+):(.+)$", "\\2.\\1") %>% 
+    str_replace_all(c("\\.KRX" = ".KS",
+                      "\\.KOSDAQ" = ".KQ",
+                      "\\.NYSE" = "",
+                      "\\.NASDAQ" = "",
+                      "\\.CVE" = ".V",
+                      "\\.EPA" = ".PA",
+                      "\\.SWX" = ".SW",
+                      "\\.AMS" = ".AS",
+                      "\\.HKG" = ".HK",
+                      "\\.TPE" = ".TW",
+                      "\\.TYO" = ".T",
+                      "RO\\.SW" = "ROG.SW"))
+}
+
+pairwise_cor = function(x, y = NULL) {
+  if (is.null(y)) {
+    r = matrix(NA, nrow = ncol(x), ncol = ncol(x), dimnames = list(colnames(x), colnames(x)))
+    w = matrix(NA, nrow = ncol(x), ncol = ncol(x), dimnames = list(colnames(x), colnames(x)))
+    
+    for (var1 in  colnames(x)) {
+      for (var2 in colnames(x)) {
+        r[var1, var2] = cor(x[[var1]], x[[var2]], use = "pairwise.complete.obs")
+        w[var1, var2] = map2_lgl(!is.na(x[[var1]]), !is.na(x[[var2]]), ~all(.x, .y)) %>% sum
+      }
+    }
+  }
+  
+  else {
+    r = matrix(NA, nrow = ncol(x), ncol = ncol(y), dimnames = list(colnames(x), colnames(y)))
+    w = matrix(NA, nrow = ncol(x), ncol = ncol(y), dimnames = list(colnames(x), colnames(y)))
+    
+    for (var1 in  colnames(x)) {
+      for (var2 in colnames(y)) {
+        r[var1, var2] = cor(x[[var1]], y[[var2]], use = "pairwise.complete.obs")
+        w[var1, var2] = map2_lgl(!is.na(x[[var1]]), !is.na(y[[var2]]), ~all(.x, .y)) %>% sum
+      }
+    }
+  }
+  
+  return(list(r = r, w = w))
+}
+
+weighted_mean = function(index_cor) {
+  r = simplify2array(index_cor$r)
+  w = simplify2array(index_cor$w)
+  t = simplify2array(index_cor$w) %>% apply(1:2, function(x) sum(x, na.rm = T))
+  apply(r * w, 1:2, function(x) sum(x, na.rm = T)) / t
+}
+```
+
+```{r}
+qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+qual_col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals))) %>% unique
+
+front = c(5, 6, 52:57)
+back = c(1, 10, 12:15, 17:18, 22, 24, 26:47, 49)
+fill_color = c(qual_col_vector[front], qual_col_vector[-c(front, back)], qual_col_vector[back])
+
+front = c(5, 6, 52:57)
+back = c(1, 4, 10, 12:15, 17:18, 22, 24, 26:47, 49)
+line_color = c(qual_col_vector[front], qual_col_vector[-c(front, back)], qual_col_vector[back])
+
+monthago = (today() - 30) %>% as.character %>% str_replace(" ", "")
+yearago = (today() - 365) %>% as.character %>% str_replace(" ", "")
+twoyearsago = (today() - round(365.25 * 2)) %>% as.character %>% str_replace(" ", "")
+fiveyearsago = (today() - round(365.25 * 5)) %>% as.character %>% str_replace(" ", "")
+thirtyyearsago = (today() - round(365.25 * 30)) %>% as.character %>% str_replace(" ", "")
+fiftyyearsago = (today() - round(365.25 * 50)) %>% as.character %>% str_replace(" ", "")
+
+thishour = now("Asia/Seoul") %>% strftime(format = "%H") %>% as.numeric
+thisyear = today() %>% strftime("%Y") %>% as.numeric
+thismonth = today() %>% strftime("%m")
+```
+
+# Preface {#preface .unnumbered}
+
+<div style = "text-align: center">
+
+![Photo by [Mathieu Stern](https://unsplash.com/@mathieustern) on [Unsplash](https://unsplash.com/)](images/mathieu-stern-1zO4O3Z0UJA-unsplash.jpg)
+
+</div>
+
+When I first stepped into the investment world, there was just too much information all over the newspapers, websites, books, YouTube, and even lunch table gossips which all seemed to be of the utmost importance to me. Some believed it was the perfect time to invest in the stock market, while others insisted that the whole market was significantly overheated by repeated fiscal stimulus packages from the government and we all should prepare for the impending market crash. I was so confused that I soon gave up deciding where to invest my money on my own, and instead relied upon some random 1M-subscriber stock YouTubers, trying to copy what they were doing as closely as I could. It seemed a fairly good strategy until I read what [one of the most successful investors on the planet](#buffett) once uttered: *"Risk comes from not knowing what you're doing."* It was painful because that was exactly what I was doing --- I didn't know what I was doing.
+
+From that moment on, I tried to read what the great investors wrote, collect seemingly helpful information, distinguish between useful and useless ones as best as I could, and make my own investment decision whether it was correct or not. It was not an easy task at first. As I rely heavily on Google to get my work done and get surprised by its versatility almost every day, I thought that investing in Google might be a good idea. I was smart enough to know that Alphabet Inc. was the parent company of Google, so I decided to do some research into it. All I really did was to search it up on Google. In about 0.5 seconds, Google spat out 166,000,000 results on the screen. It was not long after I scrolled down to see if anything useful was there that I totally gave up. After giving a few more tries to some other companies, I realized that there weren't many sources of information that fit my needs exactly: something easy, concise, yet informative.
+
+After struggling for quite a while I set about working on this project. It was initially aimed to serve as my personal resource of automatically updated financial data which include only understandable and useful information that would aid me to make an unbiased and premeditated investment decision. As the project went along, however, it slowly evolved into what I thought could also help others who were interested in investing but found existing sources of information [exhausting](https://www.sec.gov/ix?doc=/Archives/edgar/data/320193/000032019320000096/aapl-20200926.htm). This project is designed to help specifically those laymen who seek a reliable source of investment data that does not take a whole lot of time and professional-level financial knowledge to digest. I made my best effort to collate only information that most non-expert investors like me can easily apply to their investment practice right away.
+
+This is a free-to-use, public-access, ongoing project still in its infant stage, and I am always open to suggestions from whoever hopes to make it better. Please feel free to [contact me](#author), or even better make a [pull request](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests) (click the edit button on the top left corner of the page you want to edit) anytime anywhere. This project has been hugely inspired by [Warren Buffett](https://www.berkshirehathaway.com/letters/letters.html), @town2018, @graham2003, @lee2020, and @kim2019. All data published on this website (including [my own portfolio composition](#portfolio)) are automatically retrieved from [public resources](#resources) and updated every hour. They were last updated at **`r paste(now("Asia/Seoul"), "KST")`**. Check them out daily and find out how easily investment can be incorporated into your life.\
+\
+
+![](images/CC-BY-NC-SA-4.0.png){width=180px}
+
+This project is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)](https://creativecommons.org/licenses/by-nc-sa/4.0/). Some pages may contain materials that are subject to copyright, in which case you will see the copyright notice.
+
+<!--chapter:end:index.Rmd-->
+
+# About the author {#author .unnumbered}
+
+Junghoon Shin is a Korean doctor, cancer scientist, and statistical programmer. He earned his MD and MSc from the [Seoul National University College of Medicine](https://medicine.snu.ac.kr/en) and PhD from the [Graduate School of Medical Science and Engineering](https://gsmse.kaist.ac.kr/e_main), [Korea Advanced Institute of Science and Technology](https://www.kaist.ac.kr/en/), where he is currently working as a post-doctoral researcher. His research is primarily focused on the transcriptome dysregulation patterns observed in cancer cells, which have a key role in the cancer development process. Before coming to KAIST, he completed his residency training at the Department of Internal Medicine, [Seoul National University Hospital](http://www.snuh.org/global/en/main.do) and earned his medical board certification in 2018.
+
+More recently, he has had a particular interest in artificial intelligence, business management, and obviously, investment. He started investing when he knew almost nothing about investing. Yet everything he invested in was soaring through the sky. He had no idea why his stocks shot up and it was a shame. It turned out that he had made his first-ever investment in the biggest bull market the world has seen over the last decade: recovery from the COVID-19 crash in 2020. He was very lucky that he made many poor investment decisions without paying the price as many others do. This free lesson was only made possible thanks to [Sehhoon Park](http://www.samsunghospital.com/home/reservation/common/eng/doctorProfile.do?dr_no=2548), who encouraged him to start investing, told him what to read and watch, and shared with him which companies seemed good to invest in and why. This project would not have been possible without Sehhoon's constant and genuine advice.
+
+He still has a lot to learn about investment and wants to share what he learns with as many learners like him as possible (especially with his beloved family and friends who are still on the fence about investing their cold hard cash in ticker symbols on the screen). The stock market will continue to wobble with inevitable recessions and booms as it always has done. He aspires to develop an objective resource of information that can help all investors to discern signals from noise and make the right decision based on reasoning and not on feeling. He spends most of his out-of-work time designing his project while thinking, reading, and digging out early-stage companies that have a great mission, [moat](#moat), and fine management.\
+\
+
+**Contact the author**\
+junghoonshin@kaist.ac.kr
+
+<!--chapter:end:author.Rmd-->
+
+# Disclaimer {#disclaimer .unnumbered}
+
+```{r}
+confident_return = 0.05
+marr = 0.2 # minimum acceptable rate of return
+per_no_growth = 7
+
+AAA_return = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "DAAA", "&cosd=", monthago, "&coed=", today(),
+                            "&fq=Daily&fam=avg&vintage_date=", today(), "&revision_date=", today(), "&nd=", monthago), col_names = T) %>% 
+  mutate(DAAA = as.numeric(DAAA)) %>%
+  filter(!is.na(DAAA)) %>%
+  pull(DAAA) %>%
+  .[length(.)]
+```
+
+```{r}
+drive_auth(email = T, scopes = "https://www.googleapis.com/auth/drive")
+gs4_auth(token = drive_token(), scopes = "https://www.googleapis.com/auth/drive")
+
+company = drive_get("Investment/Valuation") %>% read_sheet(sheet = "Company") %>%
+  mutate(Yahoo = Ticker %>% convert_ticker) %>%
+  relocate(Yahoo, .after = Ticker)
+
+plan(multisession)
+
+yahoo_data = future_map_dfr(company$Yahoo, ~{
+  ticker = .
+  
+  out = tryCatch({
+    Summary = read_html(file.path("https://finance.yahoo.com/quote", ticker), header = F) %>% bind_rows
+    Profile = read_html(file.path("https://finance.yahoo.com/quote" , ticker, "profile"), which = 1, header = T)
+    Statistics = read_html(file.path("https://finance.yahoo.com/quote", ticker, "key-statistics"), header = F) %>% map_dfr(~select(., 1:2))
+    Statistics$V1 %<>% str_replace(" [0-9]$", "")
+    Revenue = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 2, header = F)
+    Growth = read_html(file.path("https://finance.yahoo.com/quote", ticker, "analysis"), which = 6, header = T)
+    
+    tibble(Yahoo = ticker,
+           Marketcap = Summary %>% filter(V1 == "Market Cap") %>% pull(V2),
+           Beta = Summary %>% filter(V1 == "Beta (5Y Monthly)") %>% pull(V2),
+           Target = Summary %>% filter(V1 == "1y Target Est") %>% pull(V2),
+           CEO = Profile %>% slice(1) %>% pull(Name),
+           CEO_title = Profile %>% slice(1) %>% pull(Title),
+           CEO_pay = Profile %>% slice(1) %>% pull(Pay),
+           CEO_age = thisyear - (Profile %>% slice(1) %>% pull(`Year Born`) %>% as.numeric),
+           Profit_margin = Statistics %>% filter(V1 == "Profit Margin") %>% pull(V2),
+           ROA = Statistics %>% filter(V1 == "Return on Assets (ttm)") %>% pull(V2),
+           ROE = Statistics %>% filter(V1 == "Return on Equity (ttm)") %>% pull(V2),
+           Revenue_per_share = Statistics %>% filter(V1 == "Revenue Per Share (ttm)") %>% pull(V2),
+           Quarterly_revenue_growth = Statistics %>% filter(V1 == "Quarterly Revenue Growth (yoy)") %>% pull(V2),
+           Diluted_EPS = Statistics %>% filter(V1 == "Diluted EPS (ttm)") %>% pull(V2),
+           Quarterly_earnings_growth = Statistics %>% filter(V1 == "Quarterly Earnings Growth (yoy)") %>% pull(V2),
+           DER = Statistics %>% filter(V1 == "Total Debt/Equity (mrq)") %>% pull(V2),
+           BVPS = Statistics %>% filter(V1 == "Book Value Per Share (mrq)") %>% pull(V2),
+           Operating_cash_flow = Statistics %>% filter(V1 == "Operating Cash Flow (ttm)") %>% pull(V2),
+           Levered_free_cash_flow = Statistics %>% filter(V1 == "Levered Free Cash Flow (ttm)") %>% pull(V2),
+           Forward_annual_dividend_yield = Statistics %>% filter(V1 == "Forward Annual Dividend Yield") %>% pull(V2),
+           Trailing_annual_dividend_yield = Statistics %>% filter(V1 == "Trailing Annual Dividend Yield") %>% pull(V2),
+           Average_dividend_yield_5yrs = Statistics %>% filter(V1 == "5 Year Average Dividend Yield") %>% pull(V2),
+           Payout_ratio = Statistics %>% filter(V1 == "Payout Ratio") %>% pull(V2),
+           Revenue_growth_estimate_current = Revenue %>% filter(V1 == "Sales Growth (year/est)") %>% pull(V4),
+           Revenue_growth_estimate_next = Revenue %>% filter(V1 == "Sales Growth (year/est)") %>% pull(V5),
+           Earnings_growth_past_5yrs = Growth %>% filter(`Growth Estimates` == "Past 5 Years (per annum)") %>% pull(ticker),
+           Earnings_growth_estimate_next_5yrs = Growth %>% filter(`Growth Estimates` == "Next 5 Years (per annum)") %>% pull(ticker))
+    },
+    
+    error = function(e) {
+      message(str_c("Error: ", ticker))
+      message(e$message)
+      return(NULL)
+    })
+  
+  return(out)
+})
+
+financials = future_map_dfr(company$Yahoo, get_financials) %>%
+  group_by(ticker, date) %>%
+  summarize(across(everything(), ~{
+    if(sum(!is.na(.)) > 0) unique(.[!is.na(.)])
+    else NA
+  })) %>%
+  ungroup %>%
+  rename(Yahoo = ticker) %>%
+  mutate(date = as_date(date))
+
+plan("default")
+
+financials_TSM = financials %>% filter(Yahoo == "TSM")
+financials_others = financials %>% filter(Yahoo != "TSM")
+
+TSM_exchange = getQuote(str_c(company %>% filter(Ticker == "NYSE:TSM") %>% pull(Currency), "TWD", "=X"), src = "yahoo")$Last
+
+financials_TSM %<>% mutate(across(-c(Yahoo, date), ~. / TSM_exchange)) # Summary statistics for TSM are in USD, but financial statement is in TWD.
+
+financials = bind_rows(financials_TSM, financials_others) %>% arrange(Yahoo)
+
+netIncomeGrowth = financials %>%
+  arrange(date) %>%
+  group_by(Yahoo) %>%
+  summarize(netIncomeGrowth = (netIncome[length(netIncome)] / netIncome[1]) ^ (1/(length(netIncome) - 1)) - 1,
+            firstnetIncome = netIncome[1],
+            lastnetIncome = netIncome[length(netIncome)]) %>%
+  ungroup %>%
+  filter(firstnetIncome > 0 & lastnetIncome > 0) %>%
+  select(Yahoo, netIncomeGrowth)
+
+ROIC = financials %>%
+  arrange(desc(date)) %>%
+  group_by(Yahoo) %>%
+  slice(1) %>%
+  ungroup %>%
+  mutate(NOPAT = ebit - incomeTaxExpense,
+         IC = totalStockholderEquity + longTermDebt + shortLongTermDebt - cash,
+         ROIC = NOPAT/IC,
+         Free_cash_flow = totalCashFromOperatingActivities + capitalExpenditures) %>%
+  select(Yahoo, NOPAT, IC, ROIC, Free_cash_flow)
+
+yahoo_data %<>% left_join(netIncomeGrowth) %>% left_join(ROIC)
+
+company %<>% 
+  left_join(yahoo_data) %>% 
+  replace(. == "N/A", NA) %>%
+  mutate(Name = clean_name(Name)) %>%
+  mutate(across(c(Beta, 
+                  Target, 
+                  Revenue_per_share,
+                  Diluted_EPS, 
+                  BVPS), 
+                ~as.numeric(str_replace(., ",", ""))),
+         across(c(DER, 
+                  Average_dividend_yield_5yrs), 
+                ~as.numeric(.)/100),
+         across(c(Profit_margin, 
+                  ROA,
+                  ROE,
+                  Quarterly_revenue_growth, 
+                  Quarterly_earnings_growth, 
+                  Forward_annual_dividend_yield, 
+                  Trailing_annual_dividend_yield,
+                  Payout_ratio, 
+                  Revenue_growth_estimate_current, 
+                  Revenue_growth_estimate_next, 
+                  Earnings_growth_past_5yrs, 
+                  Earnings_growth_estimate_next_5yrs), 
+                ~as.numeric(str_replace_all(., c("%" = "", "," = "")))/100),
+         Earnings_growth_estimate_next_5yrs = case_when(is.na(Earnings_growth_estimate_next_5yrs) ~ netIncomeGrowth, T ~ Earnings_growth_estimate_next_5yrs),
+         across(c(Marketcap, Operating_cash_flow, Levered_free_cash_flow),
+                ~case_when(str_detect(., "[Kk]$") ~ str_replace(., "[Kk]", "") %>% as.numeric %>% multiply_by(1e3),
+                           str_detect(., "M$") ~ str_replace(., "M", "") %>% as.numeric %>% multiply_by(1e6),
+                           str_detect(., "B$") ~ str_replace(., "B", "") %>% as.numeric %>% multiply_by(1e9),
+                           str_detect(., "T$") ~ str_replace(., "T", "") %>% as.numeric %>% multiply_by(1e12)))) %>% 
+  select(-netIncomeGrowth) %>%
+  rowwise %>%
+  mutate(PSR = Price / Revenue_per_share,
+         PBR = Price / BVPS,
+         Retention_ratio = 1 - Payout_ratio,
+         Sustainable_growth_rate = ROE * Retention_ratio,
+         Expected_EPS_growth_rate = Earnings_growth_estimate_next_5yrs,
+         Expected_payout_ratio_change_rate = 0,
+         Expected_dividend_growth_rate = Expected_EPS_growth_rate * (1 + Expected_payout_ratio_change_rate),
+         Expected_PE_in_10yrs = `Industry PER`,
+         Estimated_price_in_10yrs = EPS * (1 + Expected_EPS_growth_rate)^10 * Expected_PE_in_10yrs,
+         Reinvested_dividend_in_10yrs = sum(EPS * Payout_ratio * (1 + Expected_dividend_growth_rate)^(1:10) * (1 + confident_return)^(10 - 1:10)),
+         Expected_price_in_10yrs = ifelse(!is.na(Estimated_price_in_10yrs), sum(Estimated_price_in_10yrs, Reinvested_dividend_in_10yrs, na.rm = T), NA),
+         DCF10 = Expected_price_in_10yrs / (1 + marr)^10,
+         Payback8 = sum(Free_cash_flow * (1 + Earnings_growth_estimate_next_5yrs)^(1:8)),
+         Adjusted_Graham_formula = EPS * (per_no_growth + 100 * Earnings_growth_estimate_next_5yrs) * 4.4 / AAA_return,
+         `Price/Target` = Price/Target,
+         PEG = PER/(100 * Earnings_growth_estimate_next_5yrs),
+         `Price/Graham` = Price / Adjusted_Graham_formula,
+         `Price/DCF10` = Price / DCF10,
+         `Marketcap/Payback8` = Marketcap / Payback8,
+         Decision = case_when(BVPS < 0 ~ "Negative equity",
+                              DER > 2.5 ~ "High debt-to-equity ratio",
+                              EPS <= 0 ~ "Zero or negative earnings",
+                              Earnings_growth_estimate_next_5yrs <= 0 ~ "Zero or negative growth",
+                              Free_cash_flow <= 0 ~ "Zero or negative cash flow",
+                              sum(c_across(c(PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`)) < 1, `Price/Target` < 1 / 1.2, na.rm = T) >= 3 ~ "Buy",
+                              sum(c_across(c(PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`)) < 1, `Price/Target` < 1 / 1.2, na.rm = T) >= 2 ~ "Maybe buy",
+                              sum(is.na(c_across(c(PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`, `Price/Target`)))) >= 1 ~ "Insufficient data",
+                              T ~ "Wait")) %>%
+  ungroup %>%
+  relocate(Marketcap, .after = Shares) %>%
+  relocate(Diluted_EPS, Revenue_per_share, BVPS, .after = EPS) %>%
+  relocate(Revenue_growth_estimate_current, Revenue_growth_estimate_next, Earnings_growth_estimate_next_5yrs,
+           Operating_cash_flow, Levered_free_cash_flow, Free_cash_flow,
+           Profit_margin,
+           DER, ROA, ROIC, ROE, PBR, PSR, PER, `Industry PER`,
+           .before = `Price/Target`) %>%
+  relocate(Retention_ratio, .after = Payout_ratio) %>%
+  arrange(Name)
+
+company_plot = company
+
+company %<>% 
+  rename(`Debt-to-equity ratio` = DER,
+         `5yrs average dividend yield` = Average_dividend_yield_5yrs,
+         `Revenue growth estimate (current year)` = Revenue_growth_estimate_current,
+         `Revenue growth estimate (next year)` = Revenue_growth_estimate_next,
+         `Earnings growth (past 5yrs)` = Earnings_growth_past_5yrs,
+         `Earnings growth estimate (next 5yrs)` = Earnings_growth_estimate_next_5yrs)
+
+names(company) %<>% str_replace_all(., "_", " ")
+```
+
+```{r}
+if (thishour == 0) {
+  company %>% write_sheet(ss = drive_get("Investment/Valuation"), sheet = "Valuation")
+}
+```
+
+```{r}
+portfolio = drive_get("Investment/Investment") %>% read_sheet(sheet = "Portfolio")
+
+allocation = drive_get("Investment/Investment") %>% read_sheet(sheet = "Asset allocation")
+
+class_level = c("Stock", "REIT", "Commodity", "Gold", "Bond", "Cash")
+
+region_level = c("Korea", "USA", "Europe", "Emerging", "Global")
+
+portfolio %<>%
+  mutate(Name = clean_name(Name),
+         Name = case_when(Name == "Hyundai Motor S2 Pref Shs" ~ "Hyundai Motor",
+                          T ~ Name),
+         Class = factor(Class, levels = class_level),
+         Region = factor(Region, levels = region_level))
+
+allocation %<>%
+  mutate(`Target proportion` = round(`Target proportion`, 3),
+         Class = factor(Class, levels = class_level),
+         Region = factor(Region, levels = region_level),
+         category = str_c(Class, Region, sep = " - ") %>% 
+           {case_when(. == "Commodity - Global" ~ "Commodity",
+                      . == "Gold - Global" ~ "Gold",
+                      T ~ .)} %>%
+           factor(levels = levels(interaction(Class, Region, sep = " - ", lex.order = T)) %>% 
+                    {case_when(. == "Commodity - Global" ~ "Commodity",
+                               . == "Gold - Global" ~ "Gold",
+                               T ~ .)})) %>%
+  group_by(category) %>%
+  summarise(across(c(`Current proportion`, `Target proportion`), sum)) %>%
+  arrange(desc(category)) %>%
+  mutate(current_y = cumsum(`Current proportion`) - `Current proportion`/2,
+         target_y = cumsum(`Target proportion`) - `Target proportion`/2) %>%
+  filter(`Current proportion` > 0 | `Target proportion` > 0)
+
+portfolio_stock = portfolio %>% 
+  filter(Class == "Stock") %>%
+  select(Name, Region, Weight) %>%
+  left_join(company %>% select(Name, Industry)) %>% 
+  mutate(Industry = case_when(is.na(Industry) ~ "Index Fund",
+                              T ~ Industry) %>% 
+           factor %>% relevel("Index Fund"),
+         Weight = Weight / sum(Weight))
+
+portfolio_bond = portfolio %>% 
+  filter(Class == "Bond") %>%
+  select(Name, Region, Weight) %>%
+  mutate(Sector = case_when(Region == "USA" & str_detect(Name, "T-NOTE") & str_detect(Name, "10") ~ "U.S. 10-year treasury note",
+                            Name == "ARIRANG US Long-term Credit" ~ "U.S. long-term AAA-A corporate bond",
+                            Region == "Korea" & str_detect(Name, "10") ~ "South Korea 10-year government bond",
+                            T ~ "Others"),
+         Weight = Weight / sum(Weight))
+
+my_stock = portfolio %>% 
+  filter(Class %in% c("Stock", "REIT")) %>%
+  left_join(company %>% select(Name, Industry)) %>%
+  filter(!is.na(Industry)) %>% 
+  pull(Name) %>%
+  unique %>% 
+  sort
+```
+
+While I love delving into investing-related data and playing around with programming software for intuitive data visualization, I have no formal education or degree in economics, finance, accounting, or business administration or management, and thus I am in no way a certified expert. I am not a licensed financial advisor, portfolio manager, or accountant. All contents published on this website are for informational and recreational purposes only. They should not be considered as recommendations to buy, sell, or transact in any of the equities, index funds, mutual funds, bonds, commodities, or any other securities mentioned and analyzed. While I believe the information provided herein is reliable, I do not warrant its accuracy or completeness. Keep in mind that there is no "one-size-fits-all" investment strategy. Do your due diligence.
+
+**Disclosure**: I own shares of `r str_c(str_c(my_stock[-length(my_stock)], collapse = ", "), my_stock[length(my_stock)], sep = ", and ")`.
+
+<!--chapter:end:disclaimer.Rmd-->
+
+# (PART) Principles {-} 
+
+# Buffett's wisdom^[The quotes are picked and reorganized from https://www.fool.com/investing/best-warren-buffett-quotes.aspx.] {#buffett}
+
+![Warren Buffett, CEO of Berkshire Hathaway](images/Warren.jpg){width=240px}
+
+## Rule No. 1
+
+- "Rule No. 1 is never lose money. Rule No. 2 is never forget Rule No. 1."
+
+## Value investing
+
+- "Price is what you pay. Value is what you get."
+
+- "It's far better to buy a wonderful company at a fair price than a fair company at a wonderful price."
+
+- “The key to investing is not assessing how much an industry is going to affect society, or how much it will grow, but rather determining the competitive advantage of any given company and, above all, the durability of that advantage.”
+
+- "Buy into a company because you want to own it, not because you want the stock to go up."
+
+- "Buy a stock the way you would buy a house. Understand and like it such that you'd be content to own it in the absence of any market."
+
+## Investing for the long term
+
+- "Someone's sitting in the shade today because someone planted a tree a long time ago."
+
+- "If you aren't willing to own a stock for ten years, don't even think about owning it for ten minutes."
+
+- "All there is to investing is picking good stocks at good times and staying with them as long as they remain good companies."
+
+- "Do not take yearly results too seriously. Instead, focus on four or five-year averages."
+
+## Dealing with losing investments
+
+- "The most important thing to do if you find yourself in a hole is to stop digging."
+
+## Right mindset for investing
+
+- "We simply attempt to be fearful when others are greedy and to be greedy only when others are fearful."
+
+- "It is not necessary to do extraordinary things to get extraordinary results."
+
+- "The stock market is a device for transferring money from the impatient to the patient."
+
+- "The difference between successful people and really successful people is that really successful people say no to almost everything."
+
+- “Chains of habits are too light to be felt until they are too heavy to be broken.”
+
+## Market crashes and recessions
+
+- "In the 20th century, the United States endured two world wars and other traumatic and expensive military conflicts; the Depression; a dozen or so recessions and financial panics; oil shocks; a flu epidemic; and the resignation of a disgraced president. Yet the Dow rose from 66 to 11,497."
+
+- "Only when the tide goes out do you discover who's been swimming naked."
+
+- "Predicting rain doesn't count, building the ark does."
+
+## Importance of learning
+
+- "I just sit in my office and read all day."
+
+- "Read 500 pages like this every day. That's how knowledge works. It builds up, like compound interest. All of you can do it, but I guarantee not many of you will do it."
+
+- "I insist on a lot of time being spent, almost every day, to just sit and think. That is very uncommon in American business."
+
+- "One can best prepare themselves for the economic future by investing in your own education. If you study hard and learn at a young age, you will be in the best circumstances to secure your future."
+
+- "Never invest in a business you cannot understand."
+
+- "Risk comes from not knowing what you're doing."
+
+## Ignoring market noise
+
+- "The most important quality for an investor is temperament, not intellect. You need a temperament that neither derives great pleasure from being with the crowd nor against the crowd."
+
+- "You are neither right nor wrong because the crowd disagrees with you. You are right because your data and reasoning are right."
+
+- "We've long felt that the only value of stock forecasters is to make fortune tellers look good. Even now, Charlie and I continue to believe that short-term market forecasts are poison and should be kept locked up in a safe place, away from children and also from grown-ups who behave in the market like children."
+
+- "Don't get caught up with what other people are doing. Being a contrarian isn't the key but being a crowd follower isn't either. You need to detach yourself emotionally."
+
+## Index funds
+
+- "Among the various propositions offered to you, if you invested in a very low cost index fund --- where you don't put the money in at one time, but average in over 10 years --- you'll do better than 90% of people who start investing at the same time."
+
+- "Just pick a broad index like the S&P 500. Don't put your money in all at once; do it over a period of time."
+
+<!--chapter:end:buffett.Rmd-->
+
+# Munger and Town's lessons^[Contents of this chapter are mostly adapted from @town2018.] {#town}
+
+## Charlie Munger's four principles of investing
+
+1. It must be a business within your circle of competence.
+2. The business should have [*intrinsic* characteristics](#moat) that give it a durable competitive advantage.
+3. The business should have [management](#management) with integrity and talent.
+4. The business should be available for a fair price that gives a "margin of safety."
+
+## Five and a half moats {#moat}
+
+```{r}
+tibble(Moat = c("Strong brand", 
+                "Painful switching<br>(Network effect)", 
+                "Toll bridge<br>(Monopoly)", 
+                "Secret<br>(Patent)", 
+                "Price"),
+       Example = c("![](images/CocaCola.png){height=80px} ![](images/Starbucks.png){height=80px} ![](images/Hermes.png){height=80px}",
+                   "![](images/Apple.png){height=80px} ![](images/Facebook.png){height=80px} ![](images/Kakao.png){height=80px} ![](images/TikTok.png){height=80px}",
+                   "![](images/CN_Railway.png){height=80px} ![](images/Norfolk_Southern.png){height=80px}",
+                   "![](images/Pfizer.png){height=80px} ![](images/Roche.png){height=80px} ![](images/Janssen.png){height=80px}",
+                   "![](images/Costco.png){height=80px} ![](images/Amazon.png){height=80px}")) %>% 
+  kbl(escape = F, col.names = colnames(.), caption = "Five and a half moats that determine the durable competitive advantage of a business with nice examples") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = F, position = "left")
+```
+
+## Big four numbers {#bigfour}
+
+1. Sales (a.k.a. revenue, top line)
+2. Net income (a.k.a. net profit, bottom line)
+3. Operating cash flow
+4. Book value (a.k.a. equity) + dividends (if any)
+
+## Management numbers {#management}
+
+1. Return on equity
+2. Return on invested capital (equity + debt)
+3. Debt
+
+## Pricing methods
+
+1. Ten cap (10-year owner earnings)
+2. Payback time (8-year payback)
+3. Margin of safety (10-year discounted cash flow)
+
+<!--chapter:end:town.Rmd-->
+
+# (PART) Business {-}
+
+# Largest companies {#largest}
+
+```{r}
+largest = map_dfr(str_c("https://companiesmarketcap.com/page/", 1:5), ~read_html(., which = 1, header = T, trim = T))
+
+largest %<>% 
+  select(-`Price (30 days)`) %>%
+  mutate(Ticker = str_extract(Name, "(?<=\\n).+$") %>% str_trim,
+         Name = str_extract(Name, "^.+(?=\\n)") %>% str_trim) %>%
+  relocate(Rank, Name, Ticker)
+```
+
+(ref:largest) The `r nrow(largest)` largest public companies in the world by market value^[Data are from https://companiesmarketcap.com/.]
+
+```{r, fig.cap = "(ref:largest)"}
+my_datatable(largest, paging = T, pageLength = 100, scrollY = NULL, caption = NULL)
+```
+
+<!--chapter:end:largest.Rmd-->
+
+# My watchlist {#watchlist}
+
+## Comprehensive financials^[Data are automatically retrieved from [Google Finance](https://www.google.com/finance) and [Yahoo Finance](https://finance.yahoo.com/).] {#comprehensive}
+
+```{r}
+company_display = company %>% 
+  select(-c(Ticker, Yahoo, Ticker3)) %>%
+  mutate(Changepct = make_percent(Changepct, 1)) %>%
+  mutate(across(c(`Expected payout ratio change rate`,
+                  `Payout ratio`,
+                  `Retention ratio`,
+                  `Profit margin`,
+                  `Debt-to-equity ratio`,
+                  ROA,
+                  ROIC,
+                  ROE,
+                  contains(c("growth", "yield"))),
+                ~make_percent(., 100))) %>%
+  mutate(across(c(Shares,
+                  Marketcap,
+                  NOPAT,
+                  IC,
+                  Payback8,
+                  `Operating cash flow`,
+                  `Levered free cash flow`,
+                  `Free cash flow`),
+                make_readable)) %>%
+  mutate(across(c(Price:Closeyest,
+                  Low52:Target, 
+                  `Expected PE in 10yrs`:DCF10,
+                  `Adjusted Graham formula`,
+                  PBR:`Marketcap/Payback8`), 
+                ~round(., 1) %>% format(scientific = F, big.mark = ",", drop0trailing = T) %>% str_trim)) %>%
+  replace(. == "NA", NA)
+
+financials %<>% 
+  left_join(company %>% select(Yahoo, Name, Currency)) %>%
+  select(-Yahoo)
+
+names(financials) %<>% 
+  str_replace_all(c("([a-z])([A-Z])" = "\\1 \\2",
+                    "Liab$" = "Liabilities",
+                    "Netincome" = "Net income")) %>%
+  str_to_sentence
+
+financials %<>% 
+  rename(EBIT = Ebit) %>%
+  arrange(Name, Date) %>%
+  relocate(Name, Currency)
+
+financials_display = financials %>% 
+  mutate(across(-c(Name, Currency, Date), make_readable),
+         across(-Date, ~replace(., . == "NA", NA)))
+```
+
+```{r, fig.cap = "Summarized statistics of my watchlist"}
+my_datatable(company_display, paging = T, pageLength = 5, scrollY = NULL, caption = NULL)
+```
+
+```{r, fig.cap = "Income statement, balance sheet, and cash flow data over the last 4 years"}
+my_datatable(financials_display, paging = T, pageLength = 8, scrollY = NULL, caption = NULL)
+```
+
+(ref:roe) ROE $\times$ retention ratio
+
+```{r}
+glossary = tribble(~Term, ~Meaning,
+        "Adjusted Graham formula", "Defined [here](https://www.oldschoolvalue.com/stock-valuation/benjamin-graham-formula/)",
+        "BVPS", "Book value per share",
+        "DCF10", "Discounted cash flow per share in 10 years as defined [here](https://www.investopedia.com/terms/d/dcf.asp)",
+        "EPS", "Earnings per share",
+        "High52", "52-week high price",
+        "IC", "Invested capital",
+        "Industry PER", "Data from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html)",
+        "Low52", "52-week low price",
+        "NOPAT", "Net operating profit after taxes",
+        "Payback8", "8-year payback time buy price of the whole company [@town2018]",
+        "PBR", "Price/book-value ratio",
+        "PEG", "Price/earnings-to-growth ratio",
+        "PER", "Price/earnings ratio",
+        "PSR", "Price/sales ratio",
+        "ROA", "Return on asset",
+        "ROIC", "Return on invested capital",
+        "ROE", "Return on equity",
+        "Sustainable growth rate", "ROE $\\times$ retention ratio")
+
+glossary %>%
+  arrange(Term) %>%
+  kbl(escape = F, col.names = names(.), caption = "Glossary") %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  full_width = F, position = "left")
+```
+
+## Key financials
+
+```{r}
+company_plot %<>% 
+  mutate(`Earnings-to-price` = 1/PER,
+         `Sales-to-price` = 1/PSR,
+         `Book-to-price` = 1/PBR) %>%
+  arrange(desc(Industry), 
+          !is.na(`Earnings-to-price`), `Earnings-to-price`, 
+          !is.na(`Sales-to-price`), `Sales-to-price`, 
+          !is.na(`Book-to-price`), `Book-to-price`) %>%
+  mutate(Name = factor(Name, levels = Name))
+```
+
+```{r}
+f1 = company_plot %>%
+  ggplot(mapping = aes(x = Name, y = 0)) + 
+  geom_col(mapping = aes(fill = Industry), color = "transparent") +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 0)) +
+  scale_fill_manual(limits = unique(company_plot$Industry), 
+                    values = fill_color[length(unique(company_plot$Industry)):1],
+                    guide = guide_legend(title = NULL, ncol = 3, reverse = T, override.aes = list(color = "black"))) +
+  coord_flip() +
+  labs(x = NULL, y = NULL) +
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank(),
+        panel.border = element_blank(),
+        panel.grid = element_blank(),
+        panel.background = element_rect(fill = "transparent"), 
+        plot.margin = unit(c(5.5, 0, 5.5, 5.5), "points"),
+        legend.position = "bottom")
+
+financial_plot = function(financials, variable, title = NULL, labels = waiver()) {
+  
+  if (is.null(title)) title = enquo(variable)
+  
+  variable = enquo(variable)
+  
+  financials %>%
+    ggplot(mapping = aes(x = Name, y = !!variable)) + 
+    geom_col(mapping = aes(fill = Industry), color = "black", width = 0.7) +
+    scale_y_continuous(expand = c(0.05, 0), breaks = pretty_breaks(3), labels = labels) +
+    scale_fill_manual(limits = unique(company_plot$Industry), 
+                      values = fill_color[length(unique(financials$Industry)):1], 
+                      guide = F) +
+    coord_flip() +
+    labs(x = NULL, y = title) +
+    theme(axis.ticks.y = element_blank(), axis.ticks.length.y = unit(0, "npc"), axis.text.y = element_blank(), plot.margin = unit(c(5.5, 5.5, 5.5, 0), "points"))
+  
+}
+
+f2 = financial_plot(company_plot, `Earnings-to-price`, "Earnings/Price")
+f3 = financial_plot(company_plot, `Sales-to-price`, "Sales/Price")
+f4 = financial_plot(company_plot, `Book-to-price`, "Book/Price")
+f5 = financial_plot(company_plot, ROE, "ROE")
+f6 = financial_plot(company_plot, ROIC, "ROIC")
+f7 = financial_plot(company_plot, ROA, "ROA")
+f8 = financial_plot(company_plot, DER, "Debt/Equity")
+f9 = financial_plot(company_plot, Quarterly_earnings_growth, "Earnings growth (yoy)", percent)
+f10 = financial_plot(company_plot, Quarterly_revenue_growth, "Revenue growth (yoy)", percent)
+
+n_industry = company_plot$Industry %>% unique %>% length
+
+legend_ratio = (nrow(company_plot) + 2) / (ceiling(n_industry/3) + 1)
+
+name_width = stringWidth(company_plot$Name) %>% 
+  convertUnit("inch") %>% 
+  as.numeric %>% 
+  multiply_by(as.numeric(theme_get()$axis.text$size * theme_get()$text$size) / 12) %>% 
+  max %>%
+  add(0.1)
+
+plot_width = 7 - name_width
+```
+
+```{r, fig.height = (nrow(company_plot) + 2) * 3/4 + (ceiling(n_industry/3) + 1)/4, fig.cap = "Key financials of my watchlist"}
+ggarrange(ggarrange(f1 + guides(fill = F), f2, f3, f4, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))), 
+          ggarrange(f1 + guides(fill = F), f5, f6, f7, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))),
+          ggarrange(f1 + guides(fill = F), f8, f9, f10, nrow = 1, ncol = 4, align = "h", widths = c(name_width, rep(plot_width/3, 3))),
+          get_legend(f1),
+          nrow = 4, ncol = 1,
+          heights = c(legend_ratio, legend_ratio, legend_ratio, 1))
+```
+
+```{r}
+exchange = getQuote(str_c("USD", company_plot$Currency, "=X"), src = "yahoo") %>% 
+  rownames_to_column("Ticker") %>% 
+  mutate(Currency = str_extract(Ticker, "(?<=USD)[A-Z]+(?=\\=)")) %>%
+  select(Currency, Last) %>%
+  rename(Exchange = Last)
+
+company_plot %<>% 
+  left_join(exchange) %>%
+  mutate(Name = as.character(Name), 
+         Marketcap_USD = Marketcap / Exchange) %>%
+  arrange(desc(Marketcap_USD)) %>%
+  mutate(Name_trimmed = case_when(Name == "Taiwan Semiconductor" ~ "TSMC",
+                                  Name == "Pacific Biosciences of California" ~ "PacBio",
+                                  Name == "Logitech International" ~ "Logitech",
+                                  Name == "Dell Technologies" ~ "Dell",
+                                  Name == "Amazon.com" ~ "Amazon",
+                                  Name == "LVMH Moet Hennessy Louis Vuitton" ~ "LVMH",
+                                  T ~ Name))
+```
+
+```{r}
+relation_plot = function(.data, x, y, xlab = NULL, ylab = NULL, xlabels = waiver(), ylabels = waiver(), panelwidth) {
+  
+  if (is.null(xlab)) xlab = enquo(x)
+  if (is.null(ylab)) ylab = enquo(y)
+  
+  x = enquo(x)
+  y = enquo(y)
+  
+  b = .data %>% pull(!!y) %>% boxplot(range = 1)
+  base_limits = b$stats[c(1, 5), ]
+  
+  .data %<>%
+    filter(!is.na(!!x) & !is.na(!!y) & !is.na(Marketcap_USD)) %>%
+    mutate(group = case_when(!!y >= base_limits[1] & !!y <= base_limits[2] ~ "Main",
+                             !!y < base_limits[1] ~ "Low",
+                             !!y > base_limits[2] ~ "High") %>% 
+             factor(levels = c("High", "Main", "Low")),
+           fontsize = rescale(log10(Marketcap_USD/1e9), c(1, 6)),
+           name_width = stringWidth(Name_trimmed) %>% convertUnit("inch") %>% as.numeric %>% multiply_by(fontsize * .pt / 12))
+  
+  get_expansion = function(.data, panelwidth) {
+    for (left_expansion in 1:40/20) {
+      for (right_expansion in 1:40/20) {
+        .data %<>% 
+          mutate(data_position = rescale(!!x, to = c(panelwidth * left_expansion / (1 + left_expansion + right_expansion), 
+                                                     panelwidth * (1 + left_expansion) / (1 + left_expansion + right_expansion))),
+                 left_position = data_position - name_width / 2,
+                 right_position = data_position + name_width / 2)
+        
+        leftmost = min(.data$left_position)
+        rightmost = max(.data$right_position)
+        
+        if (leftmost >= 0) {
+          if (rightmost <= panelwidth) {
+            return(c(left_expansion, right_expansion))
+            break
+          }
+        }
+      }
+    }
+  }
+  
+  x_expansion = get_expansion(.data, panelwidth)
+  
+  g = .data %>%
+    ggplot(mapping = aes(!!x, !!y)) +
+    annotation_custom(linesGrob(gp = gpar(lty = "dashed")), ymin = 0, ymax = 0) +
+    annotation_custom(linesGrob(gp = gpar(lty = "dashed")), xmin = 0, xmax = 0) +
+    geom_text(mapping = aes(label = Name_trimmed, size = Marketcap_USD/1e9), hjust = 0.5, vjust = 0.5) +
+    scale_x_continuous(expand = c(x_expansion[1], 0, x_expansion[2], 0), labels = xlabels) +
+    scale_size(trans = "log10", range = c(1, 6), guide = guide_legend(title = "Market cap\n($billion)")) +
+    labs(x = xlab, y = ylab) +
+    facet_grid_sc(rows = vars(group), 
+                  scales = list(y = list(High = scale_y_continuous(labels = ylabels, expand = c(0.1, 0)),
+                                         Main = scale_y_continuous(labels = ylabels, expand = c(0.02, 0)),
+                                         Low = scale_y_continuous(labels = ylabels, expand = c(0.1, 0)))),
+                  labeller = labeller(group = c(High = "Upper outlier", Main = "Majority", Low = "Lower outlier")))
+  
+  gt = ggplot_gtable(ggplot_build(g))
+  
+  fig_height = 7.5 + sum(str_detect(gt$layout$name, "panel-[13]-1")) * 1.5 + 1/2
+  
+  gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] = gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] * 0.2
+  
+  ggrob = as_grob(gt)
+  
+  label_indices = sapply(ggrob$grobs[[str_which(ggrob$layout$name, "guide-box")]][[1]][[1]]$grobs, function(i) "label" %in% names(i)) %>% which
+  
+  for (i in label_indices) {
+    ggrob$grobs[[str_which(ggrob$layout$name, "guide-box")]][[1]][[1]]$grobs[[i]]$label = "A"
+  }
+  
+  list(as_ggplot(ggrob), fig_height)
+}
+```
+
+```{r, include = F}
+panelwidth = 4.8
+
+f1 = relation_plot(company_plot, `Earnings-to-price`, Earnings_growth_past_5yrs, 
+              xlab = "Earnings/Price", ylab = "Earnings growth per annum (past 5 years)", 
+              ylabels = percent,
+              panelwidth = panelwidth)
+
+f2 = relation_plot(company_plot, `Earnings-to-price`, Earnings_growth_estimate_next_5yrs, 
+              xlab = "Earnings/Price", ylab = "Earnings growth per annum (next 5 years)",
+              ylabels = percent,
+              panelwidth = panelwidth)
+
+f3 = relation_plot(company_plot, `Sales-to-price`, Revenue_growth_estimate_current, 
+              xlab = "Sales/Price", ylab = "Revenue growth estimate (current year)",
+              ylabels = percent,
+              panelwidth = panelwidth)
+
+f4 = relation_plot(company_plot, `Sales-to-price`, Revenue_growth_estimate_next, 
+              xlab = "Sales/Price", ylab = "Revenue growth estimate (next year)",
+              ylabels = percent,
+              panelwidth = panelwidth)
+
+f5 = relation_plot(company_plot, ROIC, ROE, panelwidth = panelwidth)
+
+f6 = relation_plot(company_plot, -DER, ROE, xlab = "Debt/Equity (reverse axis)", xlabels = function(x) {-x}, panelwidth = panelwidth)
+
+f7 = relation_plot(company_plot, -DER, ROIC, xlab = "Debt/Equity (reverse axis)", xlabels = function(x) {-x}, panelwidth = panelwidth)
+```
+
+```{r, fig.height = f1[[2]] + f2[[2]] + f3[[2]] + f4[[2]] + f5[[2]] + f6[[2]] + f7[[2]], fig.cap = "Scatterplot of key statistics"}
+ggarrange(f1[[1]], f2[[1]], f3[[1]], f4[[1]], f5[[1]], f6[[1]], f7[[1]], 
+          heights = c(f1[[2]], f2[[2]], f3[[2]], f4[[2]], f5[[2]], f6[[2]], f7[[2]]),
+          nrow = 7, ncol = 1, align = "v")
+```
+
+## Big four numbers
+
+Trends of [big 4 numbers](#bigfour) over the last 3 to 4 years (depending on data availability at [Yahoo Finance](https://finance.yahoo.com/)) are shown below. All numbers are normalized to 100 (if positive) or -100 (if negative) as of the first year with available data for each company.
+
+```{r}
+financials_plot = financials %>% 
+  select(Name, Date, `Total revenue`, `Net income`, `Total cash from operating activities`, `Total stockholder equity`) %>%
+  pivot_longer(cols = c(`Total revenue`, `Net income`, `Total cash from operating activities`, `Total stockholder equity`), 
+               names_to = "Variable",
+               values_to = "Value") %>%
+  filter(!is.na(Value)) %>%
+  group_by(Variable, Name) %>%
+  filter(!(Value == 0 & Date == min(Date))) %>%
+  mutate(Value = Value / Value[Date == min(Date)] * sign(Value[Date == min(Date)]) * 100) %>%
+  ungroup
+
+big_four_plot = function(.data, .variable, panelwidth, textsize) {
+  .data %<>% filter(Variable == .variable)
+  
+  get_expansion = function(.data, panelwidth, textsize) {
+    
+    .data %<>% 
+      mutate(name_width = stringWidth(Name) %>% convertUnit("inch") %>% as.numeric %>% multiply_by(textsize / 12)) %>%
+      group_by(Name) %>%
+      mutate(date_modified = case_when(Date == max(Date) ~ Date + 10, 
+                                       T ~ Date)) %>%
+      ungroup
+    
+    for (expansion in 1:40/20) {
+      xmax = .data %>% 
+        mutate(date_position = rescale(date_modified, c(0, panelwidth / (1 + expansion)))) %>%
+        group_by(Name) %>%
+        slice(which.max(date_position)) %>%
+        ungroup %>%
+        mutate(text_position = date_position + name_width) %>%
+        pull(text_position) %>%
+        max
+      
+      if (xmax <= panelwidth) {
+        return(expansion)
+        break
+      }
+    }
+  }
+
+  x_expansion = get_expansion(.data, panelwidth, textsize)
+  
+  xlabels = make_date(unique(year(seq(min(.data$Date), 
+                                      as_date(max(as.numeric(.data$Date)) + (max(as.numeric(.data$Date)) - min(as.numeric(.data$Date))) * x_expansion), 
+                                      by = 1)))[-1], 1, 1)
+  xbreaks = as.numeric(xlabels)
+  xlabels = year(xlabels)
+  
+  b = .data %>% 
+    group_by(Name) %>% 
+    slice(which.max(case_when(Value >= 0 ~ abs(Value - 100),
+                              Value < 0 ~ abs(Value + 100)))) %>% 
+    ungroup %>% 
+    pull(Value) %>% 
+    boxplot
+  
+  base_limits = b$stats[c(1, 5), ]
+  
+  high = .data %>% filter(Value > base_limits[2]) %>% pull(Name) %>% unique
+  low = .data %>% filter(Value < base_limits[1]) %>% pull(Name) %>% unique %>% setdiff(high)
+  
+  .data %<>% 
+    mutate(Date = as.numeric(Date),
+           group = case_when(Name %in% high ~ "High",
+                             Name %in% low ~ "Low",
+                             T ~ "Main") %>%
+             factor(levels = c("High", "Main", "Low")))
+  
+  g = .data %>%
+    ggplot(mapping = aes(x = Date, y = Value)) +
+    annotation_custom(linesGrob(gp = gpar(lty = "dashed")), ymin = 0, ymax = 0) +
+    geom_line(mapping = aes(group = Name), color = "gray") +
+    geom_text(data = .data %>% group_by(Name) %>% filter(Date == max(Date)),
+              mapping = aes(x = Date + 10, label = Name, color = factor(sign(Value), levels = c(1, -1, 0))), hjust = 0, size = textsize / .pt) +
+    scale_x_continuous(expand = c(0, 0, x_expansion, 0), breaks = xbreaks, labels = xlabels) +
+    scale_color_manual(values = line_color, guide = F) +
+    labs(y = .variable) +
+    facet_grid_sc(rows = vars(group),
+                  scales = list(y = list(High = scale_y_continuous(expand = c(0.1, 0), labels = make_readable),
+                                         Main = scale_y_continuous(expand = c(0.02, 0), labels = make_readable),
+                                         Low = scale_y_continuous(expand = c(0.1, 0), labels = make_readable))),
+                  labeller = labeller(group = c(High = "Upper outlier", Main = "Majority", Low = "Lower outlier")))
+  
+  gt = ggplot_gtable(ggplot_build(g))
+  
+  fig_height = 7.5 + sum(str_detect(gt$layout$name, "panel-[13]-1")) * 1.5 + 1/2
+    
+  gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] = gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] * 0.2
+    
+  list(as_ggplot(gt), fig_height)
+}
+```
+
+```{r, include = F}
+panelwidth = 6.3
+
+f1 = big_four_plot(financials_plot, "Total revenue", panelwidth, 10)
+f2 = big_four_plot(financials_plot, "Net income", panelwidth, 10)
+f3 = big_four_plot(financials_plot, "Total cash from operating activities", panelwidth, 10)
+f4 = big_four_plot(financials_plot, "Total stockholder equity", panelwidth, 10)
+```
+
+```{r, fig.height = f1[[2]], fig.cap = "Total revenue"}
+f1[[1]]
+```
+
+```{r, fig.height = f2[[2]], fig.cap = "Net income"}
+f2[[1]]
+```
+
+```{r, fig.height = f3[[2]], fig.cap = "Operating cash flow"}
+f3[[1]]
+```
+
+```{r, fig.height = f4[[2]], fig.cap = "Shareholder's equity"}
+f4[[1]]
+```
+
+## Investment decision^[The decision is made by analyzing only numerical data, which do not represent the value of a business as a whole. For example, the value of an early-stage company with zero or negative earnings cannot be determined based on numbers but should be assessed based on its mission, technology, management, and culture as well as the state of the industry overall.]
+
+```{r}
+company_decision = company %>% 
+  mutate(Decision = factor(Decision, levels = c("Buy",
+                                                "Maybe buy",
+                                                "Wait",
+                                                "Zero or negative cash flow",
+                                                "Zero or negative earnings",
+                                                "Zero or negative growth",
+                                                "High debt-to-equity ratio", 
+                                                "Negative equity",
+                                                "Insufficient data")))
+```
+
+```{r, fig.height = (nrow(company_decision) + 6)/4, fig.cap = "Investment decision made by a fundamental analysis-based algorithm for listed companies"}
+company_decision %>%
+  ggplot(mapping = aes(x = Name, y = Decision)) +
+  geom_point(mapping = aes(fill = Decision), shape = 21, size = 3, stroke = 1) +
+  scale_x_discrete(limits = sort(company$Name, decreasing = T)) +
+  scale_fill_manual(values = fill_color[1:length(unique(company_decision$Decision))]) +
+  coord_flip() +
+  labs(x = NULL) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.key = element_rect(fill = "transparent"))
+```
+
+<!--chapter:end:watchlist.Rmd-->
+
+# Small-cap list {#small-cap}
+
+These are a list of relatively small-cap companies that interest me but need more research. Brief profile of each company is shown when available at [Wikipedia](https://en.wikipedia.org/wiki/Main_Page). Note that these profiles might be significantly outdated. For up-to-date comprehensive financial data, see Section \@ref(comprehensive).
+
+```{r}
+make_wikitable = function(name, which = 1) {
+  wikitable = read_html(str_c("https://en.wikipedia.org/wiki/", name), which = which, header = T, trim = T) %>% 
+    mutate(V2 = str_replace_all(V2, c("([A-Za-z])\\(" = "\\1 (",
+                                      "\\[[0-9]+\\](?=(\\s+|$))" = ""))) %>%
+    column_to_rownames("V1") %>% 
+    t %>% 
+    as_tibble
+  
+  missing = setdiff(c("Traded as", "Key people", "Products", "Services", "Industry", "Founders", "Subsidiaries"), names(wikitable))
+  wikitable %<>% bind_cols(matrix(NA, nrow = 1, ncol = length(missing)) %>% set_colnames(missing) %>% as_tibble)
+  
+  wikitable %>%
+    mutate(`Traded as` = str_replace_all(`Traded as`, "(.)(NYSE|NASDAQ|S&P|Russell)", "\\1<br>\\2")) %>%
+    mutate(across(c(`Key people`, Services), ~str_replace_all(., c("\\)([A-Z])" = ")<br>\\1",
+                                                                   "\\s*\\n\\s*" = "<br>"))),
+           across(c(Industry, Founders, Products, Services, Subsidiaries), ~str_replace_all(., c("([a-z])([A-Z])" = "\\1<br>\\2",
+                                                                                       ", " = "<br>",
+                                                                                       ",* and " = "<br>")))) %>%
+    t %>% 
+    set_colnames("Val") %>%
+    as_tibble(.name_repair = "minimal", rownames = "Var") %>%
+    filter(!is.na(Val))
+}
+
+display_wikitable = function(wikitable, caption) {
+  wikitable %>%
+    kbl(escape = F, col.names = NULL, caption = caption) %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  full_width = F, position = "left")
+}
+
+image_link = function(image_file, url, ...) {
+  a(href = url, img(src = image_file, ...))
+}
+
+marketcap = company_plot %>% select(Name_trimmed, Marketcap_USD)
+```
+
+## Intellia Therapeutics (`r marketcap %>% filter(Name_trimmed == "Intellia Therapeutics") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+```{r}
+image_link(image_file = "images/Intellia_Therapeutics.png", url = "https://www.intelliatx.com/", width = "240px")
+
+wikitable = "Intellia_Therapeutics" %>% make_wikitable(1) 
+
+wikitable %>% display_wikitable("Intellia Therapeutics")
+```
+
+## Nano-X Imaging (`r marketcap %>% filter(Name_trimmed == "Nano-X Imaging") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+```{r}
+image_link(image_file = "images/NanoX.svg", url = "https://www.nanox.vision/", width = "240px")
+```
+
+## Unity Software (`r marketcap %>% filter(Name_trimmed == "Unity Software") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+```{r}
+image_link(image_file = "images/Unity.png", url = "https://unity.com/", width = "240px")
+
+wikitable = "Unity_Technologies" %>% make_wikitable(1)
+
+wikitable$Val[wikitable$Var == "Subsidiaries"] %<>% 
+  str_replace_all(c("Chilli<br>Connect" = "ChilliConnect",
+                    "(.+)delta<br>DNA" = "\\1<br>deltaDNA",
+                    "deltaDNA(.+)" = "deltaDNA<br>\\1"))
+
+wikitable %>% display_wikitable("Unity Software")
+```
+
+## Parrot (`r marketcap %>% filter(Name_trimmed == "Parrot") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+```{r}
+image_link(image_file = "images/Parrot.png", url = "https://www.parrot.com/en", width = "240px")
+
+wikitable = "Parrot_SA" %>% make_wikitable(7)
+
+wikitable$Val[wikitable$Var == "Subsidiaries"] %<>% 
+  str_replace_all(c("sense<br>Fly" = "senseFly"))
+
+wikitable %>% display_wikitable("Parrot")
+```
+
+## Ambarella (`r marketcap %>% filter(Name_trimmed == "Ambarella") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+```{r}
+image_link(image_file = "images/Ambarella.png", url = "https://www.ambarella.com/", width = "240px")
+
+wikitable = "Ambarella_Inc." %>% make_wikitable(2)
+
+wikitable %>% display_wikitable("Ambarella")
+```
+
+## AeroVironment (`r marketcap %>% filter(Name_trimmed == "AeroVironment") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+```{r}
+image_link(image_file = "images/Aerovironment.png", url = "https://www.avinc.com/", width = "240px")
+
+wikitable = "AeroVironment" %>% make_wikitable(1)
+
+wikitable %>% display_wikitable("AeroVironment")
+```
+
+## Surface Oncology (`r marketcap %>% filter(Name_trimmed == "Surface Oncology") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
+
+```{r}
+image_link(image_file = "images/Surface_Oncology.png", url = "https://www.surfaceoncology.com/", width = "240px")
+```
+
+<!--chapter:end:small-cap.Rmd-->
+
+# CEO analysis {#ceo}
+
+## CEO payment relative to business income
+
+```{r, include = F}
+ceo = financials %>%
+  arrange(desc(Date)) %>%
+  group_by(Name) %>%
+  slice(1) %>%
+  ungroup %>%
+  select(Name, Currency, `Net income`) %>%
+  left_join(company_plot %>% select(Name, Exchange, CEO, `CEO_pay`)) %>%
+  mutate(CEO = clean_ceo_name(CEO),
+         `CEO pay` = make_numeric(`CEO_pay`)) %>%
+  mutate(across(c(`Net income`, `CEO pay`), ~. / Exchange)) %>%
+  filter(!is.na(`Net income`) & !is.na(`CEO pay`)) %>%
+  arrange(`Net income`) %>%
+  mutate(Name = factor(Name, levels = Name),
+         CEO = factor(CEO, levels = CEO))
+
+textsize = 10
+panelwidth = 6.05
+
+ceo %<>% 
+  rowwise %>%
+  mutate(name_width = stringWidth(c_across(c(Name, CEO))) %>% convertUnit("inch") %>% as.numeric %>% max %>% multiply_by(textsize / 12)) %>%
+  ungroup
+
+for (left_expansion in 1:10/20) {
+  for (right_expansion in 1:10/20) {
+    position = ceo %>% 
+      mutate(income_position = rescale(`Net income`, c(panelwidth * left_expansion / (1 + left_expansion + right_expansion), 
+                                                       panelwidth * (1 + left_expansion) / (1 + left_expansion + right_expansion))),
+             left_position = income_position - name_width / 2,
+             right_position = income_position + name_width / 2)
+    
+    xmin = min(position$left_position)
+    xmax = max(position$right_position)
+    
+    if (xmin >= 0 & xmax <= panelwidth) {
+      xexpansion = c(left_expansion, right_expansion)
+      break
+    }
+  }
+  
+  if (xmin >= 0 & xmax <= panelwidth) {
+    xexpansion = c(left_expansion, right_expansion)
+    break
+  }
+}
+
+b = ceo %>% pull(`CEO pay`) %>% boxplot(range = 1)
+base_limits = b$stats[c(1, 5), ]
+  
+ceo %<>%
+  mutate(group = case_when(`CEO pay` >= base_limits[1] & `CEO pay` <= base_limits[2] ~ "Main",
+                           `CEO pay` < base_limits[1] ~ "Low",
+                           `CEO pay` > base_limits[2] ~ "High") %>% 
+           factor(levels = c("High", "Main", "Low")))
+
+fitting = lm(`CEO pay` ~ `Net income`, data = ceo)$coefficients
+
+outlier_to_main_ratio = 0.15
+main_height = 20
+
+g = ceo %>%
+  ggplot(mapping = aes(x = `Net income`, y = `CEO pay`)) +
+  geom_abline(slope = fitting["`Net income`"], intercept = fitting["(Intercept)"], linetype = "dashed", color = "gray") +
+  geom_text(mapping = aes(label = str_c(Name, "\n (", CEO, ")")), size = textsize / .pt) +
+  scale_x_continuous(expand = c(xexpansion[1], 0, xexpansion[2], 0), labels = make_readable) +
+  labs(x = "Net income ($)", y = "CEO salary ($)") +
+  facet_grid_sc(rows = vars(group), 
+                scales = list(y = list(High = scale_y_continuous(expand = c(0.3 / main_height / outlier_to_main_ratio, 0), labels = make_readable),
+                                       Main = scale_y_continuous(expand = c(0.3 / main_height, 0), labels = make_readable),
+                                       Low = scale_y_continuous(expand = c(0.3 / main_height / outlier_to_main_ratio, 0), labels = make_readable))),
+                labeller = labeller(group = c(High = "Upper outlier", Main = "Majority", Low = "Lower outlier")))
+
+gt = ggplot_gtable(ggplot_build(g))
+
+fig_height = main_height + (sum(str_detect(gt$layout$name, "panel-[13]-1")) * main_height * outlier_to_main_ratio) + 1/2
+
+gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] = gt$heights[gt$layout$t[str_detect(gt$layout$name, "panel-[13]-1")]] * outlier_to_main_ratio
+```
+
+```{r, fig.height = fig_height, fig.cap = "The annual salary of CEOs relative to the net income of each company. Linear regression fit is shown as the gray dashed line."}
+as_ggplot(gt)
+```
+
+## CEO analysis reports
+
+### Ran Poliakine (Nano-X Imaging)
+
+(ref:poliakine) [Brief profile of Ran Poliakine](https://en.wikipedia.org/wiki/Ran_Poliakine)
+
+```{r}
+read_html("https://en.wikipedia.org/wiki/Ran_Poliakine", which = 1, header = T, trim = T) %>%
+  column_to_rownames("V1") %>%
+  t %>%
+  as_tibble %>%
+  mutate(across(Occupation, ~str_replace_all(., "([a-z])([A-Z])", "\\1<br>\\2"))) %>%
+  t %>%
+  as_tibble(rownames = "var") %>%
+  kbl(escape = F, col.names = NULL, caption = "(ref:poliakine)") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                full_width = F, position = "left")
+```
+
+*Work in progress*
+
+### Serge Saxonov (10X Genomics)
+
+*Work in progress*
+
+<!--chapter:end:ceo.Rmd-->
+
+# Stock price trend {#price}
+
+## Normalized closing price^[Only top 20 industry sectors are shown.]
+
+```{r}
+yahoo_to_name = function(Yahoo) company$Name[match(Yahoo, company$Yahoo)]
+
+price_data = tq_get(company$Yahoo, get = "stock.prices", from = twoyearsago)
+
+sufficient_data = price_data %>% count(symbol) %>% filter(n >= 30) %>% pull(symbol) %>% unique
+
+price_data %<>%
+  mutate(Name = yahoo_to_name(symbol)) %>%
+  left_join(company %>% select(Name, Industry)) %>%
+  filter(!is.na(adjusted) & symbol %in% sufficient_data)
+```
+
+```{r}
+get_legend_nrow = function(close, industry) {
+  ceiling((close %>% filter(Industry == industry) %>% pull(Name) %>% unique %>% length)/4)
+}
+
+get_legend_nrow = Vectorize(get_legend_nrow, "industry")
+
+legend_key_size = theme_get()$legend.key.size %>% convertUnit("inch") %>% as.numeric
+
+normalized_price_trend = function(price, industry) {
+  price_subset = price %>% 
+    filter(Industry == industry) %>%
+    mutate(Name = clean_name(Name))
+  
+  price_subset %<>%
+    group_by(Name, date) %>%
+    summarize(adjusted = adjusted[length(adjusted)]) %>%
+    ungroup
+  
+  base_date = price_subset %>% count(date) %>% arrange(desc(n), date) %>% slice(1) %>% pull(date)
+  
+  price_subset %<>% 
+    group_by(Name) %>%
+    mutate(normalized = adjusted/adjusted[date == base_date] * 100) %>%
+    ungroup
+
+  ncompany = length(unique(price_subset$Name))
+  legend_nrow = ceiling(ncompany/4)
+  
+  g = price_subset %>%
+    ggplot(mapping = aes(x = date, y = normalized)) +
+    geom_line(mapping = aes(color = Name)) +
+    scale_x_date(expand = c(0, 0)) +
+    scale_color_manual(values = line_color[1:ncompany], 
+                       guide = guide_legend(title = NULL, nrow = legend_nrow)) +
+    coord_cartesian(xlim = c(as_date(twoyearsago), today())) +
+    labs(x = "Date", y = "Normalized closing price") +
+    annotation_custom(segmentsGrob(x0 = unit(0.5, "npc"), 
+                                   x1 = unit(0.5, "npc"), 
+                                   y0 = unit(0, "npc"), 
+                                   y1 = unit(1.1, "npc"),
+                                   gp = gpar(lty = "dashed")),
+                      xmin = base_date, xmax = base_date) +
+    annotation_custom(textGrob(str_c("Normalized to 100 as of ", base_date), 
+                               x = unit(0.5, "npc"),
+                               y = unit(1.05, "npc"), 
+                               hjust = ifelse(base_date < yearago, -0.03, 1.03), 
+                               vjust = 0.5,
+                               gp = gpar(fontfamily = "Lato", fontsize = 10)),
+                      xmin = base_date, xmax = base_date) +
+    theme(legend.position = "bottom", legend.key = element_rect(fill = "transparent"),
+          plot.margin = unit(c(convertUnit(unit(0.35, "inch"), unitTo = "points") %>% as.numeric, 5.5, 5.5, 5.5), "points"))
+  
+  g_legend = get_legend(g)
+  
+  g = ggplot_gtable(ggplot_build(g + guides(color = F)))
+  
+  g$layout$clip[g$layout$name == "panel"] = "off"
+  
+  ggarrange(ggdraw(g), g_legend, nrow = 2, ncol = 1, heights = c(3.5, legend_nrow * legend_key_size + 0.1 * 2))
+}
+
+interesting_sectors = price_data %>% select(Name, Industry) %>% unique %>% count(Industry) %>% arrange(desc(n), Industry) %>% pull(Industry)
+
+fig_height = 3.5 + get_legend_nrow(price_data, interesting_sectors) * legend_key_size + 0.1 * 2
+```
+
+```{r, fig.height = fig_height[1], fig.cap = interesting_sectors[1]}
+normalized_price_trend(price_data, interesting_sectors[1])
+```
+
+```{r, fig.height = fig_height[2], fig.cap = interesting_sectors[2]}
+normalized_price_trend(price_data, interesting_sectors[2])
+```
+
+```{r, fig.height = fig_height[3], fig.cap = interesting_sectors[3]}
+normalized_price_trend(price_data, interesting_sectors[3])
+```
+
+```{r, fig.height = fig_height[4], fig.cap = interesting_sectors[4]}
+normalized_price_trend(price_data, interesting_sectors[4])
+```
+
+```{r, fig.height = fig_height[5], fig.cap = interesting_sectors[5]}
+normalized_price_trend(price_data, interesting_sectors[5])
+```
+
+```{r, fig.height = fig_height[6], fig.cap = interesting_sectors[6]}
+normalized_price_trend(price_data, interesting_sectors[6])
+```
+
+```{r, fig.height = fig_height[7], fig.cap = interesting_sectors[7]}
+normalized_price_trend(price_data, interesting_sectors[7])
+```
+
+```{r, fig.height = fig_height[8], fig.cap = interesting_sectors[8]}
+normalized_price_trend(price_data, interesting_sectors[8])
+```
+
+```{r, fig.height = fig_height[9], fig.cap = interesting_sectors[9]}
+normalized_price_trend(price_data, interesting_sectors[9])
+```
+
+```{r, fig.height = fig_height[10], fig.cap = interesting_sectors[10]}
+normalized_price_trend(price_data, interesting_sectors[10])
+```
+
+```{r, fig.height = fig_height[11], fig.cap = interesting_sectors[11]}
+normalized_price_trend(price_data, interesting_sectors[11])
+```
+
+```{r, fig.height = fig_height[12], fig.cap = interesting_sectors[12]}
+normalized_price_trend(price_data, interesting_sectors[12])
+```
+
+```{r, fig.height = fig_height[13], fig.cap = interesting_sectors[13]}
+normalized_price_trend(price_data, interesting_sectors[13])
+```
+
+```{r, fig.height = fig_height[14], fig.cap = interesting_sectors[14]}
+normalized_price_trend(price_data, interesting_sectors[14])
+```
+
+```{r, fig.height = fig_height[15], fig.cap = interesting_sectors[15]}
+normalized_price_trend(price_data, interesting_sectors[15])
+```
+
+```{r, fig.height = fig_height[16], fig.cap = interesting_sectors[16]}
+normalized_price_trend(price_data, interesting_sectors[16])
+```
+
+```{r, fig.height = fig_height[17], fig.cap = interesting_sectors[17]}
+normalized_price_trend(price_data, interesting_sectors[17])
+```
+
+```{r, fig.height = fig_height[18], fig.cap = interesting_sectors[18]}
+normalized_price_trend(price_data, interesting_sectors[18])
+```
+
+```{r, fig.height = fig_height[19], fig.cap = interesting_sectors[19]}
+normalized_price_trend(price_data, interesting_sectors[19])
+```
+
+```{r, fig.height = fig_height[20], fig.cap = interesting_sectors[20]}
+normalized_price_trend(price_data, interesting_sectors[20])
+```
+
+## Adjusted closing price
+
+```{r}
+inset_height = 0.2
+inset_expansion = 1.1 * inset_height / (1 - inset_height)
+
+get_inset = function(.data) {
+  g = .data %>%
+    ggplot(mapping = aes(x = date, y = volume)) +
+    geom_area(stat = "smooth", method = "loess", span = 0.05, fill = fill_color[1], alpha = 0.5) +
+    scale_x_date(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0, 0.05, 0)) +
+    theme(axis.ticks = element_blank(), 
+          axis.ticks.length = unit(0, "points"), 
+          axis.text = element_blank(), 
+          axis.title = element_blank(),
+          panel.grid = element_blank(),
+          panel.border = element_blank(),
+          plot.margin = unit(c(0, 0, 0, 0), "points"))
+  
+  ggplotGrob(g)
+}
+
+annotation_custom2 = function (grob, xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, data) {
+  layer(data = data, stat = StatIdentity, position = PositionIdentity, geom = GeomCustomAnn,
+        inherit.aes = TRUE, params = list(grob = grob, xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax))
+}
+```
+
+```{r}
+price_data %<>%
+  left_join(company_plot %>% select(Name, Marketcap_USD)) %>%
+  mutate(Marketcap_USD = str_c(round(Marketcap_USD/1e9, 1), " ($billion)"))
+
+price_data_atol = price_data %>% 
+  filter(str_detect(Name, "^[0-9A-La-l]"))
+
+price_data_mtoz = price_data %>% 
+  filter(str_detect(Name, "^[^0-9A-La-l]"))
+```
+
+(ref:adjusted-closing-price-atol) [Adjusted stock prices](https://www.investopedia.com/terms/a/adjusted_closing_price.asp) of companies with names starting with numbers or letters A-L over the last 2 years. The blue shade at the bottom of each panel indicates trading volume per day (smoothed for visualization).
+
+```{r, fig.height = 2.5 * length(unique(price_data_atol$Name)), fig.cap = "(ref:adjusted-closing-price-atol)"}
+insets = price_data_atol %>%
+  split(.$symbol) %>%
+  map(~annotation_custom2(grob = get_inset(.),
+                          xmin = min(.$date), 
+                          xmax = max(.$date),
+                          ymin = min(.$adjusted) - (max(.$adjusted) - min(.$adjusted)) * (0.05 + inset_expansion),
+                          ymax = min(.$adjusted) - (max(.$adjusted) - min(.$adjusted)) * 0.05,
+                          data = .))
+
+g = price_data_atol %>%
+  ggplot(mapping = aes(x = date, y = adjusted)) +
+  geom_line(color = line_color[1]) +
+  geom_point(data = price_data_atol %>% group_by(Name) %>% filter(date == max(date, na.rm = T)) %>% ungroup, color = line_color[2]) +
+  geom_text(data = price_data_atol %>% 
+              group_by(Name) %>% 
+              summarise(Marketcap_USD = unique(Marketcap_USD),
+                        midprice = median(range(adjusted, na.rm = T)),
+                        firstprice = adjusted[date == min(date, na.rm = T)],
+                        vjust = ifelse(firstprice < midprice, 1, 0),
+                        adjusted = ifelse(firstprice < midprice, max(adjusted, na.rm = T), min(adjusted, na.rm = T))) %>%
+              ungroup,
+            mapping = aes(label = str_c("Market cap: ", Marketcap_USD), vjust = vjust), x = min(price_data_atol$date, na.rm = T) + 10, hjust = 0, size = 10 / .pt) +
+  scale_x_date(expand = c(0, 0)) +
+  scale_y_continuous(position = "right", 
+                     expand = c(0.05 + inset_expansion, 0, 0.05, 0),
+                     breaks = function(x) { 
+                       limits = c(x[1] + (x[2] - x[1]) * inset_expansion / (1.1 + inset_expansion), x[2])
+                       breaks = extended(limits[1], limits[2], 5)
+                       breaks[breaks >= limits[1] & breaks <= limits[2]]
+                     },
+                     labels = make_readable) +
+  labs(x = "Date", y = "Adjusted closing price") +
+  facet_grid(rows = vars(Name), scales = "free_y", switch = "y") +
+  insets
+
+gt = ggplot_gtable(ggplot_build(g))
+gt$layout$clip[str_detect(gt$layout$name, "panel")] = "off"
+
+as_ggplot(gt)
+```
+
+(ref:adjusted-closing-price-mtoz) [Adjusted stock prices](https://www.investopedia.com/terms/a/adjusted_closing_price.asp) of companies with names starting with letters M-Z over the last 2 years. The blue shade at the bottom of each panel indicates trading volume per day (smoothed for visualization).
+
+```{r, fig.height = 2.5 * length(unique(price_data_mtoz$Name)), fig.cap = "(ref:adjusted-closing-price-mtoz)"}
+insets = price_data_mtoz %>%
+  split(.$symbol) %>%
+  map(~annotation_custom2(grob = get_inset(.),
+                          xmin = min(.$date), 
+                          xmax = max(.$date),
+                          ymin = min(.$adjusted) - (max(.$adjusted) - min(.$adjusted)) * (0.05 + inset_expansion),
+                          ymax = min(.$adjusted) - (max(.$adjusted) - min(.$adjusted)) * 0.05,
+                          data = .))
+
+g = price_data_mtoz %>%
+  ggplot(mapping = aes(x = date, y = adjusted)) +
+  geom_line(color = line_color[1]) +
+  geom_point(data = price_data_mtoz %>% group_by(Name) %>% filter(date == max(date, na.rm = T)) %>% ungroup, color = line_color[2]) +
+  geom_text(data = price_data_mtoz %>% 
+              group_by(Name) %>% 
+              summarise(Marketcap_USD = unique(Marketcap_USD),
+                        midprice = median(range(adjusted, na.rm = T)),
+                        firstprice = adjusted[date == min(date, na.rm = T)],
+                        vjust = ifelse(firstprice < midprice, 1, 0),
+                        adjusted = ifelse(firstprice < midprice, max(adjusted, na.rm = T), min(adjusted, na.rm = T))) %>%
+              ungroup,
+            mapping = aes(label = str_c("Market cap: ", Marketcap_USD), vjust = vjust), x = min(price_data_mtoz$date, na.rm = T) + 10, hjust = 0, size = 10 / .pt) +
+  scale_x_date(expand = c(0, 0)) +
+  scale_y_continuous(position = "right", 
+                     expand = c(0.05 + inset_expansion, 0, 0.05, 0),
+                     breaks = function(x) { 
+                       limits = c(x[1] + (x[2] - x[1]) * inset_expansion / (1.1 + inset_expansion), x[2])
+                       breaks = extended(limits[1], limits[2], 5)
+                       breaks[breaks >= limits[1] & breaks <= limits[2]]
+                     },
+                     labels = make_readable) +
+  labs(x = "Date", y = "Adjusted closing price") +
+  facet_grid(rows = vars(Name), scales = "free_y", switch = "y") +
+  insets
+
+gt = ggplot_gtable(ggplot_build(g))
+gt$layout$clip[str_detect(gt$layout$name, "panel")] = "off"
+
+as_ggplot(gt)
+```
+
+## Stock price correlation^[Industry sector classification is based on data from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html).]
+
+```{r, include = F}
+price_cor = price_data %>% 
+  mutate(Name = clean_name(Name)) %>%
+  select(Name, date, adjusted) %>%
+  pivot_wider(id_cols = date, names_from = Name, values_from = adjusted, values_fn = function(x) x[length(x)]) %>%
+  column_to_rownames("date") %>%
+  cor(use = "pairwise.complete.obs")
+
+company_annotation = company %>% 
+  select(Name, `Broad group`, Country, Industry) %>% 
+  mutate(Name = clean_name(Name)) %>%
+  column_to_rownames("Name") %>% 
+  .[rownames(price_cor), ]
+
+n_industry = company_annotation$Industry %>% unique %>% length
+
+broad_group_color = fill_color[1:length(unique(company_annotation$`Broad group`))] %>% setNames(sort(unique(company_annotation$`Broad group`)))
+country_color = fill_color[1:length(unique(company_annotation$Country))] %>% setNames(sort(unique(company_annotation$Country)))
+industry_color = fill_color[1:length(unique(company_annotation$Industry))] %>% setNames(sort(unique(company_annotation$Industry)))
+
+column_annotation = HeatmapAnnotation(df = company_annotation,
+                                      col = list(Industry = industry_color,
+                                                 Country = country_color,
+                                                 `Broad group` = broad_group_color),
+                                      annotation_name_gp = gpar(fontsize = 8),
+                                      annotation_legend_param = list(`Broad group` = list(grid_width = unit(4, "mm"),
+                                                                                          grid_height = unit(4, "mm"),
+                                                                                          title_gp = gpar(fontsize = 8, fontface = "bold"),
+                                                                                          labels_gp = gpar(fontsize = 7)),
+                                                                     Country = list(grid_width = unit(4, "mm"),
+                                                                                    grid_height = unit(4, "mm"),
+                                                                                    title_gp = gpar(fontsize = 8, fontface = "bold"),
+                                                                                    labels_gp = gpar(fontsize = 7)),
+                                                                     Industry = list(ncol = 2, 
+                                                                                     grid_width = unit(4, "mm"),
+                                                                                     grid_height = unit(4, "mm"),
+                                                                                     title_gp = gpar(fontsize = 8, fontface = "bold"),
+                                                                                     labels_gp = gpar(fontsize = 7))))
+
+labwidth = stringWidth(rownames(price_cor)) %>% convertUnit("inch") %>% max %>% divide_by(2) %>% as.numeric
+
+h = price_cor %>% Heatmap(name = "Pearson's r",
+                        width = unit(7 - labwidth - 0.3, "inch"), height = unit(0.11 * nrow(price_cor), "inch"),
+                        show_column_names = F, show_column_dend = T,
+                        show_row_names = T, show_row_dend = F,
+                        row_names_gp = gpar(fontsize = 6),
+                        heatmap_legend_param = list(legend_height = unit(min(ceiling(n_industry/2), 10) * 4, "mm"),
+                                                    grid_width = unit(4, "mm"),
+                                                    title_gp = gpar(fontsize = 8, fontface = "bold"),
+                                                    labels_gp = gpar(fontsize = 7)),
+                        top_annotation = column_annotation) %>% 
+  draw(merge_legend = T, heatmap_legend_side = "bottom")
+
+h_height = h@ht_list_param$height %>% as.numeric %>% conv_unit("mm", "inch")
+```
+
+```{r, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between adjusted closing prices for 2 years of my watchlist"}
+draw(h, background = "transparent")
+```
+
+<!--chapter:end:price.Rmd-->
+
+# (PART) Environment {-}
+
+# Technology market share trend^[Data are from [StatCounter](https://gs.statcounter.com/).] {#technology}
+
+```{r}
+fromdate = today() - 365.25 * 5
+todate = today()
+
+fromyear = fromdate %>% strftime("%Y")
+frommonth = fromdate %>% strftime("%m")
+
+toyear = todate %>% strftime("%Y")
+tomonth = todate %>% strftime("%m")
+```
+
+```{r}
+if (thishour %in% c(0, 6, 12, 18)) {
+   machine = c("Desktop", "Mobile", "Tablet")
+   
+   for (x in machine) {
+      URL = str_c("https://gs.statcounter.com/", "os-market-share/", 
+                  str_to_lower(x), "/worldwide/chart.php?device=", x, "&device_hidden=", str_to_lower(x), 
+                  "&statType_hidden=os_combined&region_hidden=ww&granularity=monthly&statType=Operating%20System&region=Worldwide",
+                  "&fromInt=", fromyear, frommonth, "&toInt=", toyear, tomonth, 
+                  "&fromMonthYear=", fromyear, "-", frommonth, "&toMonthYear=", toyear, "-", tomonth, 
+                  "&csv=1")
+      
+      download.file(URL, str_c("OS_", x, ".csv"))
+      
+      URL = str_c("https://gs.statcounter.com/", "browser-market-share/", 
+                  str_to_lower(x), "/worldwide/chart.php?device=", x, "&device_hidden=", str_to_lower(x),
+                  "&statType_hidden=browser&region_hidden=ww&granularity=monthly&statType=Browser&region=Worldwide",
+                  "&fromInt=", fromyear, frommonth, "&toInt=", toyear, tomonth, 
+                  "&fromMonthYear=", fromyear, "-", frommonth, "&toMonthYear=", toyear, "-", tomonth, 
+                  "&csv=1")
+      
+      download.file(URL, str_c("Browser_", x, ".csv"))
+      
+      URL = str_c("https://gs.statcounter.com/", "search-engine-market-share/", 
+                  str_to_lower(x), "/worldwide/chart.php?device=", x, "&device_hidden=", str_to_lower(x), 
+                  "&statType_hidden=search_engine&region_hidden=ww&granularity=monthly&statType=Search%20Engine&region=Worldwide",
+                  "&fromInt=", fromyear, frommonth, "&toInt=", toyear, tomonth, 
+                  "&fromMonthYear=", fromyear, "-", frommonth, "&toMonthYear=", toyear, "-", tomonth, 
+                  "&csv=1")
+      
+      download.file(URL, str_c("Search_", x, ".csv"))
+      
+      URL = str_c("https://gs.statcounter.com/", "social-media-stats/", 
+                  str_to_lower(x), "/worldwide/chart.php?device=", x, "&device_hidden=", str_to_lower(x),
+                  "&statType_hidden=social_media&region_hidden=ww&granularity=monthly&statType=Social%20Media&region=Worldwide",
+                  "&fromInt=", fromyear, frommonth, "&toInt=", toyear, tomonth,
+                  "&fromMonthYear=", fromyear, "-", frommonth, "&toMonthYear=", toyear, "-", tomonth, 
+                  "&csv=1")
+      
+      download.file(URL, str_c("SNS_", x, ".csv"))
+   }
+   
+   machine = c("Mobile", "Tablet", "Console")
+   
+   for (x in machine) {
+      URL = str_c("https://gs.statcounter.com/", "vendor-market-share/", 
+                  str_to_lower(x), "/worldwide/chart.php?device=", x, "&device_hidden=", str_to_lower(x),
+                  "&statType_hidden=vendor&region_hidden=ww&granularity=monthly&statType=Device%20Vendor&region=Worldwide",
+                  "&fromInt=", fromyear, frommonth, "&toInt=", toyear, tomonth, 
+                  "&fromMonthYear=", fromyear, "-", frommonth, "&toMonthYear=", toyear, "-", tomonth, 
+                  "&csv=1")
+      
+      download.file(URL, str_c("Device_", x, ".csv"))
+   }
+}
+
+read_stat = function(machine, category) {
+   machine %>%
+      map_dfr(~{
+         mutate(read_csv(str_c(category, "_", ., ".csv"), col_names = T), Machine = .) %>%
+            pivot_longer(cols = -c(Machine, Date), names_to = category, values_to = "Share")
+      }) %>%
+      mutate(Date = as_date(str_c(Date, "-01")), Share = Share / 100) %>%
+      relocate(Machine)
+}
+
+OS = read_stat(c("Desktop", "Mobile", "Tablet"), "OS")
+Browser = read_stat(c("Desktop", "Mobile", "Tablet"), "Browser")
+Search = read_stat(c("Desktop", "Mobile", "Tablet"), "Search")
+SNS = read_stat(c("Desktop", "Mobile", "Tablet"), "SNS")
+Device = read_stat(c("Mobile", "Tablet", "Console"), "Device")
+```
+
+```{r}
+share_trend = function(.data, .machine, .variable) {
+   .data %<>% filter(Machine == .machine)
+   
+   missing_date = .data %>% group_by(Date) %>% summarize(total = sum(Share)) %>% filter(total == 0) %>% pull(Date)
+   
+   .data %<>% filter(!Date %in% missing_date)
+   
+   ranking = .data %>% 
+      group_by({{.variable}}) %>% 
+      arrange(desc(Date)) %>% 
+      slice(1) %>% 
+      arrange(desc(Share)) %>% 
+      pull({{.variable}})
+   
+   top = ranking[1:min(5, length(ranking) - 1)]
+   
+   .data %<>% 
+      mutate(variable = case_when({{.variable}} %in% top ~ {{.variable}}, T ~ "Others") %>% factor(levels = c(top, "Others"))) %>%
+      group_by(Date, variable) %>% 
+      summarize(Share = sum(Share, na.rm = T)) %>% 
+      ungroup
+   
+   .data %>%
+      ggplot(mapping = aes(x = Date, y = Share)) +
+      geom_line(mapping = aes(color = variable)) +
+      scale_x_date(expand = c(0, 0)) +
+      scale_y_continuous(labels = percent) +
+      scale_color_manual(values = line_color, guide = guide_legend(title = NULL)) +
+      labs(y = "Market share")
+}
+```
+
+## Operating system
+
+```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = c("Desktop", "Mobile", "Tablet")}
+share_trend(OS, "Desktop", OS)
+share_trend(OS, "Mobile", OS)
+share_trend(OS, "Tablet", OS)
+```
+
+## Browser
+
+```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = c("Desktop", "Mobile", "Tablet")}
+share_trend(Browser, "Desktop", Browser)
+share_trend(Browser, "Mobile", Browser)
+share_trend(Browser, "Tablet", Browser)
+```
+
+## Search engine
+
+```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = c("Desktop", "Mobile", "Tablet")}
+share_trend(Search, "Desktop", Search)
+share_trend(Search, "Mobile", Search)
+share_trend(Search, "Tablet", Search)
+```
+
+## Social media
+
+```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = c("Desktop", "Mobile", "Tablet")}
+share_trend(SNS, "Desktop", SNS)
+share_trend(SNS, "Mobile", SNS)
+share_trend(SNS, "Tablet", SNS)
+```
+
+## Device vendor
+
+```{r, fig.width = 7, fig.height = 8/2.5, fig.cap = c("Mobile", "Tablet", "Console")}
+share_trend(Device, "Mobile", Device)
+share_trend(Device, "Tablet", Device)
+share_trend(Device, "Console", Device)
+```
+
+<!--chapter:end:technology.Rmd-->
+
+# Sector evaluation^[Data are from [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html) and [here](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/mgnroc.html). All data are based on U.S. companies.] {#sector}
+
+## PE ratio
+
+```{r}
+industry = drive_get("Investment/Valuation") %>% read_sheet(sheet = "Industry valuation")
+
+names(industry) %<>% str_replace_all("/ ", "/")
+
+industry %<>% 
+  filter(nchar(`Industry Name`) > 0) %>% 
+  mutate(`Industry Name` = str_replace_all(`Industry Name`, c("\\s+" = " ", "\\t+" = " ")),
+         across(-c(`Industry Name`, `Expected growth in EPS - next 5 years`), as.numeric),
+         `Expected growth in EPS - next 5 years` = str_replace(`Expected growth in EPS - next 5 years`, "%", "") %>% as.numeric %>% divide_by(100))
+
+industry_per = industry %>% 
+  arrange(`Current PE`) %>% 
+  mutate(`Industry Name` = factor(`Industry Name`, levels = `Industry Name`)) %>% 
+  select(`Industry Name`, ends_with("PE")) %>%
+  pivot_longer(cols = ends_with("PE"), names_to = "Variable", values_to = "PE ratio") %>%
+  mutate(Variable = Variable %>% str_replace(" PE", "") %>% factor(levels = c("Current", "Trailing", "Forward")))
+
+notNA_per = industry_per %>% group_by(`Industry Name`) %>% summarise(notNA = sum(!is.na(`PE ratio`))) %>% filter(notNA > 0) %>% nrow
+```
+
+```{r, fig.height = (notNA_per + 3)/4, fig.cap = "Current, trailing, and forward PE ratio by industry sector (note the x-axis is in log scale)"}
+industry_per %>%
+  ggplot(mapping = aes(x = `Industry Name`, y = `PE ratio`)) +
+  geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
+  geom_text(mapping = aes(y = `PE ratio` + diff(range(`PE ratio`, na.rm = T))/35, label = round(`PE ratio`)), hjust = 0, size = 8 / .pt) +
+  scale_y_continuous(expand = c(0, 0, 0.25, 0), labels = make_readable) +
+  coord_flip() +
+  labs(x = NULL, y = "PE ratio") +
+  facet_grid(cols = vars(Variable)) +
+  theme(axis.ticks.y = element_blank())
+```
+
+## Expected growth rate
+
+```{r, fig.height = (nrow(industry %>% filter(!is.na(`Expected growth in EPS - next 5 years`))) + 2)/4, fig.cap = "Expected growth rate for the next 5 years by industry sector"}
+industry %>%
+  arrange(`Expected growth in EPS - next 5 years`) %>%
+  mutate(`Industry Name` = factor(`Industry Name`, levels = `Industry Name`)) %>%
+  ggplot(mapping = aes(x = `Industry Name`, y = `Expected growth in EPS - next 5 years`)) +
+  geom_col(mapping = aes(fill = factor(sign(`Expected growth in EPS - next 5 years`), levels = c(-1, 1, 0))), color = "black", width = 0.7) +
+  scale_y_continuous(labels = percent) +
+  scale_fill_brewer(type = "qual", palette = 4, guide = F) +
+  coord_flip() +
+  labs(x = NULL, y = "Expected growth rate (next 5 years)") +
+  theme(axis.ticks.y = element_blank())
+```
+
+## PEG ratio
+
+```{r, fig.height = (nrow(industry %>% filter(!is.na(`PEG Ratio`))) + 2)/4, fig.cap = "PEG ratio by industry sector"}
+industry %>%
+  filter(!is.na(`PEG Ratio`)) %>%
+  arrange(`PEG Ratio`) %>%
+  mutate(`Industry Name` = factor(`Industry Name`, levels = `Industry Name`)) %>%
+  ggplot(mapping = aes(x = `Industry Name`, y = `PEG Ratio`)) +
+  geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
+  scale_y_continuous(expand = c(0, 0, 0.05, 0)) +
+  coord_flip() +
+  labs(x = NULL, y = "PEG ratio") +
+  theme(axis.ticks.y = element_blank())
+```
+
+## ROIC
+
+```{r}
+industry2 = drive_get("Investment/Valuation") %>% read_sheet(sheet = "Industry MROIC")
+
+industry2 %<>% 
+  filter(nchar(`Industry name`) > 0) %>%
+  mutate(`Industry name` = str_replace_all(`Industry name`, "\\s+", " "),
+         across(c(`Number of firms`, `Sales/Capital`), as.numeric),
+         across(c(`After-tax Operating Margin`, `Return on Capital`), ~str_replace(., "%", "") %>% as.numeric %>% divide_by(100)))
+```
+
+```{r, fig.height = (nrow(industry2 %>% filter(!is.na(`Return on Capital`))) + 2)/4, fig.cap = "Return on invested capital by industry sector"}
+industry2 %>%
+  filter(!is.na(`Return on Capital`)) %>%
+  arrange(`Return on Capital`) %>%
+  mutate(`Industry name` = factor(`Industry name`, levels = `Industry name`)) %>%
+  ggplot(mapping = aes(x = `Industry name`, y = `Return on Capital`)) +
+  geom_col(mapping = aes(fill = factor(sign(`Return on Capital`), levels = c(-1, 1, 0))), color = "black", width = 0.7) +
+  scale_y_continuous(labels = percent) +
+  scale_fill_brewer(type = "qual", palette = 4, guide = F) +
+  coord_flip() +
+  labs(x = NULL, y = "ROIC") +
+  theme(axis.ticks.y = element_blank())
+```
+
+<!--chapter:end:sector.Rmd-->
+
+# Index evaluation {#market-index}
+
+## Index trend (2 years)^[Data are from [Yahoo Finance](https://finance.yahoo.com/).]
+
+```{r}
+ticker = tribble(
+  ~name, ~symbol,
+  "USDKRW", "KRW=X",
+  "EURKRW", "EURKRW=X",
+  "KOSPI", "^KS11",
+  "KOSDAQ", "^KQ11",
+  "S&P500", "^GSPC",
+  "NASDAQ", "^IXIC",
+  "MSCIEM", "EEM",
+  "CSI300", "ASHR",
+  "EUROSTOXX50", "EXW1.DE",
+  "EUROSTOXX30", "EXSG.DE",
+  "WilshireREIT", "^WILREIT",
+  "Gold", "GC=F",
+  "Copper", "CPER",
+  "Oil", "USO",
+  "Tbond", "GOVT",
+  "AAAETF", "QLTA",
+  "Tnoteyield", "^TNX")
+
+index_2yr = tq_get(ticker$symbol, get = "stock.prices", from = twoyearsago)
+
+index_2yr %<>% left_join(ticker)
+
+index_2yr$low[index_2yr$name == "KOSPI" & index_2yr$date == "2020-05-06"] = 1925.55 # Correct wrong data
+
+index_2yr %<>% 
+  mutate(low = case_when(low == 0 & high == 0 ~ close,
+                         low > close ~ close, 
+                         T ~ low),
+         high = case_when(low == 0 & high == 0 ~ close,
+                          high < close ~ close, 
+                          T ~ high)) %>%
+  filter(!is.na(close))
+
+index_plot = function(indexdata, title, from, ribbon = F) {
+  if (ribbon) {
+    g = indexdata %>% 
+      ggplot(mapping = aes(x = date, y = close)) + 
+      geom_ribbon(mapping = aes(ymin = low, ymax = high), fill = line_color[1], alpha = 0.4) +
+      geom_line(color = line_color[1]) +
+      geom_point(data = indexdata %>% filter(date == max(date, na.rm = T)), color = line_color[2]) +
+      scale_x_date(expand = c(0, 0)) +
+      coord_cartesian(xlim = c(from, today())) +
+      labs(x = "Date", y = title)
+  } 
+  
+  else {
+    g = indexdata %>%
+      ggplot(mapping = aes(x = date, y = price)) + 
+      geom_line(color = line_color[1]) +
+      geom_point(data = indexdata %>% filter(date == max(date, na.rm = T)), color = line_color[2]) +
+      scale_x_date(expand = c(0, 0)) +
+      coord_cartesian(xlim = c(from, today())) +
+      labs(x = "Date", y = title)
+  }
+  
+  g = ggplot_gtable(ggplot_build(g))
+  g$layout$clip[g$layout$name == "panel"] = "off"
+
+  ggdraw(g)
+}
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "South Korea/U.S. Foreign Exchange Rate"}
+index_plot(index_2yr %>% filter(name == "USDKRW"), "USD/KRW", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "South Korea/Europe Foreign Exchange Rate"}
+index_plot(index_2yr %>% filter(name == "EURKRW"), "EUR/KRW", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "KOSPI Index"}
+index_plot(index_2yr %>% filter(name == "KOSPI"), "KOSPI", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "KOSDAQ Index"}
+index_plot(index_2yr %>% filter(name == "KOSDAQ"), "KOSDAQ", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "S&P 500 Index"}
+index_plot(index_2yr %>% filter(name == "S&P500"), "S&P 500", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "NASDAQ Composite Index"}
+index_plot(index_2yr %>% filter(name == "NASDAQ"), "NASDAQ", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "iShares MSCI Emerging Markets ETF"}
+index_plot(index_2yr %>% filter(name == "MSCIEM"), "iShares MSCI Emerging Markets", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Xtrackers Harvest CSI 300 China A-Shares ETF"}
+index_plot(index_2yr %>% filter(name == "CSI300"), "Xtrackers Harvest CSI 300", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "iShares EURO STOXX 50 UCITS ETF (DE)"}
+index_plot(index_2yr %>% filter(name == "EUROSTOXX50"), "iShares EURO STOXX 50", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "iShares EURO STOXX Select Dividend 30 UCITS ETF (DE)"}
+index_plot(index_2yr %>% filter(name == "EUROSTOXX30"), "iShares EURO STOXX 30", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Wilshire US REIT Index"}
+index_plot(index_2yr %>% filter(name == "WilshireREIT"), "Wilshire REIT", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Gold"}
+index_plot(index_2yr %>% filter(name == "Gold"), "Gold price", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "U.S Copper Index Fund, LP"}
+index_plot(index_2yr %>% filter(name == "Copper"), "U.S. copper index fund", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "U.S. Oil Fund, LP"}
+index_plot(index_2yr %>% filter(name == "Oil"), "U.S. oil fund", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "iShares U.S. Treasury Bond ETF"}
+index_plot(index_2yr %>% filter(name == "Tbond"), "iShares T-bond", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "iShares Aaa - A Rated Corporate Bond ETF"}
+index_plot(index_2yr %>% filter(name == "AAAETF"), "iShares AAA", from = as_date(twoyearsago), ribbon = T)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Treasury Yield 10 Years"}
+index_plot(index_2yr %>% filter(name == "Tnoteyield"), "U.S. T-note yield", from = as_date(twoyearsago), ribbon = T)
+```
+
+## Index trend (30 years)^[Data are from [Federal Reserve Bank of St. Louis](https://fred.stlouisfed.org/).]
+
+```{r}
+ticker = tribble(
+  ~name, ~symbol,
+  "Wilshire5000", "WILL5000PRFC",
+  "WilshireREIT", "WILLREITIND",
+  "Gold", "GOLDAMGBD228NLBM",
+  "Copper", "PCOPPUSDM",
+  "WTI", "DCOILWTICO",
+  "Tnoteyield", "IRLTLT01USM156N",
+  "AAAyield", "DAAA",
+  "USDKRW", "DEXKOUS")
+
+index_30yr = tq_get(ticker$symbol, get = "economic.data", from = as_date(thirtyyearsago) - 30)
+
+index_30yr %<>% left_join(ticker) %>% select(-symbol)
+
+ticker = tribble(
+  ~name, ~symbol,
+  "KOSPI", "^KS11",
+  "KOSDAQ", "^KQ11",
+  "Tbond", "GOVT",
+  "AAAETF", "QLTA"
+)
+
+index_30yr_yahoo = tq_get(ticker$symbol, get = "stock.prices", from = as_date(thirtyyearsago) - 30)
+
+index_30yr_yahoo %<>% 
+  left_join(ticker) %>%
+  rename(price = close) %>%
+  select(name, date, price)
+
+index_30yr %<>% 
+  bind_rows(index_30yr_yahoo) %>% 
+  filter(!is.na(price)) %>%
+  mutate(name = factor(name, levels = c("USDKRW", 
+                                        "KOSPI", 
+                                        "KOSDAQ", 
+                                        "Wilshire5000", 
+                                        "WilshireREIT", 
+                                        "Gold", 
+                                        "Copper", 
+                                        "WTI", 
+                                        "Tbond", 
+                                        "AAAETF",
+                                        "Tnoteyield", 
+                                        "AAAyield"))) %>%
+  arrange(name) %>%
+  mutate(name = as.character(name))
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "South Korea/U.S. Foreign Exchange Rate"}
+index_plot(index_30yr %>% filter(name == "USDKRW"), "USD/KRW", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "KOSPI Index"}
+index_plot(index_30yr %>% filter(name == "KOSPI"), "KOSPI", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "KOSDAQ Index"}
+index_plot(index_30yr %>% filter(name == "KOSDAQ"), "KOSDAQ", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Wilshire 5000 Full Cap Price Index"}
+index_plot(index_30yr %>% filter(name == "Wilshire5000"), "Wilshire 5000", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Wilshire US REIT Total Market Index"}
+index_plot(index_30yr %>% filter(name == "WilshireREIT"), "Wilshire REIT", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Gold Fixing Price 10:30 A.M. (London time) in London Bullion Market, based in U.S. Dollars"}
+index_plot(index_30yr %>% filter(name == "Gold"), "Gold fixing price", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Global Price of Copper (U.S. Dollars per Metric Ton)"}
+index_plot(index_30yr %>% filter(name == "Copper"), "Copper price", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Crude Oil Prices: West Texas Intermediate (WTI) - Cushing, Oklahoma"}
+index_plot(index_30yr %>% filter(name == "WTI"), "Crude oil price", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "iShares U.S. Treasury Bond ETF"}
+index_plot(index_30yr %>% filter(name == "Tbond"), "iShares T-bond", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "iShares Aaa - A Rated Corporate Bond ETF"}
+index_plot(index_30yr %>% filter(name == "AAAETF"), "iShares AAA", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Long-Term Government Bond Yields: 10-year: Main (Including Benchmark) for the United States"}
+index_plot(index_30yr %>% filter(name == "Tnoteyield"), "U.S. T-note yield", from = as_date(thirtyyearsago) - 30)
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Moody's Seasoned AAA Corporate Bond Yield"}
+index_plot(index_30yr %>% filter(name == "AAAyield"), "AAA corporate bond yield", from = as_date(thirtyyearsago) - 30)
+```
+
+## Index correlation
+
+```{r}
+daily = c("KOSPI", "KOSDAQ", "Wilshire5000", "WilshireREIT", "Gold", "WTI", "Tbond", "AAAETF", "AAAyield", "USDKRW")
+monthly = c("Tnoteyield", "Copper")
+
+index_30yr_daily = index_30yr %>% 
+  filter(name %in% daily) %>%
+  pivot_wider(id_cols = date, names_from = name, values_from = price)
+
+index_30yr_monthly = index_30yr %>%
+  filter(name %in% monthly) %>%
+  pivot_wider(id_cols = date, names_from = name, values_from = price)
+
+index_30yr_cross = index_30yr_daily %>%
+  mutate(date = make_date(year = format(date, "%Y"), month = format(date, "%m"), day = 1)) %>%
+  group_by(date) %>%
+  summarise(across(everything(), ~mean(., na.rm = T))) %>%
+  left_join(index_30yr_monthly)
+```
+
+```{r}
+index_dailycor = index_30yr_daily %>%
+  mutate(interval = cut(date, 30)) %>%
+  group_by(interval) %>%
+  group_map(~pairwise_cor(select(., -date)) %>% list %>% setNames(as.character(unlist(.y)))) %>%
+  flatten %>%
+  reverseList
+
+index_monthlycor = index_30yr_monthly %>%
+  mutate(interval = cut(date, 30)) %>%
+  group_by(interval) %>%
+  group_map(~pairwise_cor(select(., -date)) %>% list %>% setNames(as.character(unlist(.y)))) %>%
+  flatten %>%
+  reverseList
+
+index_crosscor = index_30yr_cross %>%
+  mutate(interval = cut(date, 30)) %>%
+  group_by(interval) %>%
+  group_map(~pairwise_cor(select(., all_of(names(select(index_30yr_daily, -date)))),
+                          select(., all_of(names(select(index_30yr_monthly, -date))))) %>% 
+              list %>% 
+              setNames(as.character(unlist(.y)))) %>%
+  flatten %>%
+  reverseList
+
+index_dailycor = weighted_mean(index_dailycor)
+index_monthlycor = weighted_mean(index_monthlycor)
+index_crosscor = weighted_mean(index_crosscor)
+```
+
+```{r}
+index_cor = bind_rows(index_dailycor %>% as_tibble(rownames = "var1") %>% pivot_longer(cols = -var1, names_to = "var2", values_to = "r"),
+                      index_monthlycor %>% as_tibble(rownames = "var1") %>% pivot_longer(cols = -var1, names_to = "var2", values_to = "r"),
+                      index_crosscor %>% as_tibble(rownames = "var1") %>% pivot_longer(cols = -var1, names_to = "var2", values_to = "r"),
+                      index_crosscor %>% t %>% as_tibble(rownames = "var1") %>% pivot_longer(cols = -var1, names_to = "var2", values_to = "r")) %>%
+  pivot_wider(id_cols = var1, names_from = var2, values_from = r) %>%
+  column_to_rownames("var1") %>% 
+  as.matrix
+
+relabel = function(symbol) c(KOSPI = "KOSPI",
+                             KOSDAQ = "KOSDAQ",
+                             Wilshire5000 = "Wilshire 5000", 
+                             WilshireREIT = "Wilshire US REIT", 
+                             Gold = "Gold fixing price", 
+                             Copper = "Copper price",
+                             WTI = "Crude oil price",
+                             Tbond = "U.S. T-bond",
+                             AAAETF = "iShares AAA",
+                             Tnoteyield = "U.S. T-note yield",
+                             AAAyield = "AAA corporate bond yield",
+                             USDKRW = "USD/KRW exchange rate")[symbol]
+
+colnames(index_cor) %<>% relabel
+rownames(index_cor) %<>% relabel
+```
+
+```{r, include = F}
+heatmap_body_size = unit(4.3, "inch")
+
+h = Heatmap(index_cor, 
+        name = "Pearson's r", 
+        width = heatmap_body_size, 
+        height = heatmap_body_size, 
+        show_row_dend = F,
+        row_names_gp = gpar(fontsize = 10),
+        column_names_gp = gpar(fontsize = 10),
+        heatmap_legend_param = list(legend_height = unit(1.5, "inch"))) %>%
+  draw
+
+h_height = convertHeight(h@ht_list_param$height, "inch") %>% as.numeric
+
+grid_size = heatmap_body_size/nrow(index_cor)
+```
+
+```{r, fig.height = h_height + 0.2, fig.cap = "Pairwise correlation between the stock matket index, REIT index, gold price, copper price, crude oil price, bond yields, and USD/KRW exchange rate over the last 30 years (weighted average over 1-year intervals)"}
+draw(h, background = "transparent")
+
+index_cor_clustered = index_cor[row_order(h), column_order(h)]
+
+for (i in 1:ncol(index_cor_clustered)) {
+  for (j in 1:nrow(index_cor_clustered)) {
+    decorate_heatmap_body("Pearson's r", row_slice = 1, column_slice = 1, {
+      grid.text(label = index_cor_clustered[nrow(index_cor_clustered) + 1 - j, i] %>% round(2),
+                x = grid_size * i - grid_size/2, 
+                y = grid_size * j - grid_size/2, 
+                just = "center",
+                gp = gpar(fontsize = 9, fontfamily = "Lato"))
+    })
+  }
+}
+```
+
+<!--chapter:end:market-index.Rmd-->
+
+# Market evaluation {#market}
+
+## Market capitalization[^1]
+
+```{r}
+if (thishour == 0) {
+  download.file("https://api.worldbank.org/v2/en/indicator/CM.MKT.LCAP.CD?downloadformat=csv", destfile = "marketcap.zip", mode = "wb")
+  unzip("marketcap.zip", overwrite = T, exdir = "marketcap")
+  
+  tryCatch(
+    {
+      download.file("https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.CD?downloadformat=csv", destfile = "gdp.zip", mode = "wb")
+    },
+    error = function(cond) {
+      message(cond)
+      return(NULL)
+    })
+  unzip("gdp.zip", overwrite = T, exdir = "gdp")
+}
+```
+
+```{r}
+gdp_ranking = read_html("https://www.worldometers.info/gdp/gdp-by-country/", which = 1, header = T) %>% pull(Country)
+
+marketcap_csv = unzip("marketcap.zip", list = T) %>% pull(Name) %>% str_subset("^(?!Metadata)")
+marketcap = read_csv(file.path("marketcap", marketcap_csv), skip = 4, col_names = T, trim_ws = T)
+
+rename_country1 = function(x) {
+  mapping = c("Czech Republic (Czechia)" = "Czech",
+              "Côte d'Ivoire" = "Cote d'Ivoire")
+  
+  ifelse(x %in% names(mapping), mapping[x], x)
+}
+
+rename_country2 = function(x) {
+  mapping = c("Russian Federation" = "Russia",
+              "Korea, Rep." = "South Korea",
+              "Korea, Dem. People's Rep." = "North Korea",
+              "Iran, Islamic Rep." = "Iran",
+              "Hong Kong SAR, China" = "Hong Kong",
+              "Egypt, Arab Rep." = "Egypt",
+              "Czech Republic" = "Czech",
+              "Slovak Republic" = "Slovakia",
+              "Macao SAR, China" = "Macao",
+              "Congo, Dem. Rep." = "DR Congo",
+              "Congo, Rep." = "Congo",
+              "Yemen, Rep." = "Yemen",
+              "Lao PDR" = "Laos",
+              "Bahamas, The" = "Bahamas",
+              "Brunei Darussalam" = "Brunei")
+  
+  ifelse(x %in% names(mapping), mapping[x], x)
+}
+
+gdp_ranking %<>% rename_country1
+
+marketcap %<>% 
+  mutate(`Country Name` = rename_country2(`Country Name`)) %>% 
+  select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>%
+  pivot_longer(-`Country Name`, names_to = "Year", values_to = "Marketcap") %>%
+  mutate(Year = as.numeric(Year)) %>%
+  filter(`Country Name` %in% gdp_ranking)
+```
+
+```{r, eval = F}
+stock_exchange = read_html("https://en.wikipedia.org/wiki/List_of_stock_exchanges", which = 2, header = T, trim = T)
+
+names(stock_exchange) %<>% str_replace_all("\\n", "")
+
+stock_exchange %<>% select(-c(Open, Close)) %>% slice(-1) %>% mutate(across(everything(), str_trim))
+
+good = stock_exchange %>% filter(rowSums(is.na(.)) == 0) %>% select(Region, Year, `Market cap`)
+
+bad = stock_exchange %>% filter(rowSums(is.na(.)) > 0) %>% filter(`Stock exchange` == "Nasdaq Nordic Exchanges")
+
+bad %<>% 
+  mutate(Region = "Nasdaq Nordic",
+         Year = bad %>% pull(which(map_lgl(bad, ~all(str_detect(., "20[0-9]{2}"))))),
+         `Market cap` = bad %>% pull(which(map_lgl(bad, ~all(. == "Nasdaq Nordic Exchanges"))) + 1)) %>%
+  select(Region, Year, `Market cap`)
+
+stock_exchange = bind_rows(good, bad) %>%
+  rename(`Country Name` = Region, Marketcap = `Market cap`) %>%
+  mutate(across(c(Year, Marketcap), ~str_replace_all(., ",", "") %>% as.numeric),
+         `Country Name` = case_when(str_detect(`Country Name`, "United Kingdom") ~ "United Kingdom",
+                                    `Country Name` == "European Union" ~ "Euronext",
+                                    T ~ `Country Name`),
+         Marketcap = Marketcap * 1e9) %>%
+  group_by(`Country Name`, Year) %>%
+  summarize(Marketcap = sum(Marketcap, na.rm = T)) %>%
+  arrange(desc(Marketcap), desc(Year))
+
+marketcap %<>% 
+  full_join(stock_exchange %>% rename(Marketcap_wiki = Marketcap)) %>%
+  mutate(Marketcap = case_when(is.na(Marketcap) ~ Marketcap_wiki,
+                               T ~ Marketcap)) %>%
+  select(-Marketcap_wiki) %>% 
+  pivot_wider(id_cols = `Country Name`, names_from = Year, values_from = Marketcap) %>%
+  pivot_longer(cols = -`Country Name`, names_to = "Year", values_to = "Marketcap") %>%
+  mutate(Year = as.numeric(Year))
+```
+
+```{r}
+marketcap %<>% 
+  pivot_wider(id_cols = `Country Name`, names_from = Year, values_from = Marketcap) %>%
+  pivot_longer(cols = -`Country Name`, names_to = "Year", values_to = "Marketcap") %>%
+  mutate(Year = as.numeric(Year))
+
+notNA_year = marketcap %>% group_by(Year) %>% summarise(notNA = sum(!is.na(Marketcap))) %>% filter(notNA > 0) %>% pull(Year)
+
+marketcap %<>%
+  filter(Year %in% notNA_year) %>%
+  mutate(Marketcap = ifelse(is.na(Marketcap), 0, Marketcap)) %>%
+  group_by(Year) %>%
+  mutate(Proportion = Marketcap/sum(Marketcap)) %>%
+  ungroup
+
+top_country = marketcap %>% arrange(desc(Marketcap), desc(Year), desc(`Country Name`)) %>% pull(`Country Name`) %>% unique %>% .[1:3]
+notNA_year = marketcap %>% filter(`Country Name` %in% top_country & Marketcap > 0) %>% count(Year) %>% filter(n == length(top_country)) %>% pull(Year) %>% tail(3)
+
+major_country = marketcap %>% 
+  filter(Year %in% notNA_year & Marketcap > 0) %>%
+  group_by(`Country Name`) %>% 
+  summarise(min_Proportion = min(Proportion)) %>% 
+  pull(`Country Name`)
+
+marketcap %<>%
+  filter(`Country Name` %in% major_country & Year %in% notNA_year) %>%
+  mutate(Proportion = case_when(Proportion == 0 ~ "No data", 
+                                Proportion < 0.001 ~ "<0.1%",
+                                T ~ make_percent(Proportion, 100))) %>%
+  arrange(desc(Marketcap), desc(Year), desc(`Country Name`))
+
+country_level = rev(unique(marketcap$`Country Name`))
+
+marketcap %<>% mutate(`Country Name` = factor(`Country Name`, levels = country_level))
+```
+
+```{r, fig.height = (nrow(marketcap)/length(notNA_year) + 2)/4, fig.cap = str_c("Market capitalization of listed domestic companies across ", length(country_level), " major markets (approximate proportions of the global market capitalization are shown on the right side of each bar)")}
+marketcap %>% 
+  ggplot(mapping = aes(x = `Country Name`, y = Marketcap/1e12)) +
+  geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
+  geom_text(mapping = aes(y = Marketcap/1e12 + diff(range(Marketcap/1e12, na.rm = T))/35, label = Proportion), hjust = 0, size = 8 / .pt) + 
+  scale_y_continuous(expand = c(0, 0, 0.23, 0)) +
+  coord_flip() +
+  labs(x = NULL, y = "Market capitalization ($trillion)") +
+  theme(axis.ticks.y = element_blank()) +
+  facet_grid(cols = vars(Year), scales = "free_x")
+```
+
+## GDP and market capitalization[^1]
+
+```{r}
+gdp_csv = unzip("gdp.zip", list = T) %>% pull(Name) %>% str_subset("^(?!Metadata)")
+gdp = read_csv(file.path("gdp", gdp_csv), skip = 4, col_names = T, trim_ws = T)
+
+gdp %<>% mutate(`Country Name` = rename_country2(`Country Name`)) %>%
+  select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>% 
+  pivot_longer(-`Country Name`, names_to = "Year", values_to = "GDP") %>%
+  mutate(Year = as.numeric(Year)) %>%
+  filter(Year >= (thisyear - 5) & `Country Name` %in% gdp_ranking)
+
+country_level_rev = rev(intersect(country_level, gdp$`Country Name`))
+
+combined = inner_join(gdp, marketcap) %>% 
+  filter(Marketcap > 0) %>% 
+  mutate(`Country Name` = factor(`Country Name`, levels = country_level_rev)) %>%
+  arrange(desc(`Country Name`))
+
+g = combined %>% 
+  ggplot(mapping = aes(x = GDP/1e12, y = Marketcap/1e12)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray") +
+  geom_point(mapping = aes(color = `Country Name`), size = 3) +
+  scale_x_continuous(trans = "log10") +
+  scale_y_continuous(trans = "log10") +
+  scale_color_manual(values = c(line_color[1:12], rep("black", length(country_level_rev) - 12)), guide = F) +
+  labs(x = "GDP ($trillion)", y = "Market capitalization ($trillion)") +
+  facet_grid(rows = vars(Year), scales = "free")
+
+g2 = combined %>% 
+  filter(`Country Name` %in% country_level_rev[1:13]) %>%
+  ggplot(mapping = aes(x = GDP, y = Marketcap)) +
+  geom_point(mapping = aes(color = `Country Name`), size = 3) +
+  scale_x_continuous(trans = "log10") +
+  scale_y_continuous(trans = "log10") +
+  scale_color_manual(values = c(line_color[1:12], "black"), labels = c(country_level_rev[1:12], "Other countries"), guide = guide_legend(title = NULL)) +
+  facet_grid(rows = vars(Year))
+
+g_legend = get_legend(g2)
+
+legend_padding = (theme_get()$legend.margin + theme_get()$legend.box.spacing)[4] %>% convertUnit("inch") %>% as.numeric
+legend_key_width = theme_get()$legend.key.size %>% convertUnit("inch") %>% as.numeric
+legend_label_width = c(country_level_rev[1:12], "Other countries") %>% stringWidth %>% convertUnit("inch") %>% max %>% as.numeric %>% multiply_by(0.8 * theme_get()$text$size/12)
+legend_width = sum(legend_label_width, legend_key_width, legend_padding)
+```
+
+```{r buffett, fig.height = 5 * length(unique(combined$Year)) + 1/2, fig.cap = str_c("Market capitalization relative to GDP across ", length(unique(combined$`Country Name`)), " major countries")}
+ggarrange(g, g_legend, widths = c(7 - legend_width, legend_width))
+```
+
+(ref:buffett-text) Same data as in Figure \@ref(fig:buffett)
+
+```{r, fig.height = 5 * (7 - 1/2) / (7 - 1/2 - legend_width) * length(unique(combined$Year)) + 1/2, fig.cap = "(ref:buffett-text)"}
+combined %>%
+  mutate(`Country Name` = replace(as.character(`Country Name`), `Country Name` == "United States", "USA")) %>%
+  ggplot(mapping = aes(x = GDP/1e12, y = Marketcap/1e12)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray") +
+  geom_text(mapping = aes(label = `Country Name`), hjust = 0.5, vjust = 0.5, size = 10 / .pt) +
+  scale_x_continuous(trans = "log10") +
+  scale_y_continuous(trans = "log10") +
+  labs(x = "GDP ($trillion)", y = "Market capitalization ($trillion)") +
+  facet_grid(rows = vars(Year), scales = "free")
+```
+
+## GDP and Buffett indicator[^2]
+
+```{r}
+Buffett = read_html("https://www.gurufocus.com/global-market-valuation.php", which = 3, header = T) %>% 
+  mutate(across(-c(Country, `Country ETF`), as.numeric))
+```
+
+```{r, fig.cap = str_c("GDP and Buffett indicator across ", nrow(Buffett), " major countries")}
+my_datatable(Buffett, paging = T, pageLength = 10, scrollY = NULL, caption = NULL)
+```
+
+## Market valuation[^2]
+
+```{r}
+USA = read_html("https://www.gurufocus.com/stock-market-valuations.php", header = T)
+USA %<>% map(~{names(.) = str_trim(names(.)); mutate(., Country = "USA")})
+
+country_mapping = c(China = "CHN",
+                    Japan = "JPN",
+                    Germany = "DEU",
+                    India = "IND",
+                    UK = "GBR",
+                    France = "FRA",
+                    Italy = "ITA", 
+                    Canada = "CAN", 
+                    Korea = "KOR", 
+                    Australia = "AUS",
+                    Spain = "ESP",
+                    Russia = "RUS",
+                    Brazil = "BRA",
+                    Indonesia = "IDN")
+
+USA = read_html("https://www.gurufocus.com/stock-market-valuations.php", header = T) %>%
+  map(~{names(.) = str_trim(names(.)); mutate(., Country = "USA")})
+
+plan(multisession)
+
+Others = country_mapping %>%
+  future_imap(~{
+    tbl_list = read_html(str_c("https://www.gurufocus.com/global-market-valuation.php?country=", .x), which = -1, header = T)
+    country = .y
+    tbl_list %>% map(~{names(.) = str_trim(names(.)); mutate(., Country = country)})
+  })
+
+plan("default")
+
+All = list.prepend(Others, USA = USA)
+
+All %<>% 
+  map_dfr(~{
+    .[[which(map_lgl(., ~all(c("Ratio = Total Market Cap / GDP", "Valuation") %in% names(.))))]]
+  }) %>%
+  filter(`Ratio = Total Market Cap / GDP` %>% str_detect("Where are we today")) %>%
+  mutate(Valuation = str_extract(Valuation, "(Significantly|Modestly|Fair) (Overvalued|Undervalued|valued)")) %>%
+  select(-`Ratio = Total Market Cap / GDP`) %>%
+  left_join(Buffett %>% select(Country, `Total Market/GDP Ratio (%)`, `GDP ($Trillion)`)) %>%
+  rename(`Total Market/GDP Ratio` = "Total Market/GDP Ratio (%)") %>%
+  arrange(`GDP ($Trillion)`) %>%
+  mutate(Country = factor(Country, levels = Country),
+         `Total Market/GDP Ratio` = `Total Market/GDP Ratio`/100,
+         Valuation = str_to_sentence(Valuation) %>% factor(levels = c("Significantly overvalued", 
+                                                                      "Modestly overvalued",
+                                                                      "Fair valued",
+                                                                      "Modestly undervalued",
+                                                                      "Significantly undervalued")))
+```
+
+```{r, fig.height = (nrow(All) + 2)/4, fig.cap = str_c("Market valuation for ", nrow(All), " major countries")}
+f1 = All %>% 
+  ggplot(mapping = aes(x = Country, y = `GDP ($Trillion)`)) +
+  geom_col(fill = brewer_pal("qual", 4)(2)[2], color = "black", width = 0.7) +
+  scale_y_continuous(expand = c(0, 0, 0.05, 0)) +
+  coord_flip() +
+  labs(x = NULL, y = "GDP ($trillion)") +
+  theme(axis.ticks.y = element_blank())
+
+f2 = All %>% 
+  ggplot(mapping = aes(x = Country, y = `Total Market/GDP Ratio`)) +
+  geom_col(mapping = aes(fill = Valuation), color = "black", width = 0.7) +
+  scale_y_continuous(expand = c(0, 0, 0.05, 0), labels = percent) +
+  scale_fill_brewer(type = "qual", palette = 4, guide = guide_legend(title = NULL)) +
+  coord_flip() +
+  labs(x = NULL, y = "Total market/GDP ratio") +
+  theme(axis.ticks.y = element_blank())
+
+ggarrange(f1, f2, nrow = 1, legend = "right", common.legend = T)
+```
+
+## Projected annual return[^2]
+
+```{r}
+Project = read_html("https://www.gurufocus.com/global-market-valuation.php", which = 1, header = T) %>% 
+  rename(Country = "") %>% 
+  rename(`Projected Annual Return` = "Projected Annual Return (%)")
+
+emerging = Project$Country[(which(Project$Country == "Emerging Market:") + 1):nrow(Project)]
+
+Project %<>%
+  filter(Country != "Emerging Market:") %>%
+  mutate(Country = factor(Country, levels = rev(Country)),
+         `Projected Annual Return` = str_replace(`Projected Annual Return`, "%", "") %>% as.numeric %>% divide_by(100))
+
+cutoff = max(which(Project$Country %>% rev %>% as.character %in% emerging)) + 0.5
+```
+
+```{r, fig.height = (nrow(Project) + 2)/4, fig.cap = "Projected future annual returns of the world's 18 largest stock markets, calculated using (1) future business growth estimates, (2) dividends, and (3) change in market valuation"}
+Project %>% ggplot(mapping = aes(x = Country, y = `Projected Annual Return`)) +
+  annotation_custom(rectGrob(gp = gpar(col = "black", fill = "transparent")), xmin = cutoff) +
+  annotation_custom(rectGrob(gp = gpar(col = "black", fill = "transparent")), xmax = cutoff) +
+  annotation_custom(textGrob("Developed market", x = unit(0.95, "npc"), hjust = 1, vjust = -2, gp = gpar(fontface = "bold", fontfamily = "Lato")),
+                    xmin = cutoff, xmax = cutoff) +
+  annotation_custom(textGrob("Emerging market", x = unit(0.95, "npc"), hjust = 1, vjust = -2, gp = gpar(fontface = "bold", fontfamily = "Lato")),
+                    xmin = -Inf, xmax = -Inf) +
+  geom_col(mapping = aes(fill = factor(sign(`Projected Annual Return`), levels = c(-1, 1, 0))), color = "black", width = 0.7) +
+  scale_y_continuous(breaks = pretty_breaks(), labels = percent) +
+  scale_fill_brewer(type = "qual", palette = 4, guide = F) +
+  coord_flip() +
+  labs(x = NULL, y = "Projected annual return") +
+  theme(axis.ticks.y = element_blank())
+```
+
+## U.S. stock market valuation
+
+```{r}
+Shiller = read_html("https://www.multpl.com/shiller-pe/table/by-month", which = 1, header = T) %>% 
+  rename(date = Date,
+         price = "\n\nValue\n\n\n\nValue\n") %>%
+  mutate(date = as_date(date, format = "%b %e, %Y"),
+         price = str_replace(price, "\\n\\nestimate", "") %>% as.numeric) %>%
+  filter(date >= as_date(fiftyyearsago) - 30) %>%
+  arrange(date)
+
+SP500PER = read_html("https://www.multpl.com/s-p-500-pe-ratio/table/by-month", which = 1, header = T) %>% 
+  rename(date = Date,
+         price = "\n\nValue\n\n\n\nValue\n") %>%
+  mutate(date = as_date(date, format = "%b %e, %Y"),
+         price = str_replace(price, "\\n\\nestimate", "") %>% as.numeric) %>%
+  filter(date >= as_date(fiftyyearsago) - 30) %>%
+  arrange(date)
+
+GDP = tq_get("GDP", get = "economic.data", from = as_date(fiftyyearsago) - 30) %>% 
+  filter(!is.na(price)) %>%
+  mutate(year = format(date, "%Y") %>% as.numeric,
+         month = format(date, "%m") %>% as.numeric) %>%
+  rename(GDP = price) %>%
+  select(-c(date, symbol))
+
+Wilshire5000 = tq_get("WILL5000PRFC", get = "economic.data", from = as_date(fiftyyearsago) - 30) %>% 
+  filter(!is.na(price)) %>%
+  mutate(year = format(date, "%Y") %>% as.numeric,
+         month = format(date, "%m") %>% as.numeric,
+         month = ((month - 1) %/% 3) * 3 + 1) %>%
+  group_by(year, month) %>% 
+  summarise(price = mean(price, na.rm = T)) %>%
+  ungroup %>%
+  rename(Wilshire5000 = price)
+
+Buffett = full_join(GDP, Wilshire5000) %>% 
+  mutate(price = Wilshire5000/GDP,
+         date = make_date(year = year, month = month, day = 1)) %>%
+  select(-c(GDP, Wilshire5000, year, month)) %>%
+  filter(!is.na(price))
+```
+
+```{r, fig.height = 8/2.5, fig.cap = "Wilshire 5000 Full Cap Price Index/GDP"}
+index_plot(Buffett, "Buffett indicator", from = as_date(fiftyyearsago) - 30)
+```
+
+(ref:shiller) [Cyclically adjusted P/E (CAPE) ratio for S&P 500](https://www.multpl.com/shiller-pe/)
+
+```{r, fig.height = 8/2.5, fig.cap = "(ref:shiller)"}
+index_plot(Shiller, "Shiller P/E ratio", from = as_date(fiftyyearsago) - 30)
+```
+
+(ref:sp500per) [S&P 500 P/E ratio, based on trailing 12 months "as reported" earnings](https://www.multpl.com/s-p-500-pe-ratio)
+
+```{r, fig.height = 8/2.5, fig.cap = "(ref:sp500per)"}
+index_plot(SP500PER, "S&P 500 P/E ratio", from = as_date(fiftyyearsago) - 30)
+```
+
+[^1]: Data are from [World Bank](https://data.worldbank.org/indicator/CM.MKT.LCAP.CD?view=chart) and [Wikipedia](https://en.wikipedia.org/wiki/List_of_stock_exchanges). Most recent 3 years for which top 3 countries\' data are available are shown.
+
+[^2]: Source data and details can be found at [Gurufocus.com](https://www.gurufocus.com/global-market-valuation.php).
+
+<!--chapter:end:market.Rmd-->
+
+# Global economy^[Data are from [World Bank](https://www.worldbank.org/) and [OECD](https://www.oecd.org/).] {#global-economy}
+
+## GDP
+
+```{r}
+country_ranking = read_html("https://www.worldometers.info/gdp/gdp-by-country/", which = 1, header = T) %>% pull(Country) %>% .[1:15]
+
+gdp = read_csv(file.path("gdp", gdp_csv), skip = 4, col_names = T, trim_ws = T)
+
+gdp %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russian Federation" = "Russia",
+                                                                   "Korea, Rep." = "South Korea",
+                                                                   "Korea, Dem. People's Rep." = "North Korea"))) %>%
+  select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>% 
+  pivot_longer(-`Country Name`, names_to = "Year", values_to = "GDP ($Trillion)") %>%
+  mutate(Year = as.numeric(Year),
+         `GDP ($Trillion)` = `GDP ($Trillion)`/1e12) %>%
+  filter(!is.na(`GDP ($Trillion)`) & Year >= (thisyear - 30) & `Country Name` %in% country_ranking) %>%
+  mutate(`Country Name` = factor(`Country Name`, levels = country_ranking)) %>%
+  rename(Country = "Country Name")
+```
+
+```{r, fig.width = 7, fig.height = 6, fig.cap = str_c("GDP over the last 30 years of ", length(unique(gdp$Country)), " major countries")}
+g = gdp %>% 
+  ggplot(mapping = aes(x = Year, y = `GDP ($Trillion)`)) +
+  geom_line(mapping = aes(color = Country)) +
+  scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
+  scale_y_continuous(trans = "log10") +
+  scale_color_manual(values = line_color[1:length(unique(gdp$Country))], guide = guide_legend(title = NULL)) +
+  labs(x = "Year", y = "GDP ($trillion)") +
+  theme(legend.key = element_rect(fill = "transparent"))
+
+ggplotly(g) %>% layout(xaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
+                       yaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
+                       legend = list(x = 1.02, y = 0.5, font = list(size = 14)))
+```
+
+## GDP growth
+
+```{r}
+if (thishour == 0) {
+  download.file("https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.KD.ZG?downloadformat=csv", destfile = "gdp_growth.zip", mode = "wb")
+  unzip("gdp_growth.zip", overwrite = T, exdir = "gdp_growth")
+  
+  download.file("https://api.worldbank.org/v2/en/indicator/FP.CPI.TOTL.ZG?downloadformat=csv", destfile = "inflation.zip", mode = "wb")
+  unzip("inflation.zip", overwrite = T, exdir = "inflation")
+}
+```
+
+```{r}
+gdp_growth_csv = unzip("gdp_growth.zip", list = T) %>% pull(Name) %>% str_subset("^(?!Metadata)")
+gdp_growth = read_csv(file.path("gdp_growth", gdp_growth_csv), skip = 4, col_names = T)
+
+gdp_growth %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russian Federation" = "Russia",
+                                                                          "Korea, Rep." = "South Korea",
+                                                                          "Korea, Dem. People's Rep." = "North Korea"))) %>%
+  select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>% 
+  pivot_longer(-`Country Name`, names_to = "Year", values_to = "Annual GDP growth") %>%
+  mutate(`Annual GDP growth` = `Annual GDP growth`/100, Year = as.numeric(Year)) %>%
+  filter(!is.na(`Annual GDP growth`) & Year >= (thisyear - 30) & `Country Name` %in% country_ranking) %>%
+  mutate(`Country Name` = factor(`Country Name`, levels = country_ranking)) %>%
+  rename(Country = "Country Name")
+```
+
+```{r, fig.width = 7, fig.height = 6, fig.cap = str_c("Annual GDP growth over the last 30 years of ", length(unique(gdp_growth$Country)), " major countries")}
+g = gdp_growth %>% 
+  ggplot(mapping = aes(x = Year, y = `Annual GDP growth`)) +
+  geom_line(mapping = aes(color = Country)) +
+  scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
+  scale_y_continuous(labels = percent) +
+  scale_color_manual(values = line_color[1:length(unique(gdp_growth$Country))], guide = guide_legend(title = NULL)) +
+  theme(legend.key = element_rect(fill = "transparent"))
+
+ggplotly(g) %>% layout(xaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
+                       yaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
+                       legend = list(x = 1.02, y = 0.5, font = list(size = 14)))
+```
+
+## Inflation {#inflation}
+
+```{r}
+inflation_csv = unzip("inflation.zip", list = T) %>% pull(Name) %>% str_subset("^(?!Metadata)")
+inflation = read_csv(file.path("inflation", inflation_csv), skip = 4, col_names = T)
+
+inflation %<>% mutate(`Country Name` = str_replace_all(`Country Name`, c("Russian Federation" = "Russia",
+                                                                          "Korea, Rep." = "South Korea",
+                                                                          "Korea, Dem. People's Rep." = "North Korea"))) %>%
+  select(-c(`Country Code`, `Indicator Name`, `Indicator Code`)) %>% 
+  pivot_longer(-`Country Name`, names_to = "Year", values_to = "Annual inflation") %>%
+  mutate(`Annual inflation` = `Annual inflation`/100, Year = as.numeric(Year)) %>%
+  filter(!is.na(`Annual inflation`) & Year >= (thisyear - 30) & `Country Name` %in% country_ranking) %>%
+  mutate(`Country Name` = factor(`Country Name`, levels = country_ranking)) %>%
+  rename(Country = "Country Name")
+```
+
+```{r, fig.width = 7, fig.height = 6, fig.cap = str_c("Annual inflation over the last 30 years of ", length(unique(inflation$Country)), " major countries")}
+g = inflation %>% 
+  ggplot(mapping = aes(x = Year, y = `Annual inflation`)) +
+  geom_line(mapping = aes(color = Country)) +
+  scale_x_continuous(expand = c(0, 0), breaks = pretty_breaks()) +
+  scale_y_continuous(labels = percent) +
+  scale_color_manual(values = line_color[1:length(unique(inflation$Country))], guide = guide_legend(title = NULL)) +
+  coord_cartesian(ylim = c(min(inflation$`Annual inflation`), 0.25)) +
+  theme(legend.key = element_rect(fill = "transparent"))
+
+ggplotly(g) %>% layout(xaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
+                       yaxis = list(title = list(font = list(size = 16)), tickfont = list(size = 14)),
+                       legend = list(x = 1.02, y = 0.5, font = list(size = 14)))
+```
+
+## OECD Composite Leading Indicators
+
+```{r}
+USA = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "USALORSGPNOSTSAM", "&cosd=", fiveyearsago, "&coed=", today(),
+                              "&fq=Monthly&vintage_date=", today(), "&revision_date=", today(), "&nd=", fiveyearsago), col_names = T)
+
+China = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "CHNLORSGPNOSTSAM", "&cosd=", fiveyearsago, "&coed=", today(),
+                              "&fq=Monthly&vintage_date=", today(), "&revision_date=", today(), "&nd=", fiveyearsago), col_names = T)
+
+Euro = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "EA19LORSGPNOSTSAM", "&cosd=", fiveyearsago, "&coed=", today(),
+                              "&fq=Monthly&vintage_date=", today(), "&revision_date=", today(), "&nd=", fiveyearsago), col_names = T)
+
+Korea = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=", "KORLOLITONOSTSAM", "&cosd=", fiveyearsago, "&coed=", today(),
+                              "&fq=Monthly&vintage_date=", today(), "&revision_date=", today(), "&nd=", fiveyearsago), col_names = T)
+
+relabelCLI = function(symbol) c(USALORSGPNOSTSAM = "USA", 
+                                CHNLORSGPNOSTSAM = "China", 
+                                EA19LORSGPNOSTSAM = "Euro", 
+                                KORLOLITONOSTSAM = "Korea")[symbol]
+
+CLI = list(USA, China, Euro, Korea) %>%
+  reduce(full_join) %>%
+  mutate(across(-DATE, as.numeric)) %>%
+  arrange(DATE) %>% 
+  pivot_longer(-DATE, names_to = "Region", values_to = "CLI") %>% 
+  mutate(Region = relabelCLI(Region) %>% factor(levels = c("USA", "China", "Euro", "Korea")))
+```
+
+```{r, fig.width = 7, fig.height = 4, fig.cap = "OECD Composite Leading Indicators (CLIs) normalized for USA, China, Euro, and South Korea over the last 5 years"}
+CLI %>% 
+  ggplot(mapping = aes(x = DATE, y = CLI - 100)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_area(mapping = aes(fill = Region), alpha = 0.3, position = "identity") +
+  geom_line(mapping = aes(color = Region)) +
+  scale_x_date(expand = c(0, 0)) +
+  scale_y_continuous(labels = function(x) x + 100) +
+  scale_color_manual(values = line_color[1:length(unique(CLI$Region))], labels = c("USA", "China", "Euro", "Korea"), guide = guide_legend(title = NULL)) +
+  scale_fill_manual(values = line_color[1:length(unique(CLI$Region))], labels = c("USA", "China", "Euro", "Korea"), guide = guide_legend(title = NULL)) +
+  labs(x = "Year", y = "CLI")
+```
+
+[What is OECD CLI?](https://www.oecd.org/sdd/compositeleadingindicatorsclifrequentlyaskedquestionsfaqs.htm)
+
+The OECD system of Composite Leading Indicators (CLIs) is designed to provide early signals of turning points in business cycles - fluctuation in the output gap, i.e. fluctuation of the economic activity around its long term potential level. This approach, focusing on turning points (peaks and troughs), results in CLIs that provide qualitative rather than quantitative information on short-term economic movements.
+
+The phases and patterns in CLIs are likely to be followed by the business cycle. The chart below presents the CLI and the estimated business cycle for the OECD area. The two series show strong co-movements, with the turning points of the CLI consistently preceding those of the business cycle; lead time varies, but 6 - 9 months is at what the OECD aims.
+
+```{r, fig.cap = "OECD area Composite Leading Indicator (CLI) and economic activity (long-term trend = 100)"}
+include_graphics("https://www.oecd.org/media/oecdorg/directorates/statisticsdirectorate/50067091FAQ1.png")
+```
+
+\- *[OECD](https://www.oecd.org/)*
+
+[Do OECD CLIs predict the future movement of stock markets?](https://finance.yahoo.com/news/does-mean-stock-market-leading-205002941.html?soc_src=social-sh&soc_trk=ma)
+
+The stock market is what’s known as a leading economic indicator. A leading economic indicator is a measure of economic recovery that shows improvement before the actual economy does.
+
+Stock prices are forward-looking in the sense that investors buy and sell stocks not based on what happened yesterday or what is happening today, but rather based on their expectations for the future. For example, a company may report impressive EPS and revenue numbers in a given quarter. But if they also cut revenue and EPS growth projections for the next several quarters at the same time, the stock will most certainly sell off.
+
+An individual stock is priced in large part based on investors’ expectations of what is coming in the next several months and quarters. Collectively, the S&P 500 is priced in a similar fashion.
+
+\- *Wayne Duggan @ [Benzinga.com](https://www.benzinga.com/)*
+
+<!--chapter:end:global-economy.Rmd-->
+
+# (PART) Practice {-}
+
+# My portfolio {#portfolio}
+
+## Invested asset composition
+
+```{r, fig.height = 3.5, fig.cap = "Invested asset allocation"}
+portfolio %>%
+  ggplot(mapping = aes(x = 1, y = Weight)) +
+  geom_bar(stat = "summary", fun = sum, position = "fill", mapping = aes(fill = Class), color = "black") +
+  scale_y_continuous(breaks = pretty_breaks(), labels = function(x) {percent(rev(x))}) +
+  scale_fill_manual(values = fill_color, guide = guide_legend(title = NULL)) +
+  coord_polar(theta = "y", direction = -1) +
+  labs(x = NULL, y = NULL) +
+  theme(panel.border = element_blank(), panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank())
+```
+
+```{r, fig.height = 6.3, fig.cap = "Regional distribution of invested assets"}
+portfolio %>%
+  group_by(Class) %>%
+  mutate(width = sqrt(sum(Weight))) %>%
+  ungroup %>%
+  ggplot(mapping = aes(x = 1 + width/2, y = Weight)) +
+  geom_bar(stat = "summary", fun = sum, position = "fill", mapping = aes(fill = Region, width = width), color = "black") +
+  scale_y_continuous(breaks = pretty_breaks(), labels = function(x) {percent(rev(x))}) +
+  scale_fill_manual(values = fill_color, guide = guide_legend(title = NULL)) +
+  coord_polar(theta = "y", direction = -1) +
+  facet_wrap(vars(Class), nrow = 2) +
+  labs(x = NULL, y = NULL) +
+  theme(panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank())
+```
+
+```{r, fig.cap = "Sector distribution of stock investment"}
+portfolio_stock %>%
+  ggplot(mapping = aes(x = Region, y = Weight)) +
+  geom_bar(mapping = aes(fill = Industry), stat = "summary", fun = sum, color = "black", width = 0.7) +
+  scale_y_continuous(expand = c(0, 0, 0.05, 0), labels = percent) +
+  scale_fill_manual(values = fill_color, guide = guide_legend(title = "Sector")) +
+  labs(x = "Market", y = "Proportion")
+```
+
+```{r, fig.height = 3.5, fig.cap = "Bond composition"}
+portfolio_bond %>%
+  ggplot(mapping = aes(x = 1, y = Weight)) +
+  geom_bar(mapping = aes(fill = Sector), stat = "summary", fun = sum, position = "fill", color = "black") +
+  scale_y_continuous(breaks = pretty_breaks(), labels = function(x) {percent(rev(x))}) +
+  scale_fill_manual(values = fill_color, guide = guide_legend(title = NULL)) +
+  coord_polar(theta = "y", direction = -1) +
+  labs(x = NULL, y = NULL) +
+  theme(panel.border = element_blank(), panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text.y = element_blank())
+```
+
+## Current and target asset allocation
+
+```{r, fig.width = 7, fig.height = 4.5, fig.cap = "Current and long-term target allocation of my asset"}
+f1 = allocation %>%
+  ggplot(mapping = aes(x = 1, y = `Current proportion`)) +
+  geom_col(mapping = aes(fill = category), position = "fill", color = "black") +
+  geom_text(data = allocation %>% filter(`Current proportion` > 0),
+            mapping = aes(x = 1.3, y = current_y, label = make_percent(`Current proportion`, 100)), hjust = 0.5, vjust = 0.5, size = 9 / .pt) +
+  scale_y_continuous(breaks = pretty_breaks(), labels = function(x) {percent(rev(x))}) +
+  scale_fill_manual(values = fill_color, guide = guide_legend(title = NULL)) +
+  coord_polar(theta = "y", direction = -1) +
+  labs(title = "Current allocation", x = NULL, y = NULL) +
+  theme(panel.border = element_blank(), panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text = element_blank())
+
+f2 = allocation %>%
+  ggplot(mapping = aes(x = 1, y = `Target proportion`)) +
+  geom_col(mapping = aes(fill = category), position = "fill", color = "black") +
+  geom_text(data = allocation %>% filter(`Target proportion` > 0),
+            mapping = aes(x = 1.3, y = target_y, label = make_percent(`Target proportion`, 100)), hjust = 0.5, vjust = 0.5, size = 9 / .pt) +
+  scale_y_continuous(breaks = pretty_breaks(), labels = function(x) {percent(rev(x))}) +
+  scale_fill_manual(values = fill_color, guide = guide_legend(title = NULL)) +
+  coord_polar(theta = "y", direction = -1) +
+  labs(title = "Target allocation", x = NULL, y = NULL) +
+  theme(panel.border = element_blank(), panel.grid = element_blank(), axis.ticks.y = element_blank(), axis.text = element_blank())
+
+ggarrange(f1, f2, common.legend = T, legend = "bottom", align = "hv")
+```
+
+<!--chapter:end:portfolio.Rmd-->
+
+# Asset growth simulation {#simulation}
+
+In the Shiny web application embedded below, you can freely tune your investment scenario and see how your asset will grow over time. Specifically, you can choose 6 parameters depending on your financial situation:
+
+1. Initial amount of investment
+2. Investment amount per month
+3. Increment of monthly investment per year
+4. Your target annual profit
+5. [Annual inflation rate](#inflation)
+6. Total period of investment
+
+## Simulation in USD
+
+```{r, fig.cap = "Shiny web application for asset growth simulation in USD. The live version is available at https://junghoonshin.shinyapps.io/asset-growth-simulation-usd/."}
+include_app("https://junghoonshin.shinyapps.io/asset-growth-simulation-usd/", height = "1000px")
+```
+
+## Simulation in KRW
+
+```{r, fig.cap = "Shiny web application for asset growth simulation in KRW. The live version is available at https://junghoonshin.shinyapps.io/asset-growth-simulation-krw/."}
+include_app("https://junghoonshin.shinyapps.io/asset-growth-simulation-krw/", height = "1000px")
+```
+
+<!--chapter:end:simulation.Rmd-->
+
+# Resources {#resources .unnumbered}
+
+- [Google Finance](https://www.google.com/finance)
+- [Yahoo Finance](https://finance.yahoo.com/)
+- [Federal Reserve Bank of St. Louis](https://fred.stlouisfed.org/)
+- [World Bank](https://www.worldbank.org/)
+- [OECD](https://www.oecd.org/)
+- [Gurufocus](https://www.gurufocus.com/new_index/)
+- [Worldometer](https://www.worldometers.info/)
+- [StatCounter](https://gs.statcounter.com/)
+- [multpl.com](https://www.multpl.com/sitemap)
+- [Investopedia](https://www.investopedia.com/)
+- [Wikipedia](https://en.wikipedia.org/wiki/Main_Page)
+- [Company ranking by market cap](https://companiesmarketcap.com/)
+- [Industry sector classification](http://pages.stern.nyu.edu/~adamodar/New_Home_Page/datafile/pedata.html)
+- [Adjusted Graham formula](https://www.oldschoolvalue.com/stock-valuation/benjamin-graham-formula/)
+
+<!--chapter:end:resources.Rmd-->
+
+`r if (knitr::is_html_output()) '# References {-}'`
+
+<!--chapter:end:references.Rmd-->
+
