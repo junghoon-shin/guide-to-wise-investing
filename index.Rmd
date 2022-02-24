@@ -81,6 +81,8 @@ p_load(bookdown,
 
 options(bitmapType = "cairo")
 
+options(gargle_oauth_email = "freeustand@gmail.com")
+
 knitr::opts_chunk$set(echo = FALSE, 
                       message = FALSE, 
                       warning = FALSE, 
