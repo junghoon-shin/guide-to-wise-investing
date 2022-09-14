@@ -90,7 +90,7 @@ wikitable %>% display_wikitable("Parrot")
 ```{r}
 image_link(image_file = "images/Ambarella.png", url = "https://www.ambarella.com/", width = "240px")
 
-wikitable = "Ambarella_Inc." %>% make_wikitable(2)
+wikitable = "Ambarella_Inc." %>% make_wikitable(1)
 
 wikitable %>% display_wikitable("Ambarella")
 ```

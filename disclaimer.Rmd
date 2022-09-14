@@ -83,7 +83,9 @@ financials = future_map_dfr(company$Yahoo, get_financials) %>%
   mutate(date = as_date(date))
 
 plan("default")
+```
 
+```{r}
 financials_TSM = financials %>% filter(Yahoo == "TSM")
 financials_others = financials %>% filter(Yahoo != "TSM")
 
