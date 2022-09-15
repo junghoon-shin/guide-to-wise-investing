@@ -176,8 +176,8 @@ company %<>%
                               EPS <= 0 ~ "Zero or negative earnings",
                               Earnings_growth_estimate_next_5yrs <= 0 ~ "Zero or negative growth",
                               Free_cash_flow <= 0 ~ "Zero or negative cash flow",
-                              sum(c_across(c(PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`)) < 1, `Price/Target` < 1 / 1.2, na.rm = T) >= 3 ~ "Buy",
-                              sum(c_across(c(PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`)) < 1, `Price/Target` < 1 / 1.2, na.rm = T) >= 2 ~ "Maybe buy",
+                              sum(c_across(c(PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`)) < 1, `Price/Target` < 1 / 1.2, na.rm = T) >= 4 ~ "Buy",
+                              sum(c_across(c(PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`)) < 1, `Price/Target` < 1 / 1.2, na.rm = T) >= 3 ~ "Maybe buy",
                               sum(is.na(c_across(c(PEG, `Price/Graham`, `Price/DCF10`, `Marketcap/Payback8`, `Price/Target`)))) >= 1 ~ "Insufficient data",
                               T ~ "Wait")) %>%
   ungroup %>%
