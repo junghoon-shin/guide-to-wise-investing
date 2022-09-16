@@ -57,21 +57,6 @@ wikitable %>% display_wikitable("Intellia Therapeutics")
 image_link(image_file = "images/NanoX.svg", url = "https://www.nanox.vision/", width = "240px")
 ```
 
-## Unity Software (`r marketcap %>% filter(Name_trimmed == "Unity Software") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
-
-```{r}
-image_link(image_file = "images/Unity.png", url = "https://unity.com/", width = "240px")
-
-wikitable = "Unity_Technologies" %>% make_wikitable(1)
-
-wikitable$Val[wikitable$Var == "Subsidiaries"] %<>% 
-  str_replace_all(c("Chilli<br>Connect" = "ChilliConnect",
-                    "(.+)delta<br>DNA" = "\\1<br>deltaDNA",
-                    "deltaDNA(.+)" = "deltaDNA<br>\\1"))
-
-wikitable %>% display_wikitable("Unity Software")
-```
-
 ## Parrot (`r marketcap %>% filter(Name_trimmed == "Parrot") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
 
 ```{r}
@@ -83,16 +68,6 @@ wikitable$Val[wikitable$Var == "Subsidiaries"] %<>%
   str_replace_all(c("sense<br>Fly" = "senseFly"))
 
 wikitable %>% display_wikitable("Parrot")
-```
-
-## Ambarella (`r marketcap %>% filter(Name_trimmed == "Ambarella") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
-
-```{r}
-image_link(image_file = "images/Ambarella.png", url = "https://www.ambarella.com/", width = "240px")
-
-wikitable = "Ambarella_Inc." %>% make_wikitable(1)
-
-wikitable %>% display_wikitable("Ambarella")
 ```
 
 ## AeroVironment (`r marketcap %>% filter(Name_trimmed == "AeroVironment") %>% pull(Marketcap_USD) %>% make_readable %>% str_c(" $")`)
