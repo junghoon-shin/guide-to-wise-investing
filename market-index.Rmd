@@ -142,7 +142,7 @@ ticker = tribble(
   ~name, ~symbol,
   "Wilshire5000", "WILL5000PRFC",
   "WilshireREIT", "WILLREITIND",
-  "Gold", "GOLDAMGBD228NLBM",
+  "Gold", "PCU2122212122210",
   "Copper", "PCOPPUSDM",
   "WTI", "DCOILWTICO",
   "Tnoteyield", "IRLTLT01USM156N",
@@ -208,7 +208,7 @@ index_plot(index_30yr %>% filter(name == "WilshireREIT"), "Wilshire REIT", from 
 ```
 
 ```{r, fig.height = 8/2.5, fig.cap = "Gold Fixing Price 10:30 A.M. (London time) in London Bullion Market, based in U.S. Dollars"}
-index_plot(index_30yr %>% filter(name == "Gold"), "Gold fixing price", from = as_date(thirtyyearsago) - 30)
+index_plot(index_30yr %>% filter(name == "Gold"), "Producer price index of gold ores", from = as_date(thirtyyearsago) - 30)
 ```
 
 ```{r, fig.height = 8/2.5, fig.cap = "Global Price of Copper (U.S. Dollars per Metric Ton)"}

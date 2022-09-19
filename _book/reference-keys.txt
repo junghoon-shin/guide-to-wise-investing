@@ -131,11 +131,11 @@ key-financials
 big-four-numbers
 investment-decision
 small-cap
-intellia-therapeutics-5.1b
-nano-x-imaging-604.7m
-parrot-118.8m
-aerovironment-2.4b
-surface-oncology-76m
+intellia-therapeutics-4.9b
+nano-x-imaging-596.1m
+parrot-117.1m
+aerovironment-2.3b
+surface-oncology-70.8m
 ceo
 ceo-payment-relative-to-business-income
 ceo-analysis-reports
