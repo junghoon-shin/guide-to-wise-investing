@@ -97,7 +97,7 @@ read_html("https://en.wikipedia.org/wiki/Ran_Poliakine", which = 1, header = T, 
   column_to_rownames("V1") %>%
   t %>%
   as_tibble %>%
-  mutate(across(Occupation, ~str_replace_all(., "([a-z])([A-Z])", "\\1<br>\\2"))) %>%
+  mutate(across(`Occupation(s)`, ~str_replace_all(., "([a-z])([A-Z])", "\\1<br>\\2"))) %>%
   t %>%
   as_tibble(rownames = "var") %>%
   kbl(escape = F, col.names = NULL, caption = "(ref:poliakine)") %>%

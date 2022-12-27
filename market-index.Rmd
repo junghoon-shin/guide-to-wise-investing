@@ -157,7 +157,7 @@ ticker = tribble(
   ~name, ~symbol,
   "KOSPI", "^KS11",
   "KOSDAQ", "^KQ11",
-  "Tbond", "GOVT",
+  "Tbond", "ZB=F",
   "AAAETF", "QLTA"
 )
 
