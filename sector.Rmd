@@ -10,8 +10,8 @@ names(industry) %<>% str_replace_all("/ ", "/")
 industry %<>% 
   filter(nchar(`Industry Name`) > 0) %>% 
   mutate(`Industry Name` = str_replace_all(`Industry Name`, c("\\s+" = " ", "\\t+" = " ")),
-         across(-c(`Industry Name`, `Expected growth in EPS - next 5 years`), as.numeric),
-         `Expected growth in EPS - next 5 years` = str_replace(`Expected growth in EPS - next 5 years`, "%", "") %>% as.numeric %>% divide_by(100))
+         across(-c(`Industry Name`, `Expected growth - next 5 years`), as.numeric),
+         `Expected growth - next 5 years` = str_replace(`Expected growth - next 5 years`, "%", "") %>% as.numeric %>% divide_by(100))
 
 industry_per = industry %>% 
   arrange(`Current PE`) %>% 
@@ -37,12 +37,12 @@ industry_per %>%
 
 ## Expected growth rate
 
-```{r, fig.height = (nrow(industry %>% filter(!is.na(`Expected growth in EPS - next 5 years`))) + 2)/4, fig.cap = "Expected growth rate for the next 5 years by industry sector"}
+```{r, fig.height = (nrow(industry %>% filter(!is.na(`Expected growth - next 5 years`))) + 2)/4, fig.cap = "Expected growth rate for the next 5 years by industry sector"}
 industry %>%
-  arrange(`Expected growth in EPS - next 5 years`) %>%
+  arrange(`Expected growth - next 5 years`) %>%
   mutate(`Industry Name` = factor(`Industry Name`, levels = `Industry Name`)) %>%
-  ggplot(mapping = aes(x = `Industry Name`, y = `Expected growth in EPS - next 5 years`)) +
-  geom_col(mapping = aes(fill = factor(sign(`Expected growth in EPS - next 5 years`), levels = c(-1, 1, 0))), color = "black", width = 0.7) +
+  ggplot(mapping = aes(x = `Industry Name`, y = `Expected growth - next 5 years`)) +
+  geom_col(mapping = aes(fill = factor(sign(`Expected growth - next 5 years`), levels = c(-1, 1, 0))), color = "black", width = 0.7) +
   scale_y_continuous(labels = percent) +
   scale_fill_brewer(type = "qual", palette = 4, guide = F) +
   coord_flip() +

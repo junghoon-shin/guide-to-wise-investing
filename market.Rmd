@@ -63,20 +63,26 @@ marketcap %<>%
 ```
 
 ```{r, eval = F}
-stock_exchange = read_html("https://en.wikipedia.org/wiki/List_of_stock_exchanges", which = 2, header = T, trim = T)
+stock_exchange = read_html("https://en.wikipedia.org/wiki/List_of_stock_exchanges", skip.rows = c(2, 18:27), which = 2, header = F, trim = T)
 
-names(stock_exchange) %<>% str_replace_all("\\n", "")
+stock_exchange %<>% select(1:(match("Time zone", unlist(stock_exchange[1, ])) - 1))
 
-stock_exchange %<>% select(-c(Open, Close)) %>% slice(-1) %>% mutate(across(everything(), str_trim))
+names(stock_exchange) = stock_exchange %>% slice(1) %>% unlist
+
+stock_exchange %<>% select(-1) %>% slice(-1) 
+
+names(stock_exchange) %<>% str_replace_all("\\(.+\\)", "")
+
+stock_exchange %<>% mutate(across(everything(), str_trim))
 
 good = stock_exchange %>% filter(rowSums(is.na(.)) == 0) %>% select(Region, Year, `Market cap`)
 
-bad = stock_exchange %>% filter(rowSums(is.na(.)) > 0) %>% filter(`Stock exchange` == "Nasdaq Nordic Exchanges")
+bad = stock_exchange %>% filter(rowSums(is.na(.)) > 0) %>% filter(`Stock exchange` == "Nasdaq Nordic and Baltic Exchanges")
 
 bad %<>% 
   mutate(Region = "Nasdaq Nordic",
          Year = bad %>% pull(which(map_lgl(bad, ~all(str_detect(., "20[0-9]{2}"))))),
-         `Market cap` = bad %>% pull(which(map_lgl(bad, ~all(. == "Nasdaq Nordic Exchanges"))) + 1)) %>%
+         `Market cap` = bad %>% pull(which(map_lgl(bad, ~all(. == "Nasdaq Nordic and Baltic Exchanges"))) + 1)) %>%
   select(Region, Year, `Market cap`)
 
 stock_exchange = bind_rows(good, bad) %>%

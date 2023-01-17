@@ -27,8 +27,6 @@ index_2yr = tq_get(ticker$symbol, get = "stock.prices", from = twoyearsago)
 
 index_2yr %<>% left_join(ticker)
 
-index_2yr$low[index_2yr$name == "KOSPI" & index_2yr$date == "2020-05-06"] = 1925.55 # Correct wrong data
-
 index_2yr %<>% 
   mutate(low = case_when(low == 0 & high == 0 ~ close,
                          low > close ~ close, 

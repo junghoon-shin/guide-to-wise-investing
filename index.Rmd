@@ -107,8 +107,8 @@ update_geom_defaults(geom = "text", new = list(family = "Lato"))
 ```
 
 ```{r}
-read_html = function(url, which = integer(), header = T, trim = T) {
-  readHTMLTable(rawToChar(GET(url)$content), which = which, header = header, trim = trim)
+read_html = function(url, which = integer(), header = T, trim = T, skip.rows = integer()) {
+  readHTMLTable(rawToChar(GET(url)$content), which = which, header = header, trim = trim, skip.rows = skip.rows)
 }
 
 my_datatable = function(tbl, paging = F, pageLength = 5, scrollY = unit(700, "lines"), caption = NULL) {
