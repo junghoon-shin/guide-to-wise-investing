@@ -28,10 +28,6 @@ if (!"remotes" %in% installed.packages()) {
 
 library(remotes)
 
-if (!"facetscales" %in% installed.packages()) {
-  install_github("zeehio/facetscales")
-}
-
 if (!"yfinance" %in% installed.packages()) {
   install_github("ljupch0/yfinance")
 }

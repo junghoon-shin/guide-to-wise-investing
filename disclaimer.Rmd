@@ -14,7 +14,7 @@ AAA_return = read_csv(str_c("https://fred.stlouisfed.org/graph/fredgraph.csv?id=
 ```
 
 ```{r}
-drive_auth(email = "freeustand@gmail.com", scopes = "https://www.googleapis.com/auth/drive")
+drive_auth(email = "dr.junghoonshin@gmail.com", scopes = "https://www.googleapis.com/auth/drive")
 gs4_auth(token = drive_token(), scopes = "https://www.googleapis.com/auth/drive")
 
 company = drive_get("Investment/Valuation") %>% read_sheet(sheet = "Company") %>%
