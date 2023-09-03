@@ -23,7 +23,7 @@ company = drive_get("Investment/Valuation") %>% read_sheet(sheet = "Company") %>
 
 plan(multisession)
 
-yahoo_data = future_map_dfr(company$Yahoo, ~{
+yahoo_data = future_map_dfr(company$Yahoo[1:5], ~{
   ticker = .
   
   out = tryCatch({
@@ -72,17 +72,32 @@ yahoo_data = future_map_dfr(company$Yahoo, ~{
   return(out)
 })
 
-financials = future_map_dfr(company$Yahoo, get_financials) %>%
+plan("default")
+```
+
+
+
+
+```{r}
+library(quantr)
+
+yahoo_financials("AAPL")
+```
+
+
+
+
+
+```{r}
+financials = map_dfr(company$Yahoo, get_financials) %>%
   group_by(ticker, date) %>%
   summarize(across(everything(), ~{
-    if(sum(!is.na(.)) > 0) unique(.[!is.na(.)])
+    if (sum(!is.na(.)) > 0) unique(.[!is.na(.)])
     else NA
   })) %>%
   ungroup %>%
   rename(Yahoo = ticker) %>%
   mutate(date = as_date(date))
-
-plan("default")
 ```
 
 ```{r}
