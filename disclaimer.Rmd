@@ -75,19 +75,6 @@ yahoo_data = future_map_dfr(company$Yahoo[1:5], ~{
 plan("default")
 ```
 
-
-
-
-```{r}
-library(quantr)
-
-yahoo_financials("AAPL")
-```
-
-
-
-
-
 ```{r}
 financials = map_dfr(company$Yahoo, get_financials) %>%
   group_by(ticker, date) %>%
